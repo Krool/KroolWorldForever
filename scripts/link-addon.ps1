@@ -3,12 +3,12 @@
   Junctions an addon folder from this repo into a WoW Interface\AddOns folder (no admin needed).
 
 .EXAMPLE
-  .\scripts\link-addon.ps1 -AddOnsPath "C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns"
+  .\scripts\link-addon.ps1 -AddOnsPath "C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns"
   .\scripts\link-addon.ps1 -Addon HelloForever -AddOnsPath "..."
 
 .NOTES
   Links the KroolWorldForever bundle unless -Addon names another folder (repo root or template\).
-  The Forever live folder name is unconfirmed as of 2026-10-20 (beta used _classic_beta_).
+  Forever installs to _forever_ (confirmed 2026-10-20; the beta used _classic_beta_).
   Without -AddOnsPath the script lists candidate flavor folders it finds.
 #>
 param(

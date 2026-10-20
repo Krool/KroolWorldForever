@@ -14,8 +14,8 @@ Snapshot 2026-10-20, beta build 1.60.1.70450. Sources in [sources.md](sources.md
 | TOC filename | `MyAddon_Forever.toc` (or `_Camelot.toc`) | Lookup order: game suffix, then family suffix, then plain `MyAddon.toc`. |
 | Project ID | `WOW_PROJECT_ID == WOW_PROJECT_CAMELOT` (18) | Added in build 70170. Earlier beta builds returned 1 (Mainline), so guides saying "Mainline" are stale. |
 | Ruleset detection | `C_GameRules.IsGameRuleActive(Enum.GameRule.HardcoreRuleset)` etc. | Also `IsHardcoreActive`, `IsSelfFoundAllowed`, event `GAME_RULES_CHANGED`. |
-| Install folder | Beta: `World of Warcraft\_classic_beta_\Interface\AddOns` | Launch folder is **UNCONFIRMED**. Claims of `_classic_era_` / `_retail_` exist. A new `_forever_` folder is plausible. |
-| CDN product | Beta: `wow_cn_beta`. Likely live: `wowf` | Inferred from wago.tools build listings. |
+| Install folder | `World of Warcraft\_forever_\Interface\AddOns` | Confirmed 2026-10-20 from the stress-test install. The beta used `_classic_beta_`. |
+| CDN product | `wowf` | Confirmed 2026-10-20: the install's `.product.db` says `wowf`, and `us.patch.battle.net:1119/wowf/versions` serves 1.60.1.70245. Beta (`wow_classic_beta`) is at 70450. |
 
 Robust flavor detection:
 

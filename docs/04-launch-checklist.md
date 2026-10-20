@@ -5,11 +5,11 @@ Things the research could not confirm. Each is 30 seconds to check in-game. Upda
 
 ## Install and folders
 
-- [ ] Install Forever from Battle.net (it should appear as its own Game Version entry).
-- [ ] Find the actual flavor folder under `World of Warcraft\` (`_forever_`? `_classic_`?
-      `_classic_era_`?). The beta used `_classic_beta_`.
-- [ ] Create `Interface\AddOns` there if missing, then run:
-      `.\scripts\link-addon.ps1 -Addon HelloForever -AddOnsPath "<that folder>\Interface\AddOns"`
+- [x] Install Forever from Battle.net. Download started 2026-10-20 (stress test). Battle.net product
+      `wowf`, serving build 1.60.1.70245, older than beta 70450. The bundle lints clean against 70245.
+- [x] Flavor folder: `C:\Program Files (x86)\World of Warcraft\_forever_` (seen 2026-10-20).
+- [ ] Once the download finishes, create `Interface\AddOns` there if missing, then run:
+      `.\scripts\link-addon.ps1 -AddOnsPath "C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns"`
 
 ## Identity (run in chat)
 
@@ -37,13 +37,28 @@ Things the research could not confirm. Each is 30 seconds to check in-game. Upda
 - [ ] Browse CurseForge's Forever filter (`gameVersionTypeId=88568`) to see what exists at launch.
 - [ ] Re-check WeakAuras / Auctionator Forever status.
 
-## Our addons
+## Game files (as soon as the download finishes, before playing)
 
-- [ ] ForeverQuestTrash: install QuestieDB, link the addon, run `/fqt status` (expect "index: ready"),
-      hover a quest item from a finished quest, then run `/fqt` with the bank open.
-- [ ] ForeverKillValue: hover a hostile mob in the open world (a value line should show), hover one in a
+- [ ] Launch with `-console`, run `ExportInterfaceFiles code`, and diff the export against
+      wow-ui-source at the matching build. It is the exact UI code of the installed build.
+- [ ] Rebuild the allowlist from that export (`node tools\forever-api\build-allowlist.js <export>`),
+      then `cd tools\test; npm test`. Pre-checked 2026-10-20 against wow-ui-source 70245: clean.
+- [ ] `.build.info` in `World of Warcraft\` should then exist: confirm the build number it lists.
+
+## Our addons (Krool World Forever)
+
+- [ ] Link the bundle, check `/kwf list` shows both features, and that `/kwf killvalue off` and
+      `/kwf killvalue on` silence and restore it.
+- [ ] Quest Trash: install QuestieDB, run `/fqt status` (expect "index: ready"), hover a quest item
+      from a finished quest, then run `/fqt` with the bank open.
+- [ ] Kill Value: hover a hostile mob in the open world (a value line should show), hover one in a
       dungeon (nothing should show), loot a few corpses, then check `/fkv status` and `/fkv` for "blended".
-- [ ] ForeverKillValue: check that a skinned-before-looted corpse and a pickpocket are not recorded as loot.
+- [ ] Kill Value: check that a skinned-before-looted corpse and a pickpocket are not recorded as loot.
+- [ ] Kill Value: compare a few vendor prices with what a merchant actually pays (Blackthornes Farmer
+      reports the client's stored sell price can be wrong on Forever).
+- [ ] Kill Value: run an Auctionator full scan, then check AH-priced drops show "ah" as the source.
+      Note whether Alliance and Horde share one auction house (Auctionator pools them).
+- [ ] The minimap addon-compartment button opens the settings (the 70245 UI loads it for Forever).
 
 ## Before publishing anything
 

@@ -16,7 +16,9 @@ before writing addon code.
   `WOW_PROJECT_ID == WOW_PROJECT_CAMELOT` (18).
 - Creature GUIDs: server and spawn parts are obfuscated; the NPC id field should survive (unverified in-game).
 - `volumeFog 0` reverts since the Sept 24 beta (Blizzard removed the fog disable). See docs/07.
-- Live install folder and live Interface number are unconfirmed: see `docs/04-launch-checklist.md`.
+- Install folder is `World of Warcraft\_forever_`, Battle.net product `wowf` (confirmed 2026-10-20).
+  The stress test serves build 1.60.1.70245, older than the 70450 allowlist; the bundle lints clean
+  against both. The live Interface number is unconfirmed: see `docs/04-launch-checklist.md`.
 
 ## Bundle rules
 
