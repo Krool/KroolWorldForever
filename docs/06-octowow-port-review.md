@@ -103,3 +103,16 @@ Code-level gaps that hit every repo:
    toolchain.
 3. Revisit OctoKillValue once community drop data exists, and OctoFaire/OctoTravel after looking at the
    live game.
+
+## Forever addons that already cover these (checked 2026-10-20, beta)
+
+Download counts are CurseForge totals during the beta. None of these are verified in-game.
+
+| Our mod | Existing Forever addons | Gap left for us |
+|---|---|---|
+| Quest Trash | [Keep or Toss: Forever](https://www.curseforge.com/wow/addons/keep-or-toss-forever) (about 2,900 downloads, QuestieDB, also covers professions, recipes, gear, bag and bank list, sell/destroy warning). [Quest Item Cleaner Forever](https://www.curseforge.com/wow/addons/quest-item-cleaner-forever) (63 downloads, Keep / Can be removed / Unknown, needs Questie). [Forever Quest Items](https://www.curseforge.com/wow/addons/forever-quest-items) (which quests need it, no verdict). | Neither page mentions repeatable or seasonal quests, breadcrumbs, or race/class "not for you". Keep or Toss is broader than ours. |
+| Kill Value | [Blackthornes Farmer](https://www.curseforge.com/wow/addons/blackthornes-farmer) (about 6,900 downloads, learned values per mob, exact after 20 kills, ~estimate before, Rankings tab, AH prices via Blackthornes Tradeskills, vendor price read from the tooltip because Forever's stored sell price can be wrong). [Loot Tracker Forever](https://www.curseforge.com/wow/addons/loot-tracker-forever) (value per kill per source). [Lootify](https://www.curseforge.com/wow/addons/lootify), [MoneyLooter](https://www.curseforge.com/wow/addons/moneylooter) (session trackers with Auctionator/TSM pricing). | Ours shows a value on the mob tooltip before the first kill (baseline loot data) and prices from Auctionator. Check Blackthornes' sell-price note against our vendor prices. |
+| OctoTravel | [Mapzeroth](https://www.curseforge.com/wow/addons/mapzeroth), [Shortest Path Forever](https://www.curseforge.com/wow/addons/shortest-path-forever), [Travelcraft](https://www.curseforge.com/wow/addons/travelcraft), [OpenMap](https://www.curseforge.com/wow/addons/openmap), [MapUtils](https://www.curseforge.com/wow/addons/maputils), xeR's Forever Navigation. | None. Route planning with boats, zeppelins, portals and gates is already covered several times. Drop it. |
+| OctoFaire | Nothing found. No source confirms a Darkmoon Faire schedule in Forever. | Still wait for the live game. |
+| 0LoadProfiler | Nothing found, but `C_AddOnProfiler` and the AddOn list already show per-addon CPU. | Retire. |
+| Hardcore idea (from client-mods) | [Hardcore Achievements](https://www.curseforge.com/wow/addons/hardcore-achievements) lists Forever; Legacy Forever, Forever Goal Tracker. | Crowded. Only worth it with a specific angle. |
