@@ -1,0 +1,9 @@
+{
+	"Lua.runtime.version": "Lua 5.1",
+	"wowAPI.luals.frameXML": true,
+	"wowAPI.luals.defineKnownGlobals": true,
+	"[lua]": {
+		"editor.defaultFormatter": "JohnnyMorganz.stylua",
+		"editor.formatOnSave": true
+	}
+}

@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: HelloForever
+## Notes: Minimal WoW Forever addon skeleton.
+## Author: Krool
+## Version: @project-version@
+## Category: Development Tools
+## IconTexture: Interface\Icons\INV_Misc_QuestionMark
+## AddonCompartmentFunc: HelloForever_OnCompartmentClick
+## SavedVariables: HelloForeverDB
+
+Core.lua
+Options.lua

@@ -1,0 +1,14 @@
+## Interface: 16001
+## Title: ForeverQuestTrash
+## Notes: Flags quest items you can safely delete. Uses QuestieDB for quest data and the client's own completed-quest flags.
+## Author: Krool
+## Version: @project-version@
+## Category: Quests
+## IconTexture: Interface\Icons\INV_Misc_Bag_10
+## AddonCompartmentFunc: ForeverQuestTrash_OnCompartmentClick
+## Dependencies: QuestieDB
+## SavedVariables: ForeverQuestTrashDB
+
+Repeatables.lua
+Core.lua
+UI.lua

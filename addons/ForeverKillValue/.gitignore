@@ -1,0 +1,3 @@
+tools/sqlcache/
+node_modules/
+tools/test/node_modules/

@@ -1,0 +1,4 @@
+**/Libs/
+**/node_modules/
+.release/
+*.zip
