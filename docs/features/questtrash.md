@@ -1,4 +1,4 @@
-# ForeverQuestTrash
+# Quest Trash (feature)
 
 **Know which quest items you can safely delete.** WoW Forever port of OctoQuestTrash.
 
@@ -22,8 +22,8 @@ deletables first. `/fqt status` shows the data source state. `/fqt options` open
 
 ## Requires
 
-**QuestieDB** (the database addon that Questie uses; install Questie or QuestieDB on its own). The
-addon will not load without it.
+**QuestieDB** (the database addon Questie uses; install Questie or QuestieDB on its own). Without it
+the feature says so at login and `/fqt status` reports it; the rest of the bundle is unaffected.
 
 ## What changed from OctoQuestTrash
 
@@ -36,7 +36,7 @@ addon will not load without it.
 - **Repeatables:** QuestieDB's repeatable/daily/weekly/monthly flags plus the old cmangos/Turtle list
   (classic ids only) as an extra guard. Holiday and Darkmoon quest categories count as seasonal.
 - **Bagshui hook dropped** (Bagshui is a 1.12 addon). Bag addons can call
-  `ForeverQuestTrash.GetVerdict(itemID)`, which returns a verdict string and the quest links.
+  `KroolWorldForever.QuestTrash.GetVerdict(itemID)`, which returns a verdict string and the quest links.
 
 ## Honest limits
 
@@ -59,8 +59,9 @@ npm install
 npm test
 ```
 
-`run.js` syntax-checks the Lua (5.1 grammar), loads the addon files in TOC order under fengari
-with a stubbed Forever client and a fake QuestieDB (`stubs.lua`), and runs `test.lua` (49 checks).
+`tools/test/run.js` syntax-checks the bundle (Lua 5.1 grammar), then the `questtrash` suite loads the whole
+bundle under fengari with a stubbed Forever client and a fake QuestieDB (`tools/test/questtrash/stubs.lua`)
+and runs `test.lua` (61 checks, including the bundle on/off switch).
 Then `tools/forever-api/api-lint.js` (repo root) checks every `C_*` call, event and `Enum` name
 against Forever's generated API docs.
 

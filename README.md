@@ -1,53 +1,78 @@
-# WoW Forever Mods
+# Krool World Forever
 
-Groundwork for building addons for **World of Warcraft: Forever** (launch: Nov 4, 2026, 3:00 p.m. PST).
-Research snapshot taken 2026-10-20, during the final days of beta (build 1.60.1.70450).
+**Small quality-of-life features for World of Warcraft: Forever, in one addon.** Each feature has
+its own on/off switch, so you keep what you want and turn off the rest.
 
-## The five things that matter most
+- **Pick what you want.** Every feature is a page under **Options > AddOns > Krool World Forever**
+  with an Enabled switch and its own settings. `/kwf list` shows them all, `/kwf <feature> on|off`
+  toggles one, and `/kwf` opens the settings.
+- **Advice only.** The addon never deletes, sells or loots anything for you.
+- **Plays by Forever's addon rules.** Nothing reads combat data Blizzard hides from addons. Every
+  feature checks for hidden ("secret") values and steps aside instead of erroring.
 
-1. **Forever runs on the modern (Mainline) client, not the Classic one.** It shares Midnight's UI
-   architecture and "the vast majority of APIs available in 12.1.5." Build against retail/Midnight
-   docs and code, not Classic Era. Classic Era addons will not load as-is.
-2. **Midnight's addon restrictions apply in full**, including *secret values*. Combat data, combo
-   points, threat, and parts of the combat log are opaque to addons during combat/encounters.
-   "Rotation helper / combat automation" style addons are largely off the table by design.
-3. **Identity:** `## Interface: 16001`, TOC suffix `_Forever.toc` (alias of `_Camelot.toc`), game
-   type `camelot`/`forever`, `WOW_PROJECT_ID == WOW_PROJECT_CAMELOT` (18).
-4. **The ecosystem is ready:** CurseForge (game version type 88568), Wago (`forever` flavor) and
-   the BigWigs packager (`-g forever`) all support Forever. WoWInterface does not yet.
-5. **WeakAuras does not support Forever.** That is the largest gap in the addon landscape, along
-   with "Classic UI look" options that Blizzard said it will leave to addons.
+## At a glance
 
-## Docs
+| Feature | What you get | On by default |
+|---|---|---|
+| **Quest Trash** | A keep/delete verdict on quest item tooltips, and `/fqt` lists what in your bags and bank you can throw away. Needs QuestieDB. | Yes |
+| **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price. It learns real drop rates from what you loot. | Yes |
+
+## Settings
+
+Generated from the features' own definitions by `tools/settings-doc.js`. Do not edit by hand.
+
+<!-- settings:begin -->
+### Quest Trash
+
+Marks quest items you can safely delete on their tooltips. Needs QuestieDB.
+
+On by default: yes. Toggle: `/kwf questtrash on|off`. Commands: `/fqt, /questtrash`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Show Verdict on Tooltips | On | Adds a keep or delete line to quest item tooltips. |
+| List the Quests Involved | On | Shows up to four quests and their status under the verdict. |
+<!-- settings:end -->
+
+## Install
+
+Not published yet. For now, link the folder from this repo (see Development).
+
+Optional companions: **QuestieDB** (required for Quest Trash, comes with Questie) and
+**Auctionator** (auction prices for Kill Value; vendor prices are used without it).
+
+## Development
+
+```
+.\scripts\link-addon.ps1 -AddOnsPath "<WoW>\<flavor folder>\Interface\AddOns"   # junction for dev
+cd tools\test; npm install; npm test                                            # all suites + API lint
+.\scripts\build.ps1                                                             # dist\KroolWorldForever-<v>.zip
+.\scripts\release.ps1 -Version x.y.z [-Publish]                                 # see CLAUDE.md
+```
+
+- `KroolWorldForever/` is the shipped addon: `Core/` (registry, settings panel, lifecycle) and
+  `Features/<Name>/` (one folder per feature).
+- `tools/test/<feature>/` holds one suite per feature: a stub client plus behavior checks. Each suite
+  loads the whole bundle.
+- `tools/forever-api/` holds the API allowlist lint. It checks every `C_*` call, event and `Enum`
+  against Forever's API docs.
+- `tools/killvalue-data/` holds the Kill Value loot data generator (cmangos classic-db).
+
+### Research notes
 
 | File | What it covers |
 |---|---|
 | [docs/01-game-overview.md](docs/01-game-overview.md) | What the game is, features, timeline, business model |
-| [docs/02-addon-platform.md](docs/02-addon-platform.md) | Forever-specific technical facts: TOC, project ID, API base, restrictions, new APIs, addon ecosystem status |
-| [docs/03-toolchain.md](docs/03-toolchain.md) | Addon anatomy, VS Code setup, in-game dev tools, libraries, packaging/publishing, Blizzard addon policy |
-| [docs/04-launch-checklist.md](docs/04-launch-checklist.md) | What to verify once the game is installed (several facts are still unconfirmed) |
-| [docs/05-opportunities.md](docs/05-opportunities.md) | Gaps and addon ideas worth considering |
-| [docs/06-octowow-port-review.md](docs/06-octowow-port-review.md) | Which of Krool's OctoWoW (1.12) addons can be ported to Forever |
-| [docs/07-fog-control.md](docs/07-fog-control.md) | Fog/weather/view-distance control: what CVars allow, what is off-limits, addon idea |
-| [docs/sources.md](docs/sources.md) | All sources, with confidence tags |
+| [docs/02-addon-platform.md](docs/02-addon-platform.md) | Forever's technical facts: TOC, project ID, API base, restrictions, ecosystem |
+| [docs/03-toolchain.md](docs/03-toolchain.md) | Addon anatomy, editor setup, in-game tools, libraries, packaging, addon policy |
+| [docs/04-launch-checklist.md](docs/04-launch-checklist.md) | What to verify once the game is installed |
+| [docs/05-opportunities.md](docs/05-opportunities.md) | Gaps and addon ideas |
+| [docs/06-octowow-port-review.md](docs/06-octowow-port-review.md) | Which OctoWoW (1.12) addons port to Forever |
+| [docs/07-fog-control.md](docs/07-fog-control.md) | Fog/weather control: what Blizzard locked, what is left |
+| [docs/features/](docs/features) | Per-feature design notes and honest limits |
+| [docs/sources.md](docs/sources.md) | Sources with confidence tags |
 
-## Addons
+Nothing here has been run in the live game yet. The game launches Nov 4, 2026. See the launch
+checklist.
 
-| Addon | Status |
-|---|---|
-| [addons/ForeverQuestTrash](addons/ForeverQuestTrash) | Port of OctoQuestTrash on QuestieDB plus native quest completion. Tests green, not yet run in-game. |
-| [addons/ForeverKillValue](addons/ForeverKillValue) | Port of OctoKillValue: cmangos 1.12 loot baseline blended with loot learned in-game. Tests green, not yet run in-game. |
-
-`tools/forever-api/`: `api-lint.js` checks an addon's `C_*` calls, events and `Enum` names against
-Forever's real API (`forever-api.json`, generated by `build-allowlist.js` from wow-ui-source's
-`forever` branch). Regenerate it when a new build drops.
-
-## Starter kit
-
-- [template/HelloForever](template/HelloForever) - a minimal, idiomatic Forever addon skeleton
-  (TOC, namespace, SavedVariables, slash command, compartment button, Settings panel).
-- [scripts/link-addon.ps1](scripts/link-addon.ps1) - junctions an addon folder from this repo into
-  the game's `Interface\AddOns` (no admin needed).
-- [.luacheckrc](.luacheckrc), [stylua.toml](stylua.toml), [.vscode/](.vscode) - editor/lint config.
-
-Nothing here has been tested in-game yet. The game is not installed. See the launch checklist.
+MIT licensed.

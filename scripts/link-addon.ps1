@@ -3,14 +3,16 @@
   Junctions an addon folder from this repo into a WoW Interface\AddOns folder (no admin needed).
 
 .EXAMPLE
-  .\scripts\link-addon.ps1 -Addon HelloForever -AddOnsPath "C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns"
+  .\scripts\link-addon.ps1 -AddOnsPath "C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns"
+  .\scripts\link-addon.ps1 -Addon HelloForever -AddOnsPath "..."
 
 .NOTES
+  Links the KroolWorldForever bundle unless -Addon names another folder (repo root or template\).
   The Forever live folder name is unconfirmed as of 2026-10-20 (beta used _classic_beta_).
   Without -AddOnsPath the script lists candidate flavor folders it finds.
 #>
 param(
-	[Parameter(Mandatory)] [string] $Addon,
+	[string] $Addon = "KroolWorldForever",
 	[string] $AddOnsPath,
 	[string] $WowRoot = "C:\Program Files (x86)\World of Warcraft"
 )
@@ -18,9 +20,9 @@ param(
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
 
-$source = @("$repoRoot\addons\$Addon", "$repoRoot\template\$Addon") |
-	Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $source) { throw "Addon folder '$Addon' not found under addons\ or template\." }
+$source = @("$repoRoot\$Addon", "$repoRoot\template\$Addon") |
+	Where-Object { Test-Path "$_\${Addon}_Forever.toc" } | Select-Object -First 1
+if (-not $source) { throw "Addon folder '$Addon' (with ${Addon}_Forever.toc) not found at the repo root or under template\." }
 
 if (-not $AddOnsPath) {
 	if (-not (Test-Path $WowRoot)) { throw "WoW not found at '$WowRoot'. Pass -WowRoot or -AddOnsPath." }
