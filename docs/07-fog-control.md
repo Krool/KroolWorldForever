@@ -40,7 +40,8 @@ Consequences:
 | `horizonClip` | 1600 | Where it ends. |
 | `farclip` | 1000 | Draw distance. |
 | `weatherDensity` | 2 | Weather intensity 0-3. |
-| `SkyCloudLOD`, `sunShafts`, `bloomEnable`, `bloomUserMult`, `ffxGlow`, `giQuality`, `graphicsLightMode` | | Sky, glow and lighting. |
+| `ffxGlow` | | Full-screen glow. A guide (Pro-Gamer, Oct 19) says `0` "removes the milky bloom and glow haze overlay". Some of what players call fog may be glow, so this is the most promising untested lever. |
+| `SkyCloudLOD`, `sunShafts`, `bloomEnable`, `bloomUserMult`, `giQuality`, `graphicsLightMode` | | Sky, bloom and lighting. |
 | `RAID*` variants | | Same settings for the raid graphics profile. |
 
 - Because none of these is secure, `C_CVar.SetCVar` from an addon works **any time, including combat**.
@@ -79,6 +80,9 @@ small feature in the bundle. Original sketch:
 - **Restore:** snapshot the user's original values on first run and offer one-click restore. Prefer
   `SetTempCVar` if it turns out to be non-persistent.
 - **Competition:** "Forever Graphics Panel" on CurseForge already offers fog, bloom and weather presets.
+  "Foggin Stupid" (CurseForge, lists 1.60.1) is a minimap toggle for `volumeFog` only. Its last update
+  was Sept 19, before the Sept 24 change, so it should hit the same revert. As of 2026-10-20 no addon
+  has a working way around it.
   The differentiators would be per-zone and per-weather automation plus clean restore.
 - **Risk:** Blizzard can mark these CVars secure or read-only in a later build (the Forever Graphics
   Panel author warns about this). Detect a blocked set and tell the user.
@@ -96,7 +100,17 @@ IDs (wago.tools) would be a solid niche addon, including Forever's new zones.
 
 ## To verify in-game
 
-- [ ] `/console volumeFog 0`, `/console disableHorizonStart 1`, `/console horizonStart 3000`: what each does visually.
+Pick one spot with heavy haze (Westfall or Elwynn at midday). Take a screenshot before each change
+and after it, then undo the change before the next test so each result stands alone.
+
+- [ ] `/console volumeFog 0`: confirm it still snaps back, or only thins the fog (forum reports differ).
+- [ ] `/console ffxGlow 0` (undo: `1`): does the milky haze go, or only bloom on bright surfaces?
+- [ ] Graphics > Compute Effects at its lowest vs default, once with Shadows at Low and once at Good
+  or higher. Forum reports disagree: one player says low Compute plus Good+ shadows "really did
+  help", another saw no change, and a third says Low/Fair shadows make the fog stronger.
+- [ ] `/console disableHorizonStart 1`, `/console horizonStart 3000` (or 6000), `/console horizonClip 10000`,
+  `/console farclip 10000`: does the distant fog line move, and does any of it touch the haze near you?
+- [ ] `/console weatherDensity 0`: removes weather, but does it thin the fog in zones with rain or dust?
 - [ ] Whether `SetCVar` on these works in combat (no `ADDON_ACTION_BLOCKED`).
 - [ ] Whether `C_CVar.SetTempCVar` survives `/reload` and logout (it should not).
 - [ ] Performance cost of each change.
@@ -114,3 +128,7 @@ IDs (wago.tools) would be a solid niche addon, including Forever's new zones.
 - Sept 24 change and revert reports (secondary): https://wowsod.pro/articles/wow-forever-beta-fog-volumefog
 - Weather increase: https://www.warcrafttavern.com/forever/news/weather-effects-increasing-for-some-zones-in-wow-forever-beta/
 - Forever Graphics Panel: https://www.curseforge.com/wow/addons/forever-graphics-panel
+- Foggin Stupid: https://www.curseforge.com/wow/addons/foggin-stupid
+- Forum, Compute/Shadows reports: https://us.forums.blizzard.com/en/wow/t/cant-turn-off-volumetric-fog/2363444
+- Forum, haze reverts after a split second: https://us.forums.blizzard.com/en/wow/t/need-an-option-to-disable-the-volumetric-fog/2353063
+- ffxGlow, horizon and farclip values (unofficial guide): https://pro-gamer.gg/world-of-warcraft-forever-graphic-settings-hidden-cvars-commands-guide/
