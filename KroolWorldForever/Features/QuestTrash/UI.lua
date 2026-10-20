@@ -1,10 +1,9 @@
-local addonName, ns = ...
+local _, root = ...
+local ns = root.Feature("questtrash")
 local FQT = ns.FQT
 
-local DEFAULTS = { tooltip = true, questList = true }
-
 local function Print(msg)
-	print("|cff33ffccForever|cffffffffQuestTrash|r: " .. msg)
+	ns:Print(msg)
 end
 
 -- -------------------------------------------------------------------- text
@@ -117,7 +116,7 @@ local function OnItemTooltip(tooltip, data)
 	if tooltip ~= GameTooltip and tooltip ~= ItemRefTooltip then
 		return
 	end
-	if not (ns.db and ns.db.tooltip and ns.ready) then
+	if not (ns.enabled and ns.ready and ns.db.tooltip) then
 		return
 	end
 	local itemID = data and data.id
@@ -215,61 +214,41 @@ local function Status()
 	)
 end
 
--- -------------------------------------------------------------------- options
 
-local function RegisterOptions()
-	local category = Settings.RegisterVerticalLayoutCategory("ForeverQuestTrash")
-	local tooltip = Settings.RegisterAddOnSetting(
-		category,
-		"ForeverQuestTrash_Tooltip",
-		"tooltip",
-		ns.db,
-		Settings.VarType.Boolean,
-		"Show verdict on item tooltips",
-		DEFAULTS.tooltip
-	)
-	Settings.CreateCheckbox(category, tooltip, "Adds a keep/delete line to quest item tooltips.")
-	local list = Settings.RegisterAddOnSetting(
-		category,
-		"ForeverQuestTrash_QuestList",
-		"questList",
-		ns.db,
-		Settings.VarType.Boolean,
-		"List the quests involved",
-		DEFAULTS.questList
-	)
-	Settings.CreateCheckbox(category, list, "Shows up to four quests and their status under the verdict.")
-	Settings.RegisterAddOnCategory(category)
-	ns.category = category
-end
+-- -------------------------------------------------------------------- definition
 
-local function OpenOptions()
-	if ns.category then
-		Settings.OpenToCategory(ns.category:GetID())
-	end
-end
+ns.title = "Quest Trash"
+ns.description = "Marks quest items you can safely delete on their tooltips. Needs QuestieDB."
+ns.options = {
+	{
+		key = "tooltip",
+		type = "toggle",
+		label = "Show Verdict on Tooltips",
+		tooltip = "Adds a keep or delete line to quest item tooltips.",
+		default = true,
+	},
+	{
+		key = "questList",
+		type = "toggle",
+		label = "List the Quests Involved",
+		tooltip = "Shows up to four quests and their status under the verdict.",
+		default = true,
+	},
+}
+ns.slash = { "/fqt", "/questtrash" }
 
-function ForeverQuestTrash_OnCompartmentClick()
-	OpenOptions()
-end
-
-SLASH_FOREVERQUESTTRASH1 = "/fqt"
-SLASH_FOREVERQUESTTRASH2 = "/questtrash"
-SlashCmdList.FOREVERQUESTTRASH = function(msg)
+function ns.OnSlash(msg)
 	msg = strtrim(msg or ""):lower()
 	if msg == "status" then
 		Status()
 	elseif msg == "options" or msg == "config" then
-		OpenOptions()
+		root.OpenSettings(ns)
 	elseif msg == "help" then
 		Print("/fqt - scan bags (and bank when open); /fqt status; /fqt options")
 	elseif not ns.ready then
 		Status()
 	else
-		local ok, err = pcall(FQT.Scan)
-		if not ok then
-			Print("|cffff5555scan failed|r: " .. tostring(err))
-		end
+		FQT.Scan()
 	end
 end
 
@@ -288,39 +267,30 @@ local function StartBackgroundScan()
 	end)
 end
 
-local f = CreateFrame("Frame")
-f:RegisterEvent("ADDON_LOADED")
-f:RegisterEvent("PLAYER_LOGIN")
-f:RegisterEvent("QUEST_LOG_UPDATE")
-f:RegisterEvent("QUEST_TURNED_IN")
-f:RegisterEvent("BANKFRAME_OPENED")
-f:RegisterEvent("BANKFRAME_CLOSED")
-f:SetScript("OnEvent", function(self, event, arg1)
-	if event == "ADDON_LOADED" and arg1 == addonName then
-		ForeverQuestTrashDB = ForeverQuestTrashDB or {}
-		for k, v in pairs(DEFAULTS) do
-			if ForeverQuestTrashDB[k] == nil then
-				ForeverQuestTrashDB[k] = v
-			end
-		end
-		ns.db = ForeverQuestTrashDB
-		RegisterOptions()
-		self:UnregisterEvent("ADDON_LOADED")
-	elseif event == "PLAYER_LOGIN" then
-		local ok, info = FQT.ProviderStatus()
-		if not ok then
-			Print("|cffff5555" .. info .. "|r Verdicts are off.")
-			return
-		end
-		FQT.InitPlayer()
-		ns.ready = true
-		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnItemTooltip)
-		StartBackgroundScan()
-	elseif event == "QUEST_LOG_UPDATE" or event == "QUEST_TURNED_IN" then
-		FQT.ClearCache()
-	elseif event == "BANKFRAME_OPENED" then
-		bankOpen = true
-	elseif event == "BANKFRAME_CLOSED" then
-		bankOpen = false
+-- Tooltip hooks cannot be removed, so they are added once and check ns.enabled each time.
+function ns.OnEnable()
+	if ns.ready then
+		return
 	end
+	local ok, info = FQT.ProviderStatus()
+	if not ok then
+		Print("|cffff5555" .. info .. "|r Verdicts are off.")
+		return
+	end
+	FQT.InitPlayer()
+	ns.ready = true
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnItemTooltip)
+	StartBackgroundScan()
+end
+
+local function ClearCache()
+	FQT.ClearCache()
+end
+ns:RegisterEvent("QUEST_LOG_UPDATE", ClearCache)
+ns:RegisterEvent("QUEST_TURNED_IN", ClearCache)
+ns:RegisterEvent("BANKFRAME_OPENED", function()
+	bankOpen = true
+end)
+ns:RegisterEvent("BANKFRAME_CLOSED", function()
+	bankOpen = false
 end)

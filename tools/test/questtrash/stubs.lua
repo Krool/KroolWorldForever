@@ -1,4 +1,4 @@
--- Minimal Forever client + QuestieDB environment for ForeverQuestTrash under fengari (Lua 5.3).
+-- Minimal Forever client + QuestieDB environment for the Quest Trash feature under fengari (Lua 5.3).
 -- Only what the addon touches. Tests mutate the fixture tables below.
 
 function wipe(t)
@@ -94,23 +94,48 @@ function HoverItem(itemID)
 	return GameTooltip.lines
 end
 
+-- Settings: records every registered setting by variable name; SettingsSet(variable, value)
+-- simulates the player clicking it (writes the table, then fires the change callback).
+RegisteredSettings = {}
+local function Category(name)
+	return {
+		name = name,
+		GetID = function()
+			return name
+		end,
+	}
+end
 Settings = {
-	VarType = { Boolean = "boolean" },
-	RegisterVerticalLayoutCategory = function(name)
-		return {
-			name = name,
-			GetID = function()
-				return name
-			end,
-		}
+	VarType = { Boolean = "boolean", Number = "number" },
+	RegisterVerticalLayoutCategory = Category,
+	RegisterVerticalLayoutSubcategory = function(_, name)
+		return Category(name)
 	end,
-	RegisterAddOnSetting = function()
-		return {}
+	RegisterAddOnSetting = function(category, variable, key, tbl, varType, label, default)
+		local s = { category = category, key = key, tbl = tbl, label = label, default = default }
+		function s:SetValueChangedCallback(fn)
+			self.cb = fn
+		end
+		RegisteredSettings[variable] = s
+		return s
 	end,
 	CreateCheckbox = function() end,
+	CreateSliderOptions = function(min, max, step)
+		return { min = min, max = max, step = step }
+	end,
+	CreateSlider = function() end,
 	RegisterAddOnCategory = function() end,
-	OpenToCategory = function() end,
+	OpenToCategory = function(id)
+		OpenedCategory = id
+	end,
 }
+function SettingsSet(variable, value)
+	local s = RegisteredSettings[variable]
+	s.tbl[s.key] = value
+	if s.cb then
+		s.cb(s, value)
+	end
+end
 
 SlashCmdList = {}
 

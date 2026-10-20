@@ -1,4 +1,4 @@
--- ForeverQuestTrash: tells you when a quest item can be safely deleted.
+-- Quest Trash: tells you when a quest item can be safely deleted.
 -- Port of OctoQuestTrash (1.12) to WoW Forever (Mainline client, Interface 16001).
 --
 -- Data: QuestieDB (LibQuestieDB / QuestDB / ItemDB globals) for item-to-quest links and quest
@@ -19,10 +19,11 @@
 -- Item verdict, most protective wins: active > farm > maybe > safe > notyours.
 -- Everything unknown fails toward keep.
 
-local _, ns = ...
+local _, root = ...
+local ns = root.Feature("questtrash")
 
 local FQT = {}
-ForeverQuestTrash = FQT -- public API for bag addons: ForeverQuestTrash.GetVerdict(itemID)
+root.public.QuestTrash = FQT -- for bag addons: KroolWorldForever.QuestTrash.GetVerdict(itemID)
 ns.FQT = FQT
 
 local QUESTIEDB_CONTRACT = 4 -- Enum.raceMaskById (3) and Enum.classKeys (4)

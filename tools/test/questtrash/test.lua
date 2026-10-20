@@ -1,4 +1,4 @@
--- ForeverQuestTrash behavior checks. Runs after stubs.lua and the addon files.
+-- Quest Trash behavior checks. Runs after stubs.lua and the whole bundle.
 
 local failures, count = 0, 0
 local function check(label, got, want)
@@ -19,7 +19,8 @@ local function has(lines, needle)
 	return false
 end
 
-local FQT = ForeverQuestTrash
+local FQT = KroolWorldForever.QuestTrash
+local QT = __ns.features.questtrash
 local QUEST, TRADE = 12, 7
 
 -- ---------------------------------------------------------------- fixtures
@@ -85,8 +86,10 @@ Completed[1010], Completed[1012], Completed[1014], Completed[1016], Completed[10
 -- ---------------------------------------------------------------- lifecycle
 
 check("no tooltip hook before login", TooltipCallbacks[Enum.TooltipDataType.Item], nil)
-FireEvent("ADDON_LOADED", "ForeverQuestTrash")
-check("defaults applied", ForeverQuestTrashDB.tooltip, true)
+FireEvent("ADDON_LOADED", "KroolWorldForever")
+local DB = KroolWorldForeverDB.features.questtrash
+check("defaults applied", DB.tooltip, true)
+check("enabled by default", DB.enabled, true)
 FireEvent("PLAYER_LOGIN")
 check("tooltip hook registered at login", type(TooltipCallbacks[Enum.TooltipDataType.Item]), "function")
 check("background scan started", #Tickers, 1)
@@ -104,8 +107,8 @@ check("active verdict needs no scan", (function()
 end)(), "active")
 
 RunTickers()
-check("scan finished", __ns.scan.done, true)
-check("scan covered every quest", __ns.scan.position, __ns.scan.total)
+check("scan finished", QT.scan.done, true)
+check("scan covered every quest", QT.scan.position, QT.scan.total)
 
 -- ---------------------------------------------------------------- verdicts
 
@@ -156,9 +159,9 @@ check("HasBit zero mask", FQT._HasBit(0, 1), false)
 
 -- ---------------------------------------------------------------- tooltip robustness
 
-ForeverQuestTrashDB.questList = false
+DB.questList = false
 check("quest list off -> one line", #HoverItem(5001), 1)
-ForeverQuestTrashDB.questList = true
+DB.questList = true
 check("quest list on -> verdict + quest", #HoverItem(5001), 2)
 
 issecretvalue = function(v)
@@ -181,9 +184,9 @@ check("provider error degrades silently", okHover, true)
 QuestDB.GetAll = realGetAll
 FQT.ClearCache()
 
-ForeverQuestTrashDB.tooltip = false
+DB.tooltip = false
 check("tooltip toggle off", #HoverItem(5001), 0)
-ForeverQuestTrashDB.tooltip = true
+DB.tooltip = true
 
 -- ---------------------------------------------------------------- scan / slash / provider
 
@@ -192,7 +195,7 @@ local printed, realPrint = {}, print
 print = function(s)
 	printed[#printed + 1] = s
 end
-SlashCmdList.FOREVERQUESTTRASH("")
+SlashCmdList.KROOLWORLDFOREVER_QUESTTRASH("")
 print = realPrint
 check("scan lists the deletable item", has(printed, "Item5001"), true)
 check("scan groups it under Deletable", has(printed, "Deletable"), true)
@@ -206,6 +209,39 @@ LibQuestieDB = realLib
 realLib.contractVersion = 3
 check("old contract rejected", select(1, FQT.ProviderStatus()), false)
 realLib.contractVersion = 4
+
+-- ---------------------------------------------------------------- bundle on/off switch
+
+local function Capture(fn)
+	local out, real = {}, print
+	print = function(s)
+		out[#out + 1] = s
+	end
+	fn()
+	print = real
+	return out
+end
+
+check("enabled after login", QT.enabled, true)
+SlashCmdList.KROOLWORLDFOREVER("questtrash off")
+check("/kwf questtrash off disables", QT.enabled, false)
+check("off state is saved", DB.enabled, false)
+check("disabled feature adds no tooltip lines", #HoverItem(5001), 0)
+check("feature slash says it is off", has(Capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_QUESTTRASH("")
+end), "is off"), true)
+SettingsSet("KroolWorldForever_questtrash_enabled", true)
+check("settings checkbox turns it back on", QT.enabled, true)
+check("tooltip works again", has(HoverItem(5001), "Can be deleted"), true)
+check("/kwf list names the feature", has(Capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("list")
+end), "Quest Trash"), true)
+SlashCmdList.KROOLWORLDFOREVER("questtrash")
+check("/kwf <feature> opens its settings page", OpenedCategory, "Quest Trash")
+SettingsSet("KroolWorldForever_questtrash_questList", false)
+check("option checkbox writes the feature slice", DB.questList, false)
+check("option takes effect", #HoverItem(5001), 1)
+DB.questList = true
 
 print(("%d checks, %d failed"):format(count, failures))
 if failures > 0 then

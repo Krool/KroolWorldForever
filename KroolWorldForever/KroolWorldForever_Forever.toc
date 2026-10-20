@@ -1,0 +1,20 @@
+## Interface: 16001
+## Title: Krool World Forever
+## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips). /kwf
+## Author: Krool
+## Version: 0.1.0
+## Category: Interface Enhancements
+## IconTexture: Interface\Icons\INV_Misc_Bag_10
+## AddonCompartmentFunc: KroolWorldForever_OnCompartmentClick
+## OptionalDeps: QuestieDB, Auctionator
+## SavedVariables: KroolWorldForeverDB
+
+Core\Registry.lua
+Core\Settings.lua
+
+Features\QuestTrash\Repeatables.lua
+Features\QuestTrash\Core.lua
+Features\QuestTrash\UI.lua
+
+# Init last: every feature has declared itself before ADDON_LOADED.
+Core\Init.lua

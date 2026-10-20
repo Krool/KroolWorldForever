@@ -1,4 +1,5 @@
-local _, ns = ...
+local _, root = ...
+local ns = root.Feature("questtrash")
 
 -- Extra keep-guard: 665 classic quest ids that are repeatable in the cmangos classic-db 1.12
 -- world database (quest_template.SpecialFlags & 1) or in the Turtle WoW 1.18.1 database,

@@ -1,0 +1,12 @@
+{
+  "name": "krool-world-forever-tests",
+  "private": true,
+  "description": "Runs Krool World Forever under stubbed Forever clients (fengari), one suite per feature, then lints its API use against the Forever allowlist.",
+  "scripts": {
+    "test": "node run.js && node ../forever-api/api-lint.js ../../KroolWorldForever"
+  },
+  "devDependencies": {
+    "fengari": "^0.1.4",
+    "luaparse": "^0.3.1"
+  }
+}
