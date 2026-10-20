@@ -32,6 +32,23 @@ On by default: yes. Toggle: `/kwf questtrash on|off`. Commands: `/fqt, /questtra
 |---|---|---|
 | Show Verdict on Tooltips | On | Adds a keep or delete line to quest item tooltips. |
 | List the Quests Involved | On | Shows up to four quests and their status under the verdict. |
+
+### Kill Value
+
+Adds the expected gold per kill to creature tooltips: coins plus drop table times vendor or Auctionator prices.
+
+On by default: yes. Toggle: `/kwf killvalue on|off`. Commands: `/fkv, /killvalue`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Learn From My Loot | On | Records what corpses drop so new or rebalanced creatures get real numbers. |
+| Use Vendor Prices | On | Vendor sell price as fallback and floor. |
+| Use Auctionator Prices | On | If Auctionator is installed, price drops from the auction house minus the cut. |
+| Show Skinning Value | Off | Adds a skinning/gathering line (not part of the total). |
+| Show On Friendly Creatures | Off | Also adds the line to creatures you cannot attack. |
+| Login Message | On | Prints one line at login. |
+| Contributor Lines | 3 (0 to 10) | Top drops listed under the total (0 = none). |
+| Auction House Cut % | 5 (0 to 100) | Taken off Auctionator prices. |
 <!-- settings:end -->
 
 ## Install

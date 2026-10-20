@@ -1,4 +1,4 @@
--- ForeverKillValue behavior checks. Runs after stubs.lua and the addon files.
+-- Kill Value behavior checks. Runs after stubs.lua and the whole bundle.
 
 local failures, count = 0, 0
 local realPrint = print
@@ -29,8 +29,9 @@ local function has(list, needle)
 	return false
 end
 
-local ns = __ns
-local FKV = ForeverKillValue
+local ns = __ns.features.killvalue
+local FKV = KroolWorldForever.KillValue
+local SV = "KroolWorldForever_killvalue_"
 
 local function G(id, spawn)
 	return "Creature-0-4170-0-0-" .. id .. "-" .. (spawn or "0000A1B2")
@@ -83,16 +84,31 @@ end
 
 do
 	FireEvent("ADDON_LOADED", "SomeOtherAddon")
-	check("other addon's ADDON_LOADED ignored", ForeverKillValueDB, nil)
-	FireEvent("ADDON_LOADED", "ForeverKillValue")
-	check("SavedVariables table created", type(ForeverKillValueDB), "table")
-	check("defaults filled", ForeverKillValueDB.detail, 3)
-	check("learned store created", type(ForeverKillValueDB.learned), "table")
-	check("settings panel registered", ns.category ~= nil, true)
-	check("detail slider registered", Registered.detail ~= nil, true)
-	check("not ready before login", ns.ready, nil)
+	check("other addon's ADDON_LOADED ignored", KroolWorldForeverDB, nil)
+	FireEvent("ADDON_LOADED", "KroolWorldForever")
+	check("SavedVariables table created", type(KroolWorldForeverDB), "table")
+	local slice = KroolWorldForeverDB.features.killvalue
+	check("feature slice created", type(slice), "table")
+	check("feature slice is ns.db", ns.db, slice)
+	check("defaults filled", slice.detail, 3)
+	check("feature enabled by default", slice.enabled, true)
+	check("learned store created", type(slice.learned), "table")
+	check("public API exposed", KroolWorldForever.KillValue, FKV)
+	check("settings panel registered", RegisteredSettings[SV .. "enabled"] ~= nil, true)
+	check("detail slider registered", RegisteredSettings[SV .. "detail"] ~= nil, true)
+	check("cut slider registered", RegisteredSettings[SV .. "cut"] ~= nil, true)
+	local toggles = 0
+	for _, key in ipairs({ "learn", "vendor", "ah", "skin", "friendly", "hello" }) do
+		if RegisteredSettings[SV .. key] then
+			toggles = toggles + 1
+		end
+	end
+	check("six toggle options registered", toggles, 6)
+	check("no standalone master switch option", RegisteredSettings[SV .. "enabled"].label, "Enabled")
+	check("not enabled before login", ns.enabled, false)
+	check("tooltip hook not installed before login", TooltipCallbacks[Enum.TooltipDataType.Unit], nil)
 	FireEvent("PLAYER_LOGIN")
-	check("ready after login", ns.ready, true)
+	check("enabled after login", ns.enabled, true)
 	check("unit tooltip hook installed", type(TooltipCallbacks[Enum.TooltipDataType.Unit]), "function")
 	for _, e in ipairs({ "LOOT_READY", "LOOT_OPENED", "GET_ITEM_INFO_RECEIVED" }) do
 		local found = false
@@ -101,10 +117,11 @@ do
 		end
 		check("registered for " .. e, found, true)
 	end
-	check("slash registered", type(SlashCmdList.FOREVERKILLVALUE), "function")
-	check("compartment click defined", type(ForeverKillValue_OnCompartmentClick), "function")
-	ForeverKillValue_OnCompartmentClick()
-	check("compartment click opens the settings category", OpenedCategory, "ForeverKillValue")
+	check("slash registered", type(SlashCmdList.KROOLWORLDFOREVER_KILLVALUE), "function")
+	check("/fkv alias", SLASH_KROOLWORLDFOREVER_KILLVALUE1, "/fkv")
+	check("compartment click defined", type(KroolWorldForever_OnCompartmentClick), "function")
+	KroolWorldForever_OnCompartmentClick()
+	check("compartment click opens the bundle settings category", OpenedCategory, "Krool World Forever")
 end
 
 -- ---------------------------------------------------------------- GUID parsing
@@ -176,7 +193,7 @@ do
 		return 1000
 	end
 	price(1)
-	check("Auctionator called with the addon name", seenCaller, "ForeverKillValue")
+	check("Auctionator called with the addon name", seenCaller, "KroolWorldForever")
 
 	Auctionator.API.v1.GetAuctionPriceByItemID = function()
 		return 90
@@ -629,10 +646,10 @@ do
 	check("corpse always shows", left[1], "Kill value")
 	Units.mouseover = { guid = g, dead = false, canAttack = true }
 
-	FKV.cfg.enabled = false
+	ns.enabled = false
 	left = Hover(G(9000070, "Y"))
 	check("disabled: no line", #left, 0)
-	FKV.cfg.enabled = true
+	ns.enabled = true
 
 	-- an error anywhere in the lookup must not escape the post-call
 	local savedMob = ns.Data.mob
@@ -683,7 +700,7 @@ do
 	fresh()
 	setItems()
 	ns.Data.mob[9000080] = "100:200|9100001:1,9100002:0.5|||5:0:100"
-	local slash = SlashCmdList.FOREVERKILLVALUE
+	local slash = ns.OnSlash
 	local out = capture(function()
 		slash("id 9000080")
 	end)
@@ -749,10 +766,6 @@ do
 	end)
 	near("/fkv rare takes a percent", FKV.cfg.rare, 0.01)
 	capture(function()
-		slash("toggle")
-	end)
-	check("/fkv toggle", FKV.cfg.enabled, false)
-	capture(function()
 		slash("learn")
 	end)
 	check("/fkv learn", FKV.cfg.learn, false)
@@ -760,7 +773,7 @@ do
 		slash("reset")
 	end)
 	check("/fkv reset restores defaults", FKV.cfg.detail, 3)
-	check("/fkv reset re-enables", FKV.cfg.enabled, true)
+	check("/fkv reset leaves the feature switch alone", ns.enabled, true)
 
 	FKV.RecordCorpse(9000081, G(9000081, "Z"), 1, {})
 	capture(function()
@@ -775,8 +788,8 @@ do
 	capture(function()
 		slash("options")
 	end)
-	check("/fkv options opens the panel", OpenedCategory, "ForeverKillValue")
-	check("/killvalue alias registered", SLASH_FOREVERKILLVALUE2, "/killvalue")
+	check("/fkv options opens the feature panel", OpenedCategory, "Kill Value")
+	check("/killvalue alias registered", SLASH_KROOLWORLDFOREVER_KILLVALUE2, "/killvalue")
 
 	-- an error inside a command is contained
 	local savedCompute = FKV.Compute
@@ -786,6 +799,74 @@ do
 	local ok = pcall(slash, "id 9000080")
 	FKV.Compute = savedCompute
 	check("a failing report does not raise", ok, true)
+end
+
+-- ---------------------------------------------------------------- bundle switch and settings
+
+do
+	-- real saved slice again (earlier sections swapped ns.db for scratch tables)
+	local slice = KroolWorldForeverDB.features.killvalue
+	FKV.AttachDB(slice)
+	FKV.ClearCaches()
+	Clock, InInstance, Auctionator = 1000, false, nil
+	ItemCache, Units, TooltipUnitToken = {}, {}, "mouseover"
+	Loot = { slots = {}, fishing = false }
+	setItems()
+	ns.Data.mob[9000090] = "100:200|9100001:1,9100002:0.5|||5:0:100"
+	local g = G(9000090, "SW")
+	Units.mouseover = { guid = g, dead = false, canAttack = true }
+	check("on: tooltip line", Hover(g)[1], "Kill value")
+
+	local out = capture(function()
+		SlashCmdList.KROOLWORLDFOREVER("killvalue off")
+	end)
+	check("/kwf killvalue off disables the feature", ns.enabled, false)
+	check("and saves it", slice.enabled, false)
+	check("off: no tooltip lines", #Hover(G(9000090, "SW2")), 0)
+	local link = "|cffffffff|Hitem:9100001::::::::80:::::|h[Thing]|h|r"
+	Loot.slots = { { type = Enum.LootSlotType.Item, link = link, sources = { G(9000091, "SWL"), 1 } } }
+	FireEvent("LOOT_OPENED")
+	check("off: no loot recorded", FKV.GetLearned(9000091), nil)
+	out = capture(function()
+		SlashCmdList.KROOLWORLDFOREVER_KILLVALUE("id 9000090")
+	end)
+	check("off: /fkv explains it is off", has(out, "is off"), true)
+
+	SettingsSet("KroolWorldForever_killvalue_enabled", true)
+	check("settings checkbox re-enables", ns.enabled, true)
+	check("on again: tooltip line", Hover(G(9000090, "SW3"))[1], "Kill value")
+	FireEvent("LOOT_OPENED")
+	check("on again: loot recorded", FKV.GetLearned(9000091) ~= nil, true)
+	local hooks = 0
+	for _ in pairs(TooltipCallbacks) do
+		hooks = hooks + 1
+	end
+	SettingsSet("KroolWorldForever_killvalue_enabled", false)
+	SettingsSet("KroolWorldForever_killvalue_enabled", true)
+	local hooks2 = 0
+	for _ in pairs(TooltipCallbacks) do
+		hooks2 = hooks2 + 1
+	end
+	check("tooltip hook registered once", hooks2, hooks)
+
+	-- a range option change flushes the value cache
+	local before = FKV.Compute(9000090)
+	check("breakdown cached", FKV.Compute(9000090), before)
+	SettingsSet("KroolWorldForever_killvalue_cut", 20)
+	check("slider writes the saved slice", slice.cut, 20)
+	check("slider change recomputes", FKV.Compute(9000090) ~= before, true)
+	SettingsSet("KroolWorldForever_killvalue_cut", 5)
+	local cached = FKV.Compute(9000090)
+	check("cache cleared on option change", FKV.CacheStats(), 1)
+	SettingsSet("KroolWorldForever_killvalue_detail", 0)
+	check("detail slider change clears the cache", FKV.CacheStats(), 0)
+	check("detail 0 shows only the total", #Hover(G(9000090, "SW4")), 1)
+	SettingsSet("KroolWorldForever_killvalue_detail", 3)
+	check("toggle option live in the slice", (function()
+		SettingsSet("KroolWorldForever_killvalue_friendly", true)
+		return FKV.cfg.friendly
+	end)(), true)
+	SettingsSet("KroolWorldForever_killvalue_friendly", false)
 end
 
 -- ---------------------------------------------------------------- real baseline sanity

@@ -1,4 +1,4 @@
--- ForeverKillValue: expected gold per kill on creature tooltips, for WoW Forever.
+-- Kill Value: expected gold per kill on creature tooltips, for WoW Forever.
 -- Port and redesign of OctoKillValue (1.12) for the Forever Mainline client (Interface 16001).
 --
 -- value(npc) = average coin drop + sum(drop chance x average stack x item price)
@@ -6,7 +6,7 @@
 -- Two data layers, blended per item:
 --   baseline  Data.lua, generated from the cmangos classic-db vanilla world database
 --             ("Era baseline": Forever may have rebalanced loot and has creatures it lacks).
---   learned   ForeverKillValueDB.learned, recorded from the loot windows you open on corpses.
+--   learned   the feature's saved slice (db.learned), recorded from the loot windows you open on corpses.
 --     estimate = (observed + K * baseline) / (corpses + K)        K = PSEUDO_KILLS
 --   With no baseline, observed-only estimates are used once MIN_OBSERVED corpses are looted.
 --
@@ -17,10 +17,11 @@
 -- Midnight restrictions: any value that might be secret is checked with issecretvalue before it
 -- is read, and every entry point that touches game data is wrapped in pcall by its caller.
 
-local addonName, ns = ...
+local _, root = ...
+local ns = root.Feature("killvalue")
 
 local FKV = {}
-ForeverKillValue = FKV -- public API: ForeverKillValue.GetKillValue(npcID)
+root.public.KillValue = FKV -- public API: KroolWorldForever.KillValue.GetKillValue(npcID)
 ns.FKV = FKV
 
 local PSEUDO_KILLS = 10 -- weight of the baseline, in corpses
@@ -35,7 +36,6 @@ local RECENT_MAX = 200 -- looted corpse GUIDs remembered for dedupe
 FKV.PSEUDO_KILLS, FKV.MIN_OBSERVED = PSEUDO_KILLS, MIN_OBSERVED
 
 FKV.DEFAULTS = {
-	enabled = true, -- tooltip line on/off
 	detail = 3, -- top-N contributor lines under the total (0 = none)
 	vendor = true, -- vendor sell price as fallback and floor
 	ah = true, -- use Auctionator prices when it is installed
@@ -46,6 +46,7 @@ FKV.DEFAULTS = {
 	learn = true, -- record loot from corpses you open
 	hello = true, -- login message
 }
+-- (the tooltip line's on/off is the bundle's per-feature Enabled switch)
 
 local cfg = {}
 for k, v in pairs(FKV.DEFAULTS) do
@@ -190,7 +191,7 @@ end
 
 local recentList, recentSet = {}, {}
 
--- Called once the SavedVariables table exists (and by tests after swapping it).
+-- Called with the feature's saved slice once it exists (and by tests after swapping it).
 function FKV.AttachDB(db)
 	ns.db = db
 	for k, v in pairs(FKV.DEFAULTS) do
@@ -198,7 +199,7 @@ function FKV.AttachDB(db)
 			db[k] = v
 		end
 	end
-	cfg = db -- the Settings panel writes into this table, so it is the live config
+	cfg = db -- the generic settings panel writes into this table, so it is the live config
 	FKV.cfg = db
 	FKV.ClearPriceCache()
 	db.learned = db.learned or {}
@@ -397,7 +398,7 @@ function FKV.AuctionPrice(itemId)
 	if type(api) ~= "table" or type(api.GetAuctionPriceByItemID) ~= "function" then
 		return nil
 	end
-	local ok, price = pcall(api.GetAuctionPriceByItemID, addonName, itemId)
+	local ok, price = pcall(api.GetAuctionPriceByItemID, "KroolWorldForever", itemId)
 	if ok and type(price) == "number" and price > 0 then
 		return price
 	end

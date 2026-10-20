@@ -16,5 +16,9 @@ Features\QuestTrash\Repeatables.lua
 Features\QuestTrash\Core.lua
 Features\QuestTrash\UI.lua
 
+Features\KillValue\Data.lua
+Features\KillValue\Core.lua
+Features\KillValue\UI.lua
+
 # Init last: every feature has declared itself before ADDON_LOADED.
 Core\Init.lua

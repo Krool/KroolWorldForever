@@ -14,7 +14,7 @@ end
 
 Enum = {
 	ItemClass = { Questitem = 12, Key = 13, Tradegoods = 7 },
-	TooltipDataType = { Item = 0 },
+	TooltipDataType = { Item = 0, Unit = 2 },
 	BagIndex = { Backpack = 0, Bank = -1, CharacterBankTab_1 = 6, AccountBankTab_1 = 12 },
 }
 NUM_TOTAL_EQUIPPED_BAG_SLOTS = 5

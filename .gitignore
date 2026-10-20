@@ -3,3 +3,4 @@
 .release/
 *.zip
 .claude/claims/
+tools/killvalue-data/sqlcache/

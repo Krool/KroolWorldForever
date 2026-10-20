@@ -1,4 +1,4 @@
--- Minimal Forever client environment for ForeverKillValue under fengari (Lua 5.3).
+-- Minimal Forever client environment for the Kill Value feature under fengari (Lua 5.3).
 -- Only what the addon touches. Tests mutate the fixture tables below.
 
 function wipe(t)
@@ -13,7 +13,9 @@ function strtrim(s)
 end
 
 Enum = {
-	TooltipDataType = { Unit = 2 },
+	TooltipDataType = { Unit = 2, Item = 0 },
+	ItemClass = { Questitem = 12, Key = 13, Tradegoods = 7 },
+	BagIndex = { Backpack = 0, Bank = -1, CharacterBankTab_1 = 6, AccountBankTab_1 = 12 },
 	LootSlotType = { None = 0, Item = 1, Money = 2, Currency = 3 },
 }
 
@@ -95,24 +97,34 @@ function Hover(guid)
 	return GameTooltip.left, GameTooltip.right
 end
 
-Registered = {}
+-- Settings: records every registered setting by variable name; SettingsSet(variable, value)
+-- simulates the player clicking it (writes the table, then fires the change callback).
+RegisteredSettings = {}
+local function Category(name)
+	return {
+		name = name,
+		GetID = function()
+			return name
+		end,
+	}
+end
 Settings = {
 	VarType = { Boolean = "boolean", Number = "number" },
-	RegisterVerticalLayoutCategory = function(name)
-		return {
-			name = name,
-			GetID = function()
-				return name
-			end,
-		}
+	RegisterVerticalLayoutCategory = Category,
+	RegisterVerticalLayoutSubcategory = function(_, name)
+		return Category(name)
 	end,
-	RegisterAddOnSetting = function(_, variable, key, tbl, _, label, default)
-		Registered[key] = { variable = variable, tbl = tbl, label = label, default = default }
-		return {}
+	RegisterAddOnSetting = function(category, variable, key, tbl, varType, label, default)
+		local s = { category = category, key = key, tbl = tbl, label = label, default = default }
+		function s:SetValueChangedCallback(fn)
+			self.cb = fn
+		end
+		RegisteredSettings[variable] = s
+		return s
 	end,
 	CreateCheckbox = function() end,
-	CreateSliderOptions = function()
-		return { SetLabelFormatter = function() end }
+	CreateSliderOptions = function(min, max, step)
+		return { min = min, max = max, step = step }
 	end,
 	CreateSlider = function() end,
 	RegisterAddOnCategory = function() end,
@@ -120,6 +132,13 @@ Settings = {
 		OpenedCategory = id
 	end,
 }
+function SettingsSet(variable, value)
+	local s = RegisteredSettings[variable]
+	s.tbl[s.key] = value
+	if s.cb then
+		s.cb(s, value)
+	end
+end
 
 SlashCmdList = {}
 

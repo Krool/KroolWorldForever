@@ -1,11 +1,12 @@
-local addonName, ns = ...
+local _, root = ...
+local ns = root.Feature("killvalue")
 local FKV = ns.FKV
 
 local LINE_LABEL = "Kill value"
 local Money, FmtQty = FKV.Money, FKV.FmtQty
 
 local function Print(msg)
-	print("|cff33ffccForever|cffffffffKillValue|r: " .. msg)
+	ns:Print(msg)
 end
 
 local function Secret(v)
@@ -114,7 +115,7 @@ local lastData
 -- Runs on every unit tooltip; any failure must degrade to "no line", never an error popup.
 -- Inside instances unit tooltip data is secret, so nothing is looked up there.
 local function OnUnitTooltip(tooltip, data)
-	if tooltip ~= GameTooltip or not (ns.ready and ns.db and FKV.cfg.enabled) then
+	if tooltip ~= GameTooltip or not (ns.enabled and ns.db) then
 		return
 	end
 	if type(data) ~= "table" or data == lastData then
@@ -208,70 +209,27 @@ local function Status()
 end
 
 -- -------------------------------------------------------------------- options
+-- Declarative: the bundle's core builds the settings panel from this. The tooltip line's
+-- on/off is the feature's own Enabled checkbox.
 
-local CHECKBOXES = {
-	{ "enabled", "Show kill value on tooltips", "Adds the expected gold per kill to creature tooltips." },
-	{ "learn", "Learn from my loot", "Records what corpses drop so new or rebalanced creatures get real numbers." },
-	{ "vendor", "Use vendor prices", "Vendor sell price as fallback and floor." },
-	{ "ah", "Use Auctionator prices", "If Auctionator is installed, price drops from the auction house minus the cut." },
-	{ "skin", "Show skinning value", "Adds a skinning/gathering line (not part of the total)." },
-	{ "friendly", "Show on friendly creatures", "Also adds the line to creatures you cannot attack." },
-	{ "hello", "Login message", "Prints one line at login." },
+ns.title = "Kill Value"
+ns.description = "Adds the expected gold per kill to creature tooltips: coins plus drop table times vendor or Auctionator prices."
+ns.options = {
+	{ key = "learn", type = "toggle", label = "Learn From My Loot", tooltip = "Records what corpses drop so new or rebalanced creatures get real numbers.", default = FKV.DEFAULTS.learn },
+	{ key = "vendor", type = "toggle", label = "Use Vendor Prices", tooltip = "Vendor sell price as fallback and floor.", default = FKV.DEFAULTS.vendor },
+	{ key = "ah", type = "toggle", label = "Use Auctionator Prices", tooltip = "If Auctionator is installed, price drops from the auction house minus the cut.", default = FKV.DEFAULTS.ah },
+	{ key = "skin", type = "toggle", label = "Show Skinning Value", tooltip = "Adds a skinning/gathering line (not part of the total).", default = FKV.DEFAULTS.skin },
+	{ key = "friendly", type = "toggle", label = "Show On Friendly Creatures", tooltip = "Also adds the line to creatures you cannot attack.", default = FKV.DEFAULTS.friendly },
+	{ key = "hello", type = "toggle", label = "Login Message", tooltip = "Prints one line at login.", default = FKV.DEFAULTS.hello },
+	{ key = "detail", type = "range", label = "Contributor Lines", tooltip = "Top drops listed under the total (0 = none).", default = FKV.DEFAULTS.detail, min = 0, max = 10, step = 1 },
+	{ key = "cut", type = "range", label = "Auction House Cut %", tooltip = "Taken off Auctionator prices.", default = FKV.DEFAULTS.cut, min = 0, max = 100, step = 1 },
 }
 
-local function RegisterOptions()
-	local category = Settings.RegisterVerticalLayoutCategory("ForeverKillValue")
-	for _, c in ipairs(CHECKBOXES) do
-		local setting = Settings.RegisterAddOnSetting(
-			category,
-			"ForeverKillValue_" .. c[1],
-			c[1],
-			ns.db,
-			Settings.VarType.Boolean,
-			c[2],
-			FKV.DEFAULTS[c[1]]
-		)
-		Settings.CreateCheckbox(category, setting, c[3])
-	end
-	-- sliders are cosmetic extras: a client difference here must not cost the checkboxes
-	pcall(function()
-		local function slider(key, label, tip, lo, hi)
-			local setting = Settings.RegisterAddOnSetting(
-				category,
-				"ForeverKillValue_" .. key,
-				key,
-				ns.db,
-				Settings.VarType.Number,
-				label,
-				FKV.DEFAULTS[key]
-			)
-			local options = Settings.CreateSliderOptions(lo, hi, 1)
-			if MinimalSliderWithSteppersMixin then
-				options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right)
-			end
-			Settings.CreateSlider(category, setting, options, tip)
-		end
-		slider("detail", "Contributor lines", "Top drops listed under the total (0 = none).", 0, 10)
-		slider("cut", "Auction house cut %", "Taken off Auctionator prices.", 0, 100)
-	end)
-	Settings.RegisterAddOnCategory(category)
-	ns.category = category
+function ns.OnOptionChanged()
+	FKV.ClearPriceCache() -- every option feeds the cached values
 end
-
-local function OpenOptions()
-	if ns.category then
-		Settings.OpenToCategory(ns.category:GetID())
-	end
-end
-
-function ForeverKillValue_OnCompartmentClick()
-	OpenOptions()
-end
-
--- -------------------------------------------------------------------- slash
 
 local TOGGLES = {
-	toggle = { "enabled", "tooltip line" },
 	learn = { "learn", "learning from loot" },
 	vendor = { "vendor", "vendor price fallback/floor" },
 	ah = { "ah", "Auctionator prices" },
@@ -280,9 +238,8 @@ local TOGGLES = {
 	hello = { "hello", "login message" },
 }
 
-local CONFIG_ORDER = { "enabled", "detail", "cut", "rare", "learn", "vendor", "ah", "skin", "friendly", "hello" }
+local CONFIG_ORDER = { "detail", "cut", "rare", "learn", "vendor", "ah", "skin", "friendly", "hello" }
 local CONFIG_HELP = {
-	enabled = "tooltip line",
 	detail = "contributor lines under the total",
 	cut = "auction house cut %",
 	rare = "drops below this go to the rare line",
@@ -308,10 +265,11 @@ local function Help()
 	Print("  /fkv id <npcId>         breakdown for any creature")
 	Print("  /fkv status | config | options | reset [learned] | help")
 	Print("  /fkv detail <n> | cut <pct> | rare <pct>")
-	Print("  /fkv toggle | learn | vendor | ah | skin | friendly | hello    (on/off switches)")
+	Print("  /fkv learn | vendor | ah | skin | friendly | hello    (on/off switches)")
+	Print("  turn the whole feature on or off with /kwf killvalue on|off")
 end
 
-local function Slash(msg)
+function ns.OnSlash(msg)
 	msg = strtrim(msg or ""):lower()
 	local cmd, arg = msg:match("^(%S*)%s*(.*)$")
 	local cfg = FKV.cfg
@@ -357,7 +315,7 @@ local function Slash(msg)
 			Print(("  %-9s %-6s %s"):format(k, tostring(v), CONFIG_HELP[k] or ""))
 		end
 	elseif cmd == "options" then
-		OpenOptions()
+		root.OpenSettings(ns)
 	elseif cmd == "reset" then
 		if arg == "learned" then
 			ns.db.learned = {}
@@ -391,45 +349,46 @@ local function Slash(msg)
 		Print("unknown command '" .. cmd .. "'; /fkv help")
 	end
 end
-ns.Slash = Slash -- test seam
+ns.Slash = ns.OnSlash -- test seam
 
-SLASH_FOREVERKILLVALUE1 = "/fkv"
-SLASH_FOREVERKILLVALUE2 = "/killvalue"
-SlashCmdList.FOREVERKILLVALUE = function(msg)
-	local ok, err = pcall(Slash, msg)
-	if not ok then
-		Print("|cffff5555error|r: " .. tostring(err))
-	end
-end
+ns.slash = { "/fkv", "/killvalue" }
 
 -- -------------------------------------------------------------------- lifecycle
 
-local f = CreateFrame("Frame")
-f:RegisterEvent("ADDON_LOADED")
-f:RegisterEvent("PLAYER_LOGIN")
-f:RegisterEvent("LOOT_READY")
-f:RegisterEvent("LOOT_OPENED")
-f:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-f:RegisterEvent("AUCTION_HOUSE_CLOSED")
-f:SetScript("OnEvent", function(self, event, arg1)
-	if event == "ADDON_LOADED" and arg1 == addonName then
-		ForeverKillValueDB = ForeverKillValueDB or {}
-		FKV.AttachDB(ForeverKillValueDB)
-		pcall(RegisterOptions)
-		self:UnregisterEvent("ADDON_LOADED")
-	elseif event == "PLAYER_LOGIN" then
-		ns.ready = true
+function ns.OnLoad()
+	FKV.AttachDB(ns.db)
+end
+
+-- The tooltip hook cannot be removed, so it is registered once and checks ns.enabled itself.
+local hooked, greeted = false, false
+function ns.OnEnable()
+	if not hooked then
+		hooked = true
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, OnUnitTooltip)
+	end
+	if not greeted then
+		greeted = true
 		if ns.db and FKV.cfg.hello then
 			Print("loaded. Hover a creature for its kill value; /fkv help for commands.")
 		end
-	elseif event == "LOOT_READY" or event == "LOOT_OPENED" then
-		pcall(FKV.CaptureLoot)
-	elseif event == "GET_ITEM_INFO_RECEIVED" then
-		if arg1 and not Secret(arg1) then
-			FKV.ItemLoaded(arg1)
-		end
-	elseif event == "AUCTION_HOUSE_CLOSED" then
-		FKV.ClearPriceCache()
 	end
+end
+
+function ns.OnDisable()
+	FKV.ClearPriceCache()
+end
+
+ns:RegisterEvent("LOOT_READY", function()
+	pcall(FKV.CaptureLoot)
+end)
+ns:RegisterEvent("LOOT_OPENED", function()
+	pcall(FKV.CaptureLoot)
+end)
+ns:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(_, itemId)
+	if itemId and not Secret(itemId) then
+		FKV.ItemLoaded(itemId)
+	end
+end)
+ns:RegisterEvent("AUCTION_HOUSE_CLOSED", function()
+	FKV.ClearPriceCache()
 end)
