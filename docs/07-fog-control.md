@@ -63,11 +63,19 @@ Consequences:
   memory and checks files against CASC, so this is a ban risk. (OctoWoW's `patch-9.mpq` approach does not
   carry over.)
 
-## Addon idea: ForeverFog (on hold)
+## Stress-test result (2026-10-21): no lever works
 
-**On hold until the launch test.** Without `volumeFog`, this can only move distance fog and weather.
-If the horizon CVars do nothing visible to the haze, the idea is dead. If they help, it becomes a
-small feature in the bundle. Original sketch:
+Tested in-game on the stress test (client 1.60.1.70245) by the owner, by eye, no screenshots:
+`volumeFog 0`, `ffxGlow 0`, `horizonStart 6000` + `horizonClip 10000` + `farclip 10000`,
+`disableHorizonStart 1`, `volumeFogLevel 0`, and Compute Effects lowest (with Shadows Good and Low).
+**None made a lasting change to the haze.** Starting values for reference: `horizonStart 1400`,
+`horizonClip`/`farclip 6000`, `volumeFogLevel 2`, Compute Effects 2, Shadows 2, weather 1.
+
+## Addon idea: ForeverFog (dropped)
+
+**Dropped 2026-10-21** after the test above: no setting an addon can reach changes the fog, so the
+feature would have nothing to do. Revisit only if Blizzard adds a fog option or a patch note changes
+these CVars. Original sketch, kept for that case:
 
 - **Presets:** Blizzard default / Clear (volumetric off, horizon pushed out) / Light haze
   (volumetric on at lower quality, `disableHorizonStart 1`) / Atmospheric (everything on, weather 3) /

@@ -19,7 +19,9 @@ before writing addon code.
   errors there, and `_Forever.toc` is picked up.
 - The client has per-addon Lua resource caps (`LimitedLuaResources`: 500 timers, 10000 frames, 5000
   FontStrings per addon), off (`Enabled = false`) during the stress test. Keep tickers few.
-- `volumeFog 0` reverts since the Sept 24 beta (Blizzard removed the fog disable). See docs/07.
+- Fog cannot be reduced: `volumeFog 0` reverts since the Sept 24 beta, and the stress test
+  (2026-10-21) showed no lasting change from `ffxGlow`, horizon/farclip, `volumeFogLevel` or
+  Compute Effects. No fog feature. See docs/07.
 - Install folder is `World of Warcraft\_forever_`, Battle.net product `wowf` (confirmed 2026-10-20).
   The stress test serves build 1.60.1.70245, older than the 70450 allowlist; the bundle lints clean
   against both. The live Interface number is unconfirmed: see `docs/04-launch-checklist.md`.
