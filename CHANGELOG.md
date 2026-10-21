@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1
+
+- **Setups fix:** the auto snapshot no longer refreshes at logout. The client has already emptied the
+  action bars and reset Edit Mode by then, so 0.2.0 saved empty bars and the built-in layout over
+  the real setup. It now refreshes after login, when the window opens, and shortly after you change
+  bars, keybindings, macros, Edit Mode or settings.
+- An auto refresh that reads empty bars keeps the previously saved bars.
+- Applying a setup with no saved bar slots now leaves your bars alone instead of clearing them.
+
 ## 0.2.0
 
 - **Setups** (new): save a character's action bars, keybindings, macros, Edit Mode layout,

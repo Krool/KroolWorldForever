@@ -61,7 +61,7 @@ On by default: yes. Toggle: `/kwf setups on|off`. Commands: `/kws, /kwsetups`.
 | Setting | Default | What it does |
 |---|---|---|
 | Offer A Setup On New Characters | On | The first time a character logs in, open the Setups window so you can start from a saved setup. Preselects the setup marked for new characters. |
-| Auto Snapshot Each Character | On | Keep one automatic setup per character, refreshed on login and logout, so any character can copy any other. |
+| Auto Snapshot Each Character | On | Keep one automatic setup per character, refreshed after login and shortly after you change bars, keybindings, macros, Edit Mode or settings, so any character can copy any other. |
 | Applied Keybindings Are Per Character | On | On: applying a setup saves its keybindings for this character only. Off: for the whole account, which changes every character that uses account keybindings. |
 | Clear Bar Slots The Setup Leaves Empty | On | On: an apply makes your bars match the setup exactly. Off: only fills slots, keeping anything already in a slot the setup leaves empty. |
 <!-- settings:end -->
