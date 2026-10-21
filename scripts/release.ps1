@@ -35,7 +35,8 @@ try {
 	if (git tag --list "v$Version") { throw "Tag v$Version already exists. Pick a new version." }
 
 	$log = [IO.File]::ReadAllText($changelog)
-	$m = [regex]::Match($log, "(?ms)^## $([regex]::Escape($Version))\s*$(.*?)(?=^## |\z)")
+	# Single-quoted pieces: inside double quotes PowerShell would run "$(...)" as a subexpression.
+	$m = [regex]::Match($log, '(?ms)^## ' + [regex]::Escape($Version) + '\s*$(.*?)(?=^## |\z)')
 	if (-not $m.Success -or -not $m.Groups[1].Value.Trim()) {
 		throw "CHANGELOG.md has no '## $Version' section with content. Write it first."
 	}
@@ -48,15 +49,22 @@ try {
 
 	$zip = & (Join-Path $PSScriptRoot "build.ps1") -Version $Version | Select-Object -Last 1
 
-	git add -- $toc $changelog $readme
+	# git writes notices to stderr; under "Stop" PowerShell 5.1 turns those into errors. Judge by exit code.
+	function Invoke-Git {
+		$prev = $ErrorActionPreference
+		$ErrorActionPreference = "Continue"
+		try { & git.exe @args 2>&1 | ForEach-Object { "$_" } } finally { $ErrorActionPreference = $prev }
+		if ($LASTEXITCODE -ne 0) { throw "git $($args -join ' ') failed (exit $LASTEXITCODE)" }
+	}
+
+	Invoke-Git add -- $toc $changelog $readme
 	$msgFile = Join-Path $env:TEMP "kwf-release-msg.txt"
 	[IO.File]::WriteAllText($msgFile, "Release $Version`n`n$notes`n", $utf8)
-	git commit -q -F $msgFile
-	if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
-	git tag -a "v$Version" -F $msgFile
+	Invoke-Git commit -q -F $msgFile
+	Invoke-Git tag -a "v$Version" -F $msgFile
 	if (git remote) {
-		git push -q
-		git push -q origin "v$Version"
+		Invoke-Git push -q
+		Invoke-Git push -q origin "v$Version"
 		Write-Host "Pushed main and v$Version"
 	} else {
 		Write-Host "No git remote; committed and tagged locally only."
