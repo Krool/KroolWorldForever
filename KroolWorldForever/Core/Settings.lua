@@ -71,6 +71,15 @@ function root.BuildSettings()
 			OnChange(enabled, function(value)
 				root.SetEnabled(F, value)
 			end)
+			if F.OnOpen and CreateSettingsButtonInitializer and SettingsPanel then
+				local layout = SettingsPanel:GetLayout(category)
+				layout:AddInitializer(CreateSettingsButtonInitializer("", "Open " .. (F.title or key), function()
+					if F.enabled then
+						SettingsPanel:Hide()
+						F.OnOpen()
+					end
+				end, F.description, true))
+			end
 			for _, opt in ipairs(F.options) do
 				local setting = AddOption(category, F, opt)
 				if setting and F.OnOptionChanged then

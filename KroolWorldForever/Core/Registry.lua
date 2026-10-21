@@ -11,6 +11,8 @@
 --   ns.OnEnable() / ns.OnDisable()    after login, whenever the feature turns on/off
 --   ns.OnOptionChanged(key, value)
 --   ns:RegisterEvent(event, fn)       fn(event, ...) runs only while the feature is enabled
+--   ns.OnOpen()                       optional: the feature's own window; /kwf <key> opens it, and
+--                                     the settings page gets an "Open" button
 --
 -- File scope must stay free of game calls so tools/settings-doc.js can load the definitions
 -- outside the client. Do game work in OnLoad/OnEnable.

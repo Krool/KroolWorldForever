@@ -38,7 +38,9 @@ before writing addon code.
   Settings UI in a feature. Labels are Title Case and player-facing; the tooltip is the help text.
 - **Tooltip hooks cannot be removed.** Register once in OnEnable and check `ns.enabled` inside.
 - **Advice only.** Features never delete, sell, loot or click for the player. Any action needs the
-  owner's explicit OK.
+  owner's explicit OK. The one approved exception (2026-10-21) is **Setups**: it changes bars,
+  bindings, macros, layouts, CVars and the addon list, but only on a click, out of combat, after a
+  confirm, with an undo snapshot taken first. Keep those four guards on anything it gains.
 - **Never let an error reach the client.** Tooltip and event work runs under pcall (the core
   dispatcher already wraps events).
 - Saved data: `KroolWorldForeverDB.features.<key>` is the feature's slice (`ns.db`). Option values
