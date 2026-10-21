@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.3
+
+Setups review fixes:
+
+- A name that comes back as a different character (deleted and remade, or a stress-test name reused
+  at launch) no longer overwrites the earlier character's snapshot: it is kept as a named setup
+  "(earlier character)", and the new character gets the picker. Characters are told apart by GUID.
+- Opening the window now refreshes the character's snapshot (a declaration-order bug skipped it).
+- Undo can restore bars that were empty; a setup with no keybindings no longer clears yours.
+- Interface settings skip game state (tutorial and "seen" flags, collapsed lists, tracked quests,
+  "last selected" values): 84 Forever CVars excluded, real preferences kept.
+- Edit Mode: refuses while Edit Mode is open, and checks the layout name is valid.
+- Apply waits until the character has finished loading. The full report is also printed to chat.
+- Closing the new-character picker, or logging in during combat, asks again next login.
+- Long setup names no longer wrap in the list.
+
 ## 0.2.2
 
 - **Setups:** applying an Edit Mode layout the character already has (for example re-applying its own
