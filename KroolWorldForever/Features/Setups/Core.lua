@@ -254,6 +254,11 @@ end
 -- A slot whose action this character cannot use (unknown spell, item not owned) keeps whatever
 -- the character already has there; only slots the setup leaves empty are cleared (clearEmpty).
 function apply.bars(data, opts, report)
+	if next(data) == nil then
+		-- Clearing every slot from an empty capture is never what anyone wants.
+		report.lines[#report.lines + 1] = "Action Bars: the setup has no bar slots saved; left your bars alone"
+		return
+	end
 	local placed, cleared, skipped = 0, 0, {}
 	for slot = 1, MAX_SLOTS do
 		local want = data[slot]
@@ -560,7 +565,7 @@ function ns.SetDefault(id)
 	ns.db.default = (ns.db.default ~= id) and id or nil -- clicking the default again clears it
 end
 
--- The per-character auto snapshot: one entry per character, refreshed on login and logout.
+-- The per-character auto snapshot: one entry per character, refreshed after login and after changes.
 function ns.AutoSnapshot()
 	local key = ns.CharKey()
 	local c = ns.db.chars[key] or {}
@@ -573,7 +578,13 @@ function ns.AutoSnapshot()
 		c.auto = s.id
 	end
 	s.name = key .. " (auto)"
-	Stamp(s, ns.Capture())
+	local parts, counts = ns.Capture()
+	-- An empty bar read while the old snapshot had slots means the client was not ready (or was
+	-- tearing down): keep the old bars rather than saving an empty setup over a real one.
+	if (counts.bars or 0) == 0 and s.counts and (s.counts.bars or 0) > 0 then
+		parts.bars, counts.bars = s.parts.bars, s.counts.bars
+	end
+	Stamp(s, parts, counts)
 	return s
 end
 

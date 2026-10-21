@@ -6,6 +6,9 @@ layout, interface settings and the addon list, and applies any of them to the ch
 `/kws` (or `/kwf setups`, or the button on the Setups settings page) opens the window:
 
 - **Left:** every saved setup on this PC, named ones first, then one auto snapshot per character.
+  The auto snapshot refreshes 8 seconds after login, when the window opens, and 10 seconds after
+  you change bars, keybindings, macros, Edit Mode or settings. Never at logout: by then the client
+  has emptied the bars and reset Edit Mode (found on the stress test, fixed in 0.2.1).
 - **Right:** what the selected setup holds, a checkbox per part, and the actions:
   - **Apply To <character>**: asks first, keeps an undo, then reports what it could not restore.
   - **Undo Last Apply**: puts the character back the way it was before the last apply (one level).

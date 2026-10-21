@@ -410,7 +410,7 @@ function Refresh()
 		tostring(s.source),
 		tostring(s.level or "?"),
 		When(s.updated),
-		s.auto and " Updated automatically on login and logout." or ""
+		s.auto and " Updated automatically while you play." or ""
 	) or (#list == 0 and "Save Current As New stores this character's setup." or ""))
 
 	local any = false
@@ -464,6 +464,9 @@ function ns.Open(asOnboarding)
 	onboarding = asOnboarding and true or false
 	lastReport = nil
 	selected = nil
+	if ready and ns.db.autosave and not InCombatLockdown() then
+		pcall(ns.AutoSnapshot) -- show this character as it is right now
+	end
 	frame:Show()
 	Refresh()
 end
@@ -494,8 +497,8 @@ ns.options = {
 		key = "autosave",
 		type = "toggle",
 		label = "Auto Snapshot Each Character",
-		tooltip = "Keep one automatic setup per character, refreshed on login and logout, so any character "
-			.. "can copy any other.",
+		tooltip = "Keep one automatic setup per character, refreshed after login and shortly after you change "
+			.. "bars, keybindings, macros, Edit Mode or settings, so any character can copy any other.",
 		default = true,
 	},
 	{
@@ -574,11 +577,26 @@ function ns.OnEnable()
 	end))
 end
 
-ns:RegisterEvent("PLAYER_LOGOUT", function()
-	if ready and ns.db.autosave then
-		ns.AutoSnapshot()
+-- Keep the auto snapshot current while playing. Not on logout: by PLAYER_LOGOUT the client has
+-- already emptied the action bars and reset Edit Mode to a built-in layout (seen on the stress test).
+local pending = false
+local function SnapshotSoon()
+	if not ready or pending or not ns.db.autosave then
+		return
 	end
-end)
+	pending = true
+	C_Timer.After(10, Safe(function()
+		pending = false
+		if ns.enabled and ready and ns.db.autosave and not InCombatLockdown() then
+			ns.AutoSnapshot()
+			Refresh()
+		end
+	end))
+end
+ns.SnapshotSoon = SnapshotSoon
+for _, event in ipairs({ "ACTIONBAR_SLOT_CHANGED", "UPDATE_BINDINGS", "UPDATE_MACROS", "EDIT_MODE_LAYOUTS_UPDATED", "CVAR_UPDATE" }) do
+	ns:RegisterEvent(event, SnapshotSoon)
+end
 ns:RegisterEvent("PLAYER_REGEN_DISABLED", function()
 	Refresh() -- grey out Apply and Undo in combat
 end)

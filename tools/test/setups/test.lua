@@ -77,6 +77,29 @@ local auto = ns.Get(ns.db.chars["Kaptain-Realm"].auto)
 check("auto snapshot is marked auto", auto and auto.auto, true)
 check("auto snapshot name", auto and auto.name, "Kaptain-Realm (auto)")
 check("no picker: nothing else to offer", KroolWorldForeverSetupsFrame == nil or not KroolWorldForeverSetupsFrame:IsShown(), true)
+check("auto snapshot has the bars", auto.counts.bars, 8)
+
+-- Regression (stress test 2026-10-21): at logout the client has emptied the bars and reset Edit Mode.
+local savedActions, savedLayouts = Actions, EditLayouts
+Actions, EditLayouts = {}, { layouts = savedLayouts.layouts, activeLayout = 1 }
+Clock = Clock + 30
+FireEvent("PLAYER_LOGOUT")
+RunTimers()
+check("logout does not touch the snapshot", auto.updated, 1000000)
+check("logout keeps the custom layout", auto.parts.editmode.str, "LAYOUT:Krool")
+ns.AutoSnapshot() -- a refresh that reads empty bars anyway
+check("an empty bar read keeps the old bars", auto.counts.bars, 8)
+Actions, EditLayouts = savedActions, savedLayouts
+
+-- Changes while playing refresh the snapshot a few seconds later (debounced).
+Clock = Clock + 30
+Bound.Q = "TOGGLEBAG"
+FireEvent("UPDATE_BINDINGS")
+FireEvent("ACTIONBAR_SLOT_CHANGED", 1)
+check("one refresh queued for a burst of changes", #Timers, 1)
+RunTimers()
+check("change refreshed the snapshot", auto.updated, Clock)
+Bound.Q = nil
 
 -- ---------------------------------------------------------------- capture
 
@@ -251,8 +274,22 @@ local altAuto = ns.db.chars["Alt-Realm"].auto
 ns.Delete(altAuto)
 check("deleting an auto snapshot unlinks it", ns.db.chars["Alt-Realm"].auto, nil)
 Clock = Clock + 60
-FireEvent("PLAYER_LOGOUT")
-check("logout recreates the auto snapshot", ns.Get(ns.db.chars["Alt-Realm"].auto) ~= nil, true)
+FireEvent("ACTIONBAR_SLOT_CHANGED", 1)
+RunTimers()
+check("the next change recreates the auto snapshot", ns.Get(ns.db.chars["Alt-Realm"].auto) ~= nil, true)
+
+-- Applying a setup whose bars are empty must not wipe the target's bars.
+local filled = 0
+for _ in pairs(Actions) do
+	filled = filled + 1
+end
+r = ns.Apply({ name = "empty", parts = { bars = {} } }, { bars = true }, { clearEmpty = true })
+local after = 0
+for _ in pairs(Actions) do
+	after = after + 1
+end
+check("empty bar setup leaves the bars alone", after, filled)
+check("empty bar setup says so", has(r.lines, "left your bars alone"), true)
 
 -- Window: save through the name prompt.
 F.saveNew:Click()
@@ -298,8 +335,9 @@ check("off state is saved", ns.db.enabled, false)
 local before = count_keys(ns.db.setups)
 local autoBefore = ns.Get(ns.db.chars["Alt-Realm"].auto).updated
 Clock = Clock + 60
-FireEvent("PLAYER_LOGOUT")
-check("disabled feature does not snapshot on logout", ns.Get(ns.db.chars["Alt-Realm"].auto).updated, autoBefore)
+FireEvent("ACTIONBAR_SLOT_CHANGED", 1)
+RunTimers()
+check("disabled feature does not snapshot", ns.Get(ns.db.chars["Alt-Realm"].auto).updated, autoBefore)
 check("disabled feature adds no setups", count_keys(ns.db.setups), before)
 SlashCmdList.KROOLWORLDFOREVER_SETUPS("save Nope")
 check("feature slash says it is off", count_keys(ns.db.setups), before)
