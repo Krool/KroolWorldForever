@@ -13,11 +13,12 @@ Things the research could not confirm. Each is 30 seconds to check in-game. Upda
 
 ## Identity (run in chat)
 
-- [ ] `/dump select(4, GetBuildInfo())`: Interface number (expect 16001).
-- [ ] `/dump GetBuildInfo()`: version and build.
-- [ ] `/dump WOW_PROJECT_ID, WOW_PROJECT_CAMELOT`: expect `18, 18`. Check whether a
-      `WOW_PROJECT_FOREVER` constant appeared (the Camelot rename was pending).
-- [ ] Check that `HelloForever` shows up and loads from `HelloForever_Forever.toc`.
+Stress test 2026-10-21 (client 70245, realm server 70399): the first three passed.
+
+- [x] `/dump select(4, GetBuildInfo())`: 16001.
+- [x] `/dump WOW_PROJECT_ID, WOW_PROJECT_CAMELOT`: 18, 18.
+- [x] `_Forever.toc` is picked up: KroolWorldForever listed and enabled, zero Lua errors.
+- [ ] Check whether a `WOW_PROJECT_FOREVER` constant appeared (the Camelot rename was pending).
 
 ## Restrictions (learn the boundaries)
 
@@ -25,8 +26,8 @@ Things the research could not confirm. Each is 30 seconds to check in-game. Upda
 - [ ] Use `/etrace` while questing, in combat and in a dungeon to learn the event flow.
 - [ ] Check which values are secret: `/dump UnitPower("player", Enum.PowerType.ComboPoints)` in and
       out of combat, `issecretvalue` (or the current secret-check API, see `/api`) on threat, health, auras.
-- [ ] Target an NPC and run `/dump UnitGUID("target")`. Check that the NPC ID field (6th part) is readable
-      and matches the NPC on Wowhead. OctoKillValue-style ports depend on it.
+- [x] Target an NPC and run `/dump UnitGUID("target")`: the NPC id (6th part) reads fine
+      (`Creature-0-6834-0-2-299-...` = Diseased Young Wolf, 2026-10-21).
 - [ ] Check whether a Darkmoon Faire exists (calendar) and what the world map shows for boats/zeppelins/portals.
 - [ ] Test whether `ExportInterfaceFiles code` works (launch with `-console`).
 - [ ] Look at whether Lua has `import` (the wiki says `require` was renamed).
@@ -47,12 +48,14 @@ Things the research could not confirm. Each is 30 seconds to check in-game. Upda
 
 ## Our addons (Krool World Forever)
 
-- [ ] Link the bundle, check `/kwf list` shows both features, and that `/kwf killvalue off` and
-      `/kwf killvalue on` silence and restore it.
-- [ ] Quest Trash: install QuestieDB, run `/fqt status` (expect "index: ready"), hover a quest item
-      from a finished quest, then run `/fqt` with the bank open.
-- [ ] Kill Value: hover a hostile mob in the open world (a value line should show), hover one in a
-      dungeon (nothing should show), loot a few corpses, then check `/fkv status` and `/fkv` for "blended".
+- [x] Link the bundle, `/kwf list` shows both features (2026-10-21).
+- [ ] `/kwf killvalue off` and `/kwf killvalue on` silence and restore it.
+- [x] Quest Trash: `/fqt status` reports QuestieDB found and the index ready (Questie 1.0.6 bundles it).
+- [ ] Quest Trash: hover a quest item from a finished quest, then run `/fqt` with the bank open.
+- [x] Kill Value: open-world mob tooltip shows a value line; looting records the corpse (wolf 299:
+      Broken Fang, Chipped Claw, Ripped Wolf Pelt).
+- [ ] Kill Value: hover a mob in a dungeon (nothing should show); after 3+ corpses of one mob,
+      check `/fkv` for "blended".
 - [ ] Kill Value: check that a skinned-before-looted corpse and a pickpocket are not recorded as loot.
 - [ ] Kill Value: compare a few vendor prices with what a merchant actually pays (Blackthornes Farmer
       reports the client's stored sell price can be wrong on Forever).

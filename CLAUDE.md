@@ -14,7 +14,11 @@ before writing addon code.
   check `issecretvalue` first.
 - `## Interface: 16001`, TOC `KroolWorldForever_Forever.toc`, detect with
   `WOW_PROJECT_ID == WOW_PROJECT_CAMELOT` (18).
-- Creature GUIDs: server and spawn parts are obfuscated; the NPC id field should survive (unverified in-game).
+- Creature GUIDs: the NPC id is the 6th field and reads fine in-game (stress test 2026-10-21:
+  `Creature-0-6834-0-2-299-5CD49D4332` = Diseased Young Wolf). The bundle loaded with zero Lua
+  errors there, and `_Forever.toc` is picked up.
+- The client has per-addon Lua resource caps (`LimitedLuaResources`: 500 timers, 10000 frames, 5000
+  FontStrings per addon), off (`Enabled = false`) during the stress test. Keep tickers few.
 - `volumeFog 0` reverts since the Sept 24 beta (Blizzard removed the fog disable). See docs/07.
 - Install folder is `World of Warcraft\_forever_`, Battle.net product `wowf` (confirmed 2026-10-20).
   The stress test serves build 1.60.1.70245, older than the 70450 allowlist; the bundle lints clean
