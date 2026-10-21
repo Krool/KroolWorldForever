@@ -71,7 +71,11 @@ function Widget:Show()
 	self.shown = true
 end
 function Widget:Hide()
+	local was = self.shown
 	self.shown = false
+	if was and self.scripts.OnHide then
+		self.scripts.OnHide(self) -- real frames fire OnHide when a shown frame hides
+	end
 end
 function Widget:SetShown(v)
 	self.shown = v and true or false
@@ -243,6 +247,9 @@ function UnitLevel()
 end
 function GetNormalizedRealmName()
 	return Player.realm
+end
+function UnitGUID()
+	return Player.guid or ("Player-1-" .. Player.name)
 end
 InCombat = false
 function InCombatLockdown()
@@ -416,10 +423,11 @@ end
 
 -- [name] = { value, default, account, character, locked, secure, readOnly }
 CVars = {}
+CVarHelp = {} -- [name] = help text
 function ConsoleGetAllCommands()
 	local out = {}
 	for name in pairs(CVars) do
-		out[#out + 1] = { command = name, commandType = 0, help = "", category = 0 }
+		out[#out + 1] = { command = name, commandType = 0, help = CVarHelp[name] or "", category = 0 }
 	end
 	out[#out + 1] = { command = "reloadui", commandType = 1 }
 	table.sort(out, function(a, b)
@@ -521,4 +529,9 @@ C_EditMode = {
 	SetActiveLayout = function(i)
 		EditLayouts.activeLayout = i
 	end,
+	IsValidLayoutName = function(name)
+		return #name > 0 and #name <= 32
+	end,
 }
+EditModeManagerFrame = NewWidget("Frame")
+EditModeManagerFrame:Hide()

@@ -33,12 +33,31 @@ Slash: `/kws save [name]`, `/kws list`, `/kws undo`.
 Apply never runs in combat or while the cursor holds something. Undo restores bars, bindings,
 settings, addons and switches Edit Mode back; macros it created stay (it never edits existing ones).
 
+## Characters are told apart by GUID
+
+A character is keyed by name and realm, plus its GUID. When a name comes back as a different
+character (deleted and remade, or a stress-test name reused at launch), its old auto snapshot is
+kept as a named setup, "<name> (earlier character)", and the new character gets the picker.
+
+## Interface settings left out on purpose
+
+Server-stored CVars that are game state, not preferences, are never copied or reset: tutorial and
+"seen" flags, collapsed lists, tracked quests, "last selected" values, and anything whose help text
+says it is internal, serialized or "stores the last". Checked against Forever's full CVar list:
+84 excluded, 807 kept.
+
 ## Honest limits
+
+- **Account-wide settings and keybindings** apply to every character that uses them. That is how the
+  game stores them, not a choice here.
+- **Keybindings are a full replace**, including keys for addon commands the setup does not have
+  (Undo restores them).
 
 - **Other addons' per-character settings** (Questie, Auctionator profiles) are out of reach: the game
   only loads an addon's per-character data for that addon. Use their own profile options.
 - **Chat windows** are not copied yet.
 - Spells the character has not learned stay off the bars until it learns them and the setup is applied again.
-- **Not yet run in the live game.** Verified by 100 checks against a stubbed client and the Forever
-  API allowlist (builds 70245 and 70450). The Edit Mode path mirrors Blizzard's own save
+- **Adding an Edit Mode layout has not been seen working in-game yet** (the stress test only
+  exercised switching). Verified by 138 checks against a stubbed client and the Forever API
+  allowlist (builds 70245 and 70450). The Edit Mode path mirrors Blizzard's own save
   (`EditModeManagerFrameMixin:MakeNewLayout`) without calling the Edit Mode frame, which would taint it.

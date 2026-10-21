@@ -10,6 +10,8 @@ local frame -- built on first open
 local selected, onboarding
 local applyParts = {} -- part key -> checked
 local lastReport
+local ready = false -- true once bars, macros and bindings have loaded after login
+local REPORT_LINES = 9 -- shown in the window; the full report goes to chat
 
 local function Safe(fn)
 	return function(...)
@@ -164,6 +166,16 @@ local function Build()
 	frame:SetClampedToScreen(true)
 	frame:Hide()
 	tinsert(UISpecialFrames, frame:GetName()) -- Escape closes it
+	frame:SetScript("OnHide", function()
+		if onboarding then
+			-- Closed with X or Escape: same as Not Now.
+			local c = ns.db.chars[ns.CharKey()]
+			if c then
+				c.askAgain = true
+			end
+			onboarding = false
+		end
+	end)
 
 	frame.title = Text(frame, "GameFontHighlight", "CENTER")
 	frame.title:SetPoint("TOP", 0, -6)
@@ -201,6 +213,7 @@ local function Build()
 	frame.name = Text(right, "GameFontNormalLarge")
 	frame.name:SetPoint("TOPLEFT", 0, -28)
 	frame.name:SetWidth(W - x - 26)
+	frame.name:SetWordWrap(false)
 	frame.source = Text(right, "GameFontHighlightSmall")
 	frame.source:SetPoint("TOPLEFT", frame.name, "BOTTOMLEFT", 0, -4)
 	frame.source:SetWidth(W - x - 26)
@@ -231,10 +244,17 @@ local function Build()
 		if not s then
 			return
 		end
+		if not ready then
+			ns:Print("still loading this character; try again in a few seconds")
+			return
+		end
 		Confirm(
 			("Apply %s to %s?\nWhat it replaces is kept for Undo."):format(s.name, ns.CharKey()),
 			function()
 				lastReport = ns.Apply(s, applyParts, ns.db)
+				for _, line in ipairs(lastReport.lines) do
+					print("  " .. line)
+				end
 				if lastReport.ok then
 					ns:Print("applied " .. s.name)
 					local c = ns.db.chars[ns.CharKey()]
@@ -252,6 +272,9 @@ local function Build()
 	frame.undo = Button(right, "Undo Last Apply", 140, function()
 		Confirm("Put this character back the way it was before the last apply?", function()
 			lastReport = ns.Undo()
+			for _, line in ipairs(lastReport and lastReport.lines or {}) do
+				print("  " .. line)
+			end
 			Refresh()
 		end)
 	end)
@@ -348,9 +371,11 @@ local function Row(i)
 	row.line1 = Text(row, "GameFontHighlight")
 	row.line1:SetPoint("TOPLEFT", 4, -3)
 	row.line1:SetWidth(LIST_W - 36)
+	row.line1:SetWordWrap(false) -- long names end in "..." instead of spilling onto line 2
 	row.line2 = Text(row, "GameFontDisableSmall")
 	row.line2:SetPoint("TOPLEFT", 4, -19)
 	row.line2:SetWidth(LIST_W - 36)
+	row.line2:SetWordWrap(false)
 	row:SetScript("OnClick", function(self)
 		Select(self.id)
 	end)
@@ -452,7 +477,16 @@ function Refresh()
 	frame.default:SetText(has and ns.db.default == s.id and "Stop Using For New Characters" or "Use For New Characters")
 	frame.default:SetWidth(has and ns.db.default == s.id and 200 or 170)
 
-	frame.report:SetText(lastReport and table.concat(lastReport.lines, "\n") or "")
+	local shown = {}
+	if lastReport then
+		for i = 1, math.min(#lastReport.lines, REPORT_LINES) do
+			shown[i] = lastReport.lines[i]
+		end
+		if #lastReport.lines > REPORT_LINES then
+			shown[#shown + 1] = "|cffaaaaaa(full report in chat)|r"
+		end
+	end
+	frame.report:SetText(table.concat(shown, "\n"))
 	frame.reload:SetShown(lastReport and lastReport.reload and true or false)
 end
 ns.Refresh = Refresh
@@ -545,8 +579,6 @@ ns.OnOpen = function()
 	ns.Open(false)
 end
 
-local ready = false
-
 local function Settle(wasNew)
 	ready = true
 	if ns.db.autosave then
@@ -554,8 +586,12 @@ local function Settle(wasNew)
 	end
 	local c = ns.db.chars[ns.CharKey()]
 	local fresh = c and not c.onboarded and (wasNew or c.askAgain)
-	if fresh and ns.db.picker and #ns.Offers() > 0 and not InCombatLockdown() then
-		ns.Open(true)
+	if fresh and ns.db.picker and #ns.Offers() > 0 then
+		if InCombatLockdown() then
+			c.askAgain = true -- logged in fighting: offer next time instead of never
+		else
+			ns.Open(true)
+		end
 	end
 	Refresh()
 end
@@ -567,8 +603,7 @@ function ns.OnEnable()
 		return
 	end
 	started = true
-	local wasNew = ns.db.chars[ns.CharKey()] == nil
-	ns.db.chars[ns.CharKey()] = ns.db.chars[ns.CharKey()] or { first = time() }
+	local wasNew = ns.Identify()
 	-- Action bars, macros and bindings arrive from the server after login; wait before reading them.
 	C_Timer.After(8, Safe(function()
 		if ns.enabled then

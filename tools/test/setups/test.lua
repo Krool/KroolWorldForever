@@ -55,7 +55,11 @@ CVars = {
 	gxWindow = { "1", "0", false, false }, -- local (Config.wtf): not part of a setup
 	secureThing = { "1", "0", true, false, false, true }, -- secure: never touched
 	lockedThing = { "1", "0", true, false, true }, -- locked from user
+	showTutorials = { "0", "1", true, false }, -- state by name: never copied or reset
+	eventReminders = { "x", "", true, false }, -- state by help text
+	nameplateShowNeutral = { "1", "0", true, false }, -- preference despite "shown" in "showneutral"
 }
+CVarHelp.eventReminders = "Internal cvar for saving event reminders"
 AddonOn.Kaptain = { KroolWorldForever = true, Questie = true, Auctionator = false, BugSack = true }
 EditLayouts = { layouts = { { layoutName = "Krool", layoutType = 1 } }, activeLayout = 3 }
 
@@ -114,7 +118,10 @@ check("bindings: 6 commands", main.counts.bindings, 6)
 check("macros: account and character", main.counts.macros, 2)
 check("macros: character flag", p.macros[2].char, true)
 check("editmode: active saved layout captured", p.editmode.str, "LAYOUT:Krool")
-check("cvars: only server-stored, user-settable, non-default", main.counts.cvars, 2)
+check("cvars: only server-stored, user-settable, non-default preferences", main.counts.cvars, 3)
+check("cvars: tutorial state not captured", p.cvars.showTutorials, nil)
+check("cvars: state recognized by help text not captured", p.cvars.eventReminders, nil)
+check("cvars: a real preference containing 'shown' is kept", p.cvars.nameplateShowNeutral, "1")
 check("cvars: local graphics cvar not captured", p.cvars.gxWindow, nil)
 check("cvars: secure cvar not captured", p.cvars.secureThing, nil)
 check("addons: off addon recorded off", p.addons.Auctionator, false)
@@ -178,6 +185,8 @@ check("bindings replaced: F no longer jumps", Bound.F, nil)
 check("bindings replaced: SPACE jumps", Bound.SPACE, "JUMP")
 check("bindings saved per character", SavedBindingSet, 2)
 check("cvar applied", CVars.autoLootDefault[1], "1")
+check("state cvar not reset by apply", CVars.showTutorials[1], "0")
+check("help-text state cvar not reset by apply", CVars.eventReminders[1], "x")
 check("cvar left at default in the setup is reset", CVars.nameplateShowEnemies[1], "1")
 check("secure cvar untouched", CVars.secureThing[1], "1")
 check("addons: Auctionator turned off for Alt", AddonOn.Alt.Auctionator, false)
@@ -357,6 +366,82 @@ check("settings checkbox turns it back on", ns.enabled, true)
 SettingsSet("KroolWorldForever_setups_perCharBinds", false)
 r = ns.Apply({ name = "b", parts = { bindings = { { "JUMP", "SPACE" } } } }, { bindings = true }, ns.db)
 check("account keybinding option takes effect", SavedBindingSet, 1)
+
+-- ---------------------------------------------------------------- review fixes (0.2.3)
+
+-- Opening the window refreshes this character's snapshot (the "ready" upvalue must be the real one).
+F:Hide()
+local altSnap = ns.Get(ns.db.chars["Alt-Realm"].auto)
+Clock = Clock + 60
+ns.Open(false)
+check("opening the window refreshes the snapshot", altSnap.updated, Clock)
+
+-- Undo puts back bars that really were empty.
+Actions = {}
+ns.Apply({ name = "fill", parts = { bars = { [1] = { t = "spell", id = 133, name = "Fireball" } } } }, { bars = true }, { clearEmpty = true })
+check("apply filled slot 1", Actions[1] ~= nil, true)
+ns.Undo()
+check("undo empties bars that were empty", next(Actions), nil)
+
+-- A setup with no keybindings leaves yours alone.
+Bound = { W = "MOVEFORWARD" }
+r = ns.Apply({ name = "nobinds", parts = { bindings = {} } }, { bindings = true }, ns.db)
+check("empty keybinding setup keeps bindings", Bound.W, "MOVEFORWARD")
+check("empty keybinding setup says so", has(r.lines, "left yours alone"), true)
+
+-- Edit Mode open: refuse instead of fighting its unsaved state.
+EditModeManagerFrame:Show()
+SaveLayoutsCalls = {}
+EditLayouts = { layouts = {}, activeLayout = 1 }
+r = ns.Apply({ name = "em", parts = { editmode = { name = "X", str = "LAYOUT:X" } } }, { editmode = true }, ns.db)
+check("edit mode open: nothing saved", #SaveLayoutsCalls, 0)
+check("edit mode open: told to close it", has(r.lines, "close Edit Mode"), true)
+EditModeManagerFrame:Hide()
+
+-- A layout name the client rejects falls back to "Setup".
+local long = string.rep("L", 40)
+r = ns.Apply({ name = "em", parts = { editmode = { name = long, str = "LAYOUT:" .. long } } }, { editmode = true }, ns.db)
+check("invalid layout name falls back", SaveLayoutsCalls[1] and SaveLayoutsCalls[1].layouts[3].layoutName, "Setup")
+
+-- Closing the new-character picker with X or Escape asks again next login.
+ns.db.chars["Alt-Realm"].onboarded = nil
+ns.db.chars["Alt-Realm"].askAgain = nil
+ns.Settle(true)
+check("picker open again", F:IsShown(), true)
+F:Hide()
+check("closing the picker means ask again", ns.db.chars["Alt-Realm"].askAgain, true)
+ns.db.chars["Alt-Realm"].askAgain = nil
+InCombat = true
+ns.Settle(true)
+check("in combat at login: no picker", F:IsShown(), false)
+check("in combat at login: asks next time", ns.db.chars["Alt-Realm"].askAgain, true)
+InCombat = false
+
+-- Same name, different character (stress test character reused at launch).
+Player = { name = "Kaptain", realm = "Realm", class = "WARRIOR", level = 1, guid = "Player-1-NEW" }
+ns.db.chars["Kaptain-Realm"].guid = "Player-1-OLD"
+local oldAutoId = ns.db.chars["Kaptain-Realm"].auto
+ns.db.undo["Kaptain-Realm"] = { at = 1, parts = {} }
+local isNew = ns.Identify()
+check("same name, new GUID: treated as a new character", isNew, true)
+check("the earlier character's snapshot is kept", ns.Get(oldAutoId) ~= nil, true)
+check("and is now a named setup", ns.Get(oldAutoId).auto, nil)
+check("named after the earlier character", ns.Get(oldAutoId).name, "Kaptain-Realm (earlier character)")
+check("the old undo is dropped", ns.db.undo["Kaptain-Realm"], nil)
+check("the new character records its GUID", ns.db.chars["Kaptain-Realm"].guid, "Player-1-NEW")
+check("the new character is offered the earlier setup", (function()
+	for _, s in ipairs(ns.Offers()) do
+		if s.id == oldAutoId then
+			return true
+		end
+	end
+	return false
+end)(), true)
+check("same GUID again: not new", ns.Identify(), false)
+ns.db.chars["Legacy-Realm"] = { first = 1 }
+Player = { name = "Legacy", realm = "Realm", class = "MAGE", level = 5 }
+check("entry saved before GUIDs existed: not new", ns.Identify(), false)
+check("and gets its GUID", ns.db.chars["Legacy-Realm"].guid, "Player-1-Legacy")
 
 print(("%d checks, %d failed"):format(count, failures))
 if failures > 0 then

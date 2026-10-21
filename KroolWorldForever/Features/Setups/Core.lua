@@ -35,6 +35,40 @@ local function Now()
 	return time()
 end
 
+local function PlayerGUID()
+	local guid = UnitGUID("player")
+	if guid == nil or (issecretvalue and issecretvalue(guid)) then
+		return nil
+	end
+	return guid
+end
+
+-- Registers this character and says whether it is new. A name can come back as a different
+-- character (deleted and remade, or the stress test's characters reused at launch): the GUID tells
+-- them apart. The earlier character's auto snapshot is kept as a named setup, so it can be applied.
+function ns.Identify()
+	local key, guid = ns.CharKey(), PlayerGUID()
+	local c = ns.db.chars[key]
+	if c and guid and c.guid and c.guid ~= guid then
+		local old = ns.Get(c.auto)
+		if old then
+			old.auto = nil
+			old.name = ("%s (earlier character)"):format(key)
+		end
+		if ns.db.undo then
+			ns.db.undo[key] = nil
+		end
+		c = nil
+	end
+	local isNew = c == nil
+	if not c then
+		c = { first = Now() }
+		ns.db.chars[key] = c
+	end
+	c.guid = c.guid or guid
+	return isNew, c
+end
+
 -- -------------------------------------------------------------------- capture
 
 local capture = {}
@@ -136,13 +170,47 @@ function capture.editmode()
 	return { name = layout.layoutName, str = C_EditMode.ConvertLayoutInfoToString(layout) }, 1
 end
 
+-- Server-stored CVars that are game state, not preferences: copying them would carry tutorial
+-- progress, "seen" flags or collapsed lists between characters, and resetting them would replay
+-- tutorials. Lua patterns, matched against the lowercased name. Not "shown": it would also match
+-- preferences like nameplateShowNeutral ("showneutral").
+local STATE_CVARS = {
+	"tutorial", "seen", "collapsed", "closedinfoframes", "needs", "flagged", "^cache", "^last", "^latest",
+	"^highest", "acknowledged", "actioned", "tracked", "alreadyshown",
+}
+-- The same, recognized by the CVar's help text (ConsoleGetAllCommands gives it at runtime).
+-- Not a bare "^stores": "Stores whether to ..." also describes real preferences (showQuestLevel).
+-- Checked against Forever's full CVar list (Ketho dump, build 70338): excludes ~90 state CVars and
+-- keeps preferences such as the cast-audio options ("Stores the voice to use ...").
+local STATE_HELP = {
+	"^internal", "^%(internal", "serialized", "already shown", "has been shown", "^stores the last",
+	"^stores the number", "^saves current", "pending completion",
+}
+
+local function IsStateCVar(name, help)
+	local lower = name:lower()
+	for _, pattern in ipairs(STATE_CVARS) do
+		if lower:find(pattern) then
+			return true
+		end
+	end
+	help = (help or ""):lower()
+	for _, pattern in ipairs(STATE_HELP) do
+		if help:find(pattern) then
+			return true
+		end
+	end
+	return false
+end
+ns.IsStateCVar = IsStateCVar
+
 -- Only settings Blizzard stores on its servers: those are the interface choices that follow a
 -- character, and the ones a wipe or a new character loses. Graphics and sound live in Config.wtf.
 local function ServerCVars()
 	local list = {}
 	local cvarType = Enum.ConsoleCommandType and Enum.ConsoleCommandType.Cvar or 0
 	for _, cmd in ipairs(ConsoleGetAllCommands() or {}) do
-		if cmd.commandType == cvarType then
+		if cmd.commandType == cvarType and not IsStateCVar(cmd.command, cmd.help) then
 			local value, default, account, character, locked, secure, readOnly = C_CVar.GetCVarInfo(cmd.command)
 			if value ~= nil and (account or character) and not (locked or secure or readOnly) then
 				list[#list + 1] = { name = cmd.command, value = value, default = default }
@@ -254,8 +322,9 @@ end
 -- A slot whose action this character cannot use (unknown spell, item not owned) keeps whatever
 -- the character already has there; only slots the setup leaves empty are cleared (clearEmpty).
 function apply.bars(data, opts, report)
-	if next(data) == nil then
-		-- Clearing every slot from an empty capture is never what anyone wants.
+	if next(data) == nil and not opts.isUndo then
+		-- Clearing every slot from an empty capture is never what anyone wants. (Undo may: it puts
+		-- back bars that really were empty.)
 		report.lines[#report.lines + 1] = "Action Bars: the setup has no bar slots saved; left your bars alone"
 		return
 	end
@@ -287,6 +356,10 @@ function apply.bars(data, opts, report)
 end
 
 function apply.bindings(data, opts, report)
+	if #data == 0 and not opts.isUndo then
+		report.lines[#report.lines + 1] = "Keybindings: the setup has no keybindings saved; left yours alone"
+		return
+	end
 	-- Full replace: clear every current key, then bind the setup's. The undo snapshot has the old set.
 	for i = 1, GetNumBindings() do
 		local _, _, key1, key2 = GetBinding(i)
@@ -359,6 +432,11 @@ local function UniqueLayoutName(layouts, name)
 end
 
 function apply.editmode(data, _, report)
+	if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
+		-- Its in-memory layouts (and any unsaved changes) would fight ours.
+		report.lines[#report.lines + 1] = "Edit Mode: close Edit Mode first, then apply again"
+		return
+	end
 	if data.preset or data.restore then
 		C_EditMode.SetActiveLayout(data.preset or data.restore)
 		report.lines[#report.lines + 1] = data.preset and "Edit Mode: switched to a built-in layout"
@@ -399,6 +477,9 @@ function apply.editmode(data, _, report)
 	end
 	layout.layoutType = Enum.EditModeLayoutType.Character
 	layout.layoutName = UniqueLayoutName(saved, data.name or "Setup")
+	if not C_EditMode.IsValidLayoutName(layout.layoutName) then
+		layout.layoutName = UniqueLayoutName(saved, "Setup")
+	end
 	-- Same shape EditModeManagerFrameMixin:MakeNewLayout saves: built-in layouts first, then saved ones.
 	local all = presets
 	for _, l in ipairs(saved) do
