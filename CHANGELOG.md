@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- **Setups: Krool World Settings part.** A setup now also holds every bundle feature's Enabled switch
+  and settings (Kill Value, Quest Trash, Setups), and applying it restores them. New settings any
+  feature adds are included automatically. Learned data such as Kill Value's loot counts is not.
+  The settings are account-wide today, so this part works as a backup and restore.
+- Core: `root.SetOption` changes a setting the way the settings panel does, so the panel and the
+  feature stay in sync.
+
 ## 0.2.3
 
 Setups review fixes:
