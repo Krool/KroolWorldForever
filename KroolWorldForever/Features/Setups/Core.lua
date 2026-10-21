@@ -16,6 +16,7 @@ ns.PARTS = {
 	{ key = "editmode", label = "Edit Mode Layout" },
 	{ key = "cvars", label = "Interface Settings" },
 	{ key = "addons", label = "Addon List" },
+	{ key = "kwf", label = "Krool World Settings" },
 }
 ns.RELOAD_PARTS = { editmode = true, addons = true } -- take effect after /reload
 
@@ -239,6 +240,25 @@ function capture.addons()
 		local name = C_AddOns.GetAddOnInfo(i)
 		if name then
 			out[name] = (C_AddOns.GetAddOnEnableState(name, me) or 0) > 0
+			n = n + 1
+		end
+	end
+	return out, n
+end
+
+-- This bundle's own settings: every feature's Enabled switch and declared ns.options, so a new
+-- option is included without touching Setups. Learned data (Kill Value's loot counts and the like)
+-- is not an option and is never copied.
+function capture.kwf()
+	local out, n = {}, 0
+	for _, key in ipairs(root.featureOrder) do
+		local F = root.features[key]
+		if F.db then
+			local values = { enabled = F.db.enabled }
+			for _, opt in ipairs(F.options) do
+				values[opt.key] = F.db[opt.key]
+			end
+			out[key] = values
 			n = n + 1
 		end
 	end
@@ -540,6 +560,51 @@ function apply.addons(data, _, report)
 	end
 end
 
+-- A saved value that still fits the option as declared now (types and ranges change between versions).
+local function Fit(opt, value)
+	if opt.type == "toggle" then
+		return value, type(value) == "boolean"
+	elseif opt.type == "range" then
+		if type(value) ~= "number" then
+			return nil, false
+		end
+		return math.min(opt.max, math.max(opt.min, value)), true
+	end
+	return value, true
+end
+
+function apply.kwf(data, _, report)
+	local changed, unknown = 0, 0
+	for key, values in pairs(data) do
+		local F = root.features[key]
+		if not F or not F.db then
+			unknown = unknown + 1
+		else
+			for _, opt in ipairs(F.options) do
+				local saved = values[opt.key]
+				if saved ~= nil then
+					local value, fits = Fit(opt, saved)
+					if not fits then
+						unknown = unknown + 1
+					elseif F.db[opt.key] ~= value then
+						root.SetOption(F, opt.key, value)
+						changed = changed + 1
+					end
+				end
+			end
+			-- Never switch Setups itself off in the middle of its own apply.
+			if key ~= "setups" and type(values.enabled) == "boolean" and F.db.enabled ~= values.enabled then
+				root.SetOption(F, "enabled", values.enabled)
+				changed = changed + 1
+			end
+		end
+	end
+	report.lines[#report.lines + 1] = ("Krool World Settings: %d changed%s"):format(
+		changed,
+		unknown > 0 and (", " .. unknown .. " not in this version (skipped)") or ""
+	)
+end
+
 -- Applies the chosen parts of a setup to the current character.
 -- Returns report { ok, lines, reload } where reload means a /reload finishes the job.
 function ns.Apply(setup, which, opts)
@@ -572,7 +637,7 @@ function ns.Apply(setup, which, opts)
 	end
 
 	-- Macros before bars, so macro buttons find their macro.
-	for _, key in ipairs({ "macros", "bars", "bindings", "cvars", "addons", "editmode" }) do
+	for _, key in ipairs({ "macros", "bars", "bindings", "cvars", "addons", "kwf", "editmode" }) do
 		local data = setup.parts and setup.parts[key]
 		if which[key] and data then
 			local ok, err = pcall(apply[key], data, opts, report)

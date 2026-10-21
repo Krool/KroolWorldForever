@@ -36,6 +36,10 @@ before writing addon code.
   load all features outside the client. Do the work in OnLoad/OnEnable.
 - **Settings come from `ns.options`.** The panel (`Core/Settings.lua`) is generic. Never hand-build
   Settings UI in a feature. Labels are Title Case and player-facing; the tooltip is the help text.
+  Setups saves and applies every declared option automatically ("Krool World Settings" part), so:
+  keep player choices in `ns.options` and learned data or caches out of them; change an option
+  in code with `root.SetOption(F, key, value)`, never by writing `F.db` directly (it keeps the panel
+  and `OnOptionChanged` in sync); a new option `type` needs a case in Setups' `Fit()`.
 - **Tooltip hooks cannot be removed.** Register once in OnEnable and check `ns.enabled` inside.
 - **Advice only.** Features never delete, sell, loot or click for the player. Any action needs the
   owner's explicit OK. The one approved exception (2026-10-21) is **Setups**: it changes bars,

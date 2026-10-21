@@ -5,7 +5,7 @@
 local _, root = ...
 local ns = root.Feature("setups")
 
-local W, H, LIST_W, ROW_H = 700, 470, 250, 36
+local W, H, LIST_W, ROW_H = 700, 540, 250, 36
 local frame -- built on first open
 local selected, onboarding
 local applyParts = {} -- part key -> checked
@@ -43,6 +43,7 @@ local function PartCount(s, key)
 		editmode = "layout",
 		cvars = "changed",
 		addons = "addons",
+		kwf = "features",
 	}
 	if key == "editmode" then
 		local e = s.parts and s.parts.editmode

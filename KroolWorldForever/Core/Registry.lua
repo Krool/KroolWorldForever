@@ -69,6 +69,24 @@ function root.Dispatch(event, ...)
 	end
 end
 
+-- Sets one declared option (or "enabled") the way the settings panel would: through the panel's
+-- own setting object when it exists, so the panel shows the new value and its change callbacks run.
+function root.SetOption(F, key, value)
+	local setting = F.settingObjects and F.settingObjects[key]
+	if setting and setting.SetValue then
+		setting:SetValue(value, true) -- immediate: write now, not on the panel's Apply step
+		return
+	end
+	if key == "enabled" then
+		root.SetEnabled(F, value)
+		return
+	end
+	F.db[key] = value
+	if F.OnOptionChanged then
+		F.OnOptionChanged(key, value)
+	end
+end
+
 -- Turns a feature on or off after login. Persisted in its slice.
 function root.SetEnabled(F, on)
 	on = on and true or false

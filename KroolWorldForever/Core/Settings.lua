@@ -71,6 +71,7 @@ function root.BuildSettings()
 			OnChange(enabled, function(value)
 				root.SetEnabled(F, value)
 			end)
+			F.settingObjects = { enabled = enabled } -- root.SetOption goes through these
 			if F.OnOpen and CreateSettingsButtonInitializer and SettingsPanel then
 				local layout = SettingsPanel:GetLayout(category)
 				layout:AddInitializer(CreateSettingsButtonInitializer("", "Open " .. (F.title or key), function()
@@ -82,6 +83,7 @@ function root.BuildSettings()
 			end
 			for _, opt in ipairs(F.options) do
 				local setting = AddOption(category, F, opt)
+				F.settingObjects[opt.key] = setting
 				if setting and F.OnOptionChanged then
 					OnChange(setting, function(value)
 						F.OnOptionChanged(opt.key, value)

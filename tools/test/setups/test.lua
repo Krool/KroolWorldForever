@@ -443,6 +443,52 @@ Player = { name = "Legacy", realm = "Realm", class = "MAGE", level = 5 }
 check("entry saved before GUIDs existed: not new", ns.Identify(), false)
 check("and gets its GUID", ns.db.chars["Legacy-Realm"].guid, "Player-1-Legacy")
 
+-- ---------------------------------------------------------------- Krool World Settings part
+
+local KV, QT = __ns.features.killvalue, __ns.features.questtrash
+KV.db.cut, QT.db.tooltip, QT.db.enabled = 15, false, true
+KV.db.learned = { [299] = { n = 5 } }
+local kwfSetup = ns.SaveNew("Bundle settings")
+local kp = kwfSetup.parts.kwf
+check("kwf: every feature captured", kwfSetup.counts.kwf, #__ns.featureOrder)
+check("kwf: a range option captured", kp.killvalue.cut, 15)
+check("kwf: a false toggle captured", kp.questtrash.tooltip, false)
+check("kwf: learned data is not an option", kp.killvalue.learned, nil)
+check("kwf: enabled captured", kp.questtrash.enabled, true)
+
+KV.db.cut, QT.db.tooltip, QT.db.enabled = 5, true, false
+SetValueCalls = 0
+r = ns.Apply(kwfSetup, { kwf = true }, ns.db)
+check("kwf: range option restored", KV.db.cut, 15)
+check("kwf: false toggle restored", QT.db.tooltip, false)
+check("kwf: enabled restored", QT.db.enabled, true)
+check("kwf: goes through the panel's setting objects", SetValueCalls >= 3, true)
+check("kwf: written immediately, not on the panel's Apply step", RegisteredSettings.KroolWorldForever_killvalue_cut.immediate, true)
+check("kwf: reported", has(r.lines, "Krool World Settings: 3 changed"), true)
+check("kwf: no reload needed", r.reload, false)
+
+-- Undo restores the previous values.
+ns.Undo()
+check("kwf undo: range option back", KV.db.cut, 5)
+check("kwf undo: toggle back", QT.db.tooltip, true)
+
+-- Saved data from another version: clamped ranges, wrong types, unknown features, Setups stays on.
+local odd = {
+	name = "odd",
+	parts = {
+		kwf = {
+			killvalue = { cut = 500, learn = "yes" },
+			gone = { enabled = true },
+			setups = { enabled = false },
+		},
+	},
+}
+r = ns.Apply(odd, { kwf = true }, ns.db)
+check("kwf: range clamped to the slider", KV.db.cut, 100)
+check("kwf: wrong type skipped", KV.db.learn ~= "yes", true)
+check("kwf: unknown feature and bad value reported", has(r.lines, "2 not in this version"), true)
+check("kwf: never turns Setups off", ns.db.enabled, true)
+
 print(("%d checks, %d failed"):format(count, failures))
 if failures > 0 then
 	error("setups tests failed")

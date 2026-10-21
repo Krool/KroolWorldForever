@@ -29,6 +29,7 @@ Slash: `/kws save [name]`, `/kws list`, `/kws undo`.
 | Edit Mode Layout | The active layout (or which built-in one) | Added as a new character layout with a unique name and made active; refused when the character has 5 layouts. Finishes after a UI reload. |
 | Interface Settings | Server-stored CVars changed from default; never secure, locked or read-only ones | Set, and server-stored ones the setup left at default are reset. Graphics and sound are local (Config.wtf) and not touched. |
 | Addon List | Which addons are on for the character | Turned on/off for this character; never turns itself off; missing addons listed. Finishes after a reload. |
+| Krool World Settings | Every bundle feature's Enabled switch and declared options (Kill Value, Quest Trash, Setups...). A feature's new options are included automatically. Learned data is not. | Set through the settings panel's own setting objects, so the panel and each feature react at once. Slider values are clamped to the current range; options this version does not have are skipped and counted. Never turns Setups itself off. These settings are account-wide today, so this part is a backup/restore until some become per character. |
 
 Apply never runs in combat or while the cursor holds something. Undo restores bars, bindings,
 settings, addons and switches Edit Mode back; macros it created stay (it never edits existing ones).

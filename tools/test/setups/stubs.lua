@@ -189,6 +189,14 @@ Settings = {
 		function s:SetValueChangedCallback(fn)
 			self.cb = fn
 		end
+		function s:SetValue(value, immediate)
+			SetValueCalls = (SetValueCalls or 0) + 1
+			self.immediate = immediate
+			self.tbl[self.key] = value -- AddOn settings write their table, then notify
+			if self.cb then
+				self.cb(self, value)
+			end
+		end
 		RegisteredSettings[variable] = s
 		return s
 	end,
