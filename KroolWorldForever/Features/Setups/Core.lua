@@ -377,6 +377,15 @@ function apply.editmode(data, _, report)
 	end
 	local info = C_EditMode.GetLayouts()
 	local saved = info.layouts or {}
+	-- The same layout already saved here (e.g. a character re-applying its own setup): switch to it.
+	for i, l in ipairs(saved) do
+		local ok, str = pcall(C_EditMode.ConvertLayoutInfoToString, l)
+		if ok and str == data.str then
+			C_EditMode.SetActiveLayout(#presets + i)
+			report.lines[#report.lines + 1] = ('Edit Mode: switched to your existing layout "%s"'):format(l.layoutName)
+			return
+		end
+	end
 	local count = 0
 	for _, l in ipairs(saved) do
 		if l.layoutType == Enum.EditModeLayoutType.Character then

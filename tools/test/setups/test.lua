@@ -231,8 +231,19 @@ r = ns.Apply(main, { macros = true }, ns.db)
 check("full macro slots reported", has(r.lines, "could not create"), true)
 MacroLimits.char = 18
 
--- Edit Mode: name collision and full layouts.
-EditLayouts = { layouts = { { layoutName = "Krool", layoutType = 2 } }, activeLayout = 3 }
+-- Edit Mode: the identical layout already exists (re-applying your own setup) -> just switch to it.
+EditLayouts = { layouts = { { layoutName = "Other", layoutType = 2 }, { layoutName = "Krool", layoutType = 2 } }, activeLayout = 3 }
+SaveLayoutsCalls = {}
+r = ns.Apply(main, { editmode = true }, ns.db)
+check("identical layout: no copy saved", #SaveLayoutsCalls, 0)
+check("identical layout: switched to it", EditLayouts.activeLayout, 4)
+check("identical layout: reported", has(r.lines, "existing layout"), true)
+
+-- Edit Mode: same name, different layout -> a uniquely named copy.
+C_EditMode.ConvertLayoutInfoToString = function(layout)
+	return "LAYOUT:" .. layout.layoutName .. (layout.changed and "*" or "")
+end
+EditLayouts = { layouts = { { layoutName = "Krool", layoutType = 2, changed = true } }, activeLayout = 3 }
 SaveLayoutsCalls = {}
 ns.Apply(main, { editmode = true }, ns.db)
 check("layout name made unique", SaveLayoutsCalls[1] and SaveLayoutsCalls[1].layouts[4].layoutName, "Krool 2")
