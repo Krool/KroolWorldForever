@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.2
+
+- **Setups:** applying an Edit Mode layout the character already has (for example re-applying its own
+  setup) switches to that layout instead of adding a numbered copy.
+
 ## 0.2.1
 
 - **Setups fix:** the auto snapshot no longer refreshes at logout. The client has already emptied the
