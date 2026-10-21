@@ -49,6 +49,9 @@ before writing addon code.
 - Quest data comes from QuestieDB's public `LibQuestieDB`/`QuestDB`/`ItemDB` globals
   (github.com/Questie/QuestieDB docs/api.md). Numeric fields read 0, not nil. Race masks exceed
   32 bits: use arithmetic, not `bit.band`.
+- **In-game errors:** the dev install (`_forever_\Interface\AddOns`) has !BugGrabber and BugSack.
+  After the owner `/reload`s, `node tools\bugs.js [filter]` prints the latest session's errors with
+  stacks (`--all` for every session, `--locals` for locals). Read it before guessing at a bug report.
 
 ## Releases (same rules as KroolWorldUI)
 
