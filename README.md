@@ -15,8 +15,7 @@ All three are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
-*Kill Value tooltip. This shot is from the earlier 1.12 version (OctoKillValue); a Forever screenshot
-will replace it.*
+*Kill Value tooltip (earlier 1.12 version; a Forever screenshot is coming).*
 
 ## How it behaves
 

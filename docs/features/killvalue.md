@@ -1,8 +1,7 @@
 # Kill Value
 
 A feature (`killvalue`) of the Krool World Forever bundle addon (one addon, `KroolWorldForever`).
-Expected gold per kill on creature tooltips, for WoW Forever (Interface 16001). A port and
-redesign of OctoKillValue (1.12).
+Expected gold per kill on creature tooltips, for WoW Forever (Interface 16001).
 
 `value = average coin drop + sum(drop chance x average stack x item price)`
 

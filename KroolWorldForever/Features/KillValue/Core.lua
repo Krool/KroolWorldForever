@@ -1,5 +1,5 @@
 -- Kill Value: expected gold per kill on creature tooltips, for WoW Forever.
--- Port and redesign of OctoKillValue (1.12) for the Forever Mainline client (Interface 16001).
+-- Built for the Forever Mainline client (Interface 16001).
 --
 -- value(npc) = average coin drop + sum(drop chance x average stack x item price)
 --

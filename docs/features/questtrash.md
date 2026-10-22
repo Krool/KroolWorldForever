@@ -1,6 +1,6 @@
 # Quest Trash (feature)
 
-**Know which quest items you can safely delete.** WoW Forever port of OctoQuestTrash.
+**Know which quest items you can safely delete.**
 
 Hover any item. Quest items, and items any quest uses, get a verdict line:
 
@@ -25,18 +25,17 @@ deletables first. `/fqt status` shows the data source state. `/fqt options` open
 **QuestieDB** (the database addon Questie uses; install Questie or QuestieDB on its own). Without it
 the feature says so at login and `/fqt status` reports it; the rest of the bundle is unaffected.
 
-## What changed from OctoQuestTrash
+## How it decides
 
-- **Completion comes from the client** (`C_QuestLog.IsQuestFlaggedCompleted`). No pfQuest history,
-  no `/db query` backfill, no polluted-history caveat.
-- **Data comes from QuestieDB** instead of pfQuest: collect objectives, spell-objective items,
+- **Completion comes from the client** (`C_QuestLog.IsQuestFlaggedCompleted`), so there is no
+  history to backfill or repair.
+- **Quest links come from QuestieDB**: collect objectives, spell-objective items,
   required carried items, items handed out on accept, quest-starting items, and QuestieDB's own
   `relatedQuests`.
 - **Breadcrumbs** are recognized: a breadcrumb note is dead once its target quest is taken or done.
-- **Repeatables:** QuestieDB's repeatable/daily/weekly/monthly flags plus the old cmangos/Turtle list
-  (classic ids only) as an extra guard. Holiday and Darkmoon quest categories count as seasonal.
-- **Bagshui hook dropped** (Bagshui is a 1.12 addon). Bag addons can call
-  `KroolWorldForever.QuestTrash.GetVerdict(itemID)`, which returns a verdict string and the quest links.
+- **Repeatables:** QuestieDB's repeatable/daily/weekly/monthly flags plus a list of
+  repeatable quest ids from cmangos classic-db as an extra guard. Holiday and Darkmoon quest categories count as seasonal.
+- **Bag addons** can call `KroolWorldForever.QuestTrash.GetVerdict(itemID)`, which returns a verdict string and the quest links.
 
 ## Honest limits
 

@@ -60,8 +60,7 @@ Consequences:
   volumetric haze at all.
 - **Editing game files** (Light.db2 overrides, "no fog" patches, model edits) or **memory editing**.
   The EULA §1.C bans modifying the client and unauthorized third-party software. The client monitors
-  memory and checks files against CASC, so this is a ban risk. (OctoWoW's `patch-9.mpq` approach does not
-  carry over.)
+  memory and checks files against CASC, so this is a ban risk.
 
 ## Stress-test result (2026-10-21): no lever works
 

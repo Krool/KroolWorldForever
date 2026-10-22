@@ -34,7 +34,7 @@ ItemClass[5002] = QUEST
 -- 1003 daily (questFlags 4096), item 5003
 Quests[1003] = { name = "Daily", questFlags = 4096 + 8, objectives = { nil, nil, { { 5003 } } } }
 ItemClass[5003] = QUEST
--- 16 is on the cmangos/Turtle extra-repeatable list, item 5004
+-- 16 is on the cmangos extra-repeatable list, item 5004
 Quests[16] = { name = "Old Repeatable", objectives = { nil, nil, { { 5004 } } } }
 ItemClass[5004] = QUEST
 -- 1005 Midsummer quest, item 5005

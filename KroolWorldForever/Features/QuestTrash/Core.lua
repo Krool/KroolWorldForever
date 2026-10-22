@@ -1,5 +1,5 @@
 -- Quest Trash: tells you when a quest item can be safely deleted.
--- Port of OctoQuestTrash (1.12) to WoW Forever (Mainline client, Interface 16001).
+-- Built for WoW Forever (Mainline client, Interface 16001).
 --
 -- Data: QuestieDB (LibQuestieDB / QuestDB / ItemDB globals) for item-to-quest links and quest
 -- facts; the client itself (C_QuestLog.IsQuestFlaggedCompleted) for completion. The native
