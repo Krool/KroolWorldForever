@@ -2,7 +2,7 @@
 ## Title: Krool World Forever
 ## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters). /kwf
 ## Author: Krool
-## Version: 0.4.0
+## Version: 0.4.1
 ## Category: Interface Enhancements
 ## IconTexture: Interface\Icons\INV_Misc_Bag_10
 ## AddonCompartmentFunc: KroolWorldForever_OnCompartmentClick

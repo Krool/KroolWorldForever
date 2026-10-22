@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Removed legacy repeatable-quest ids not in cmangos; doc cleanup.
+
 ## 0.4.0
 
 - **Setups: new characters get the default automatically.** With a setup marked Use For New
