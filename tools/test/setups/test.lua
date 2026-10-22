@@ -146,6 +146,8 @@ local offers = ns.Offers()
 check("offers exclude nothing of Alt's yet", #offers, 2)
 check("default for new characters", (ns.SetDefault(main.id) or ns.db.default), main.id)
 ns.db.chars["Alt-Realm"] = { first = Clock }
+-- The picker path (auto-apply and auto-reload have their own tests at the end).
+ns.db.autoDefault, ns.db.autoReload = false, false
 ns.Settle(true)
 check("picker opens on a new character", KroolWorldForeverSetupsFrame:IsShown(), true)
 local F = KroolWorldForeverSetupsFrame
@@ -443,6 +445,132 @@ Player = { name = "Legacy", realm = "Realm", class = "MAGE", level = 5 }
 check("entry saved before GUIDs existed: not new", ns.Identify(), false)
 check("and gets its GUID", ns.db.chars["Legacy-Realm"].guid, "Player-1-Legacy")
 
+-- ---------------------------------------------------------------- Action Bars 2-8 on/off
+
+BarToggles = { true, true, false, true, false, false, false }
+local barsOn = ns.SaveNew("Bars on")
+check("bar toggles captured", barsOn.parts.bars.toggles[2], true)
+check("bar toggles do not count as slots", barsOn.counts.bars, (function()
+	local n = 0
+	for _ in pairs(Actions) do
+		n = n + 1
+	end
+	return n
+end)())
+BarToggles = { false, false, false, false, false, false, false }
+r = ns.Apply(barsOn, { bars = true }, ns.db)
+check("bar 2 switched on", BarToggles[1], true)
+check("bar 5 switched on", BarToggles[4], true)
+check("bar 4 stays off", BarToggles[3], false)
+check("bar toggles reported", has(r.lines, "3 extra bars switched on"), true)
+ns.Undo()
+check("undo switches the bars back off", BarToggles[1], false)
+-- A setup holding only the toggles (no slots) still applies them, and leaves the slots alone.
+local before = 0
+for _ in pairs(Actions) do
+	before = before + 1
+end
+r = ns.Apply({ name = "t", parts = { bars = { toggles = { true, false, false, false, false, false, false } } } }, { bars = true }, ns.db)
+check("toggles-only setup switches bar 2 on", BarToggles[1], true)
+check("toggles-only setup keeps the slots", (function()
+	local n = 0
+	for _ in pairs(Actions) do
+		n = n + 1
+	end
+	return n
+end)(), before)
+-- Forever can force bar visibility: then leave the toggles alone.
+ForcedBars = true
+BarToggles = { false, false, false, false, false, false, false }
+ns.Apply(barsOn, { bars = true }, ns.db)
+check("forced visibility: toggles untouched", BarToggles[1], false)
+ForcedBars = false
+
+-- ---------------------------------------------------------------- Edit Mode account options
+
+EditModeManagerFrame:Hide()
+EditLayouts = { layouts = {}, activeLayout = 2 } -- built-in Classic
+EditAccount = { [3] = 1, [7] = 1, [24] = 1 }
+local classic = ns.SaveNew("Classic look")
+check("em: built-in Classic captured as preset 2", classic.parts.editmode.preset, 2)
+check("em: account options captured", classic.parts.editmode.account[24], 1)
+EditLayouts = { layouts = {}, activeLayout = 1 }
+EditAccount = { [3] = 0, [7] = 1, [24] = 0 }
+r = ns.Apply(classic, { editmode = true }, ns.db)
+check("em: switched to Classic", EditLayouts.activeLayout, 2)
+check("em: target and focus shown again", EditAccount[3], 1)
+check("em: pet frame shown again", EditAccount[24], 1)
+check("em: options reported", has(r.lines, "2 options changed"), true)
+ns.Undo()
+check("em undo: back to Modern", EditLayouts.activeLayout, 1)
+check("em undo: account options back", EditAccount[3], 0)
+ns.Open(false)
+for _, s in ipairs(ns.List()) do
+	if s.id == classic.id then
+		F.rows[1].scripts.OnClick({ id = s.id })
+	end
+end
+local emLabel
+for _, cb in ipairs(F.checks) do
+	if cb.key == "editmode" then
+		emLabel = cb.label.text
+	end
+end
+check("window names the built-in layout", emLabel and emLabel:find("built-in Classic", 1, true) ~= nil, true)
+check("window counts the Edit Mode options", emLabel and emLabel:find("3 options", 1, true) ~= nil, true)
+
+-- ---------------------------------------------------------------- auto reload and auto default
+
+-- Manual apply that needs a reload: reloads by itself, and the report survives the reload.
+ns.db.autoReload = true
+Reloaded = false
+EditLayouts = { layouts = {}, activeLayout = 1 }
+ns.Open(false)
+for i, row in ipairs(F.rows) do
+	if row.id == classic.id then
+		row.scripts.OnClick(row)
+	end
+end
+F.apply:Click()
+AcceptPopup()
+check("apply reloads by itself when Edit Mode changed", Reloaded, true)
+check("the report is kept for after the reload", ns.db.pendingReport and ns.db.pendingReport.name, "Classic look")
+ns.Settle(false)
+check("the kept report is printed after the reload", ns.db.pendingReport, nil)
+-- Nothing that needs a reload: no reload.
+Reloaded = false
+ns.Apply({ name = "b", parts = { bindings = { { "JUMP", "SPACE" } } } }, { bindings = true }, ns.db)
+check("no reload when nothing needs one", ns.ReloadIfNeeded({ name = "b" }, { reload = false }), false)
+check("and the client was not reloaded", Reloaded, false)
+
+-- A brand-new character with a default set: applied at login, no picker, then reloaded.
+ns.db.autoDefault = true
+ns.SetDefault(classic.id)
+Player = { name = "Fresh", realm = "Realm", class = "WARRIOR", level = 1 }
+EditLayouts = { layouts = {}, activeLayout = 1 }
+F:Hide()
+Reloaded = false
+local isNewFresh = ns.Identify()
+ns.Settle(isNewFresh)
+check("default applied to the new character", EditLayouts.activeLayout, 2)
+check("no picker when the default was applied", F:IsShown(), false)
+check("the new character counts as onboarded", ns.db.chars["Fresh-Realm"].onboarded, true)
+check("and the UI reloads to finish", Reloaded, true)
+check("undo is available for the auto apply", ns.db.undo["Fresh-Realm"] ~= nil, true)
+-- Logging in again does not apply it a second time.
+EditLayouts.activeLayout = 1
+Reloaded = false
+ns.Settle(ns.Identify())
+check("not applied again on the next login", EditLayouts.activeLayout, 1)
+-- With the option off, the picker opens instead.
+ns.db.autoDefault = false
+Player = { name = "Picky", realm = "Realm", class = "MAGE", level = 1 }
+ns.Settle(ns.Identify())
+check("option off: the picker opens instead", F:IsShown(), true)
+check("option off: nothing applied", ns.db.chars["Picky-Realm"].onboarded, nil)
+F:Hide()
+ns.db.autoDefault, ns.db.autoReload = true, true
+
 -- ---------------------------------------------------------------- Krool World Settings part
 
 local KV, QT = __ns.features.killvalue, __ns.features.questtrash
@@ -450,7 +578,8 @@ KV.db.cut, QT.db.tooltip, QT.db.enabled = 15, false, true
 KV.db.learned = { [299] = { n = 5 } }
 local kwfSetup = ns.SaveNew("Bundle settings")
 local kp = kwfSetup.parts.kwf
-check("kwf: every feature captured", kwfSetup.counts.kwf, #__ns.featureOrder)
+check("kwf: every feature but Setups captured", kwfSetup.counts.kwf, #__ns.featureOrder - 1)
+check("kwf: Setups' own options are not part of a setup", kp.setups, nil)
 check("kwf: a range option captured", kp.killvalue.cut, 15)
 check("kwf: a false toggle captured", kp.questtrash.tooltip, false)
 check("kwf: learned data is not an option", kp.killvalue.learned, nil)
@@ -488,6 +617,10 @@ check("kwf: range clamped to the slider", KV.db.cut, 100)
 check("kwf: wrong type skipped", KV.db.learn ~= "yes", true)
 check("kwf: unknown feature and bad value reported", has(r.lines, "2 not in this version"), true)
 check("kwf: never turns Setups off", ns.db.enabled, true)
+-- A 0.3.0 setup that still holds Setups' options does not switch them back.
+ns.db.autoReload = true
+ns.Apply({ name = "old", parts = { kwf = { setups = { autoReload = false, picker = false } } } }, { kwf = true }, ns.db)
+check("kwf: Setups' own options never applied", ns.db.autoReload, true)
 
 print(("%d checks, %d failed"):format(count, failures))
 if failures > 0 then

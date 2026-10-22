@@ -296,6 +296,21 @@ function PickupAction(slot)
 	Cursor = Actions[slot]
 	Actions[slot] = nil
 end
+-- Action Bars 2-8 on/off, per character on the server.
+BarToggles = { false, false, false, false, false, false, false }
+ForcedBars = false
+function GetActionBarToggles()
+	return table.unpack(BarToggles)
+end
+function SetActionBarToggles(...)
+	BarToggles = { ... }
+end
+C_GameRules = {
+	IsMultiActionBarVisibilityForced = function()
+		return ForcedBars
+	end,
+}
+
 C_ActionBar = {
 	HasAction = function(slot)
 		return Actions[slot] ~= nil
@@ -540,6 +555,17 @@ C_EditMode = {
 	IsValidLayoutName = function(name)
 		return #name > 0 and #name <= 32
 	end,
+	GetAccountSettings = function()
+		local out = {}
+		for setting, value in pairs(EditAccount) do
+			out[#out + 1] = { setting = setting, value = value }
+		end
+		return out
+	end,
+	SetAccountSetting = function(setting, value)
+		EditAccount[setting] = value
+	end,
 }
+EditAccount = { [3] = 1, [7] = 1, [24] = 0 } -- ShowTargetAndFocus, ShowCastBar, ShowPetFrame
 EditModeManagerFrame = NewWidget("Frame")
 EditModeManagerFrame:Hide()

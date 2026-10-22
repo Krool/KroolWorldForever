@@ -50,7 +50,13 @@ local function PartCount(s, key)
 		if not e then
 			return "none"
 		end
-		return e.preset and "built-in" or ('"' .. tostring(e.name) .. '"')
+		local which = e.preset == 1 and "built-in Modern" or e.preset == 2 and "built-in Classic"
+			or e.preset and "built-in" or ('"' .. tostring(e.name) .. '"')
+		local n = 0
+		for _ in pairs(e.account or {}) do
+			n = n + 1
+		end
+		return n > 0 and (which .. " + " .. n .. " options") or which
 	end
 	return n .. " " .. unit[key]
 end
@@ -263,6 +269,7 @@ local function Build()
 						c.onboarded, c.askAgain = true, nil
 					end
 					onboarding = false
+					ns.ReloadIfNeeded(s, lastReport)
 				end
 				Refresh()
 			end
@@ -529,6 +536,22 @@ ns.options = {
 		default = true,
 	},
 	{
+		key = "autoDefault",
+		type = "toggle",
+		label = "Apply The Default Setup Automatically",
+		tooltip = "When a setup is marked Use For New Characters, a brand-new character gets it a few seconds "
+			.. "after its first login, with no picker. Off: the picker opens instead.",
+		default = true,
+	},
+	{
+		key = "autoReload",
+		type = "toggle",
+		label = "Reload Automatically After Apply",
+		tooltip = "Edit Mode layouts and the addon list only take effect after a UI reload. On: applying "
+			.. "reloads by itself when needed and prints the report again afterwards. Off: a Reload button appears.",
+		default = true,
+	},
+	{
 		key = "autosave",
 		type = "toggle",
 		label = "Auto Snapshot Each Character",
@@ -580,13 +603,67 @@ ns.OnOpen = function()
 	ns.Open(false)
 end
 
+-- Edit Mode and the addon list only take effect after a reload. Keep the report across it so the
+-- player still sees what changed (printed again after login).
+function ns.ReloadIfNeeded(setup, report)
+	if not (report and report.reload and ns.db.autoReload) then
+		return false
+	end
+	ns.db.pendingReport = { name = setup.name, lines = report.lines, at = time() }
+	ns:Print("reloading the UI to finish (Edit Mode, addon list)")
+	C_UI.Reload()
+	return true
+end
+
+-- Every part the setup holds.
+local function AllParts(s)
+	local which = {}
+	for _, p in ipairs(ns.PARTS) do
+		which[p.key] = s.parts and s.parts[p.key] ~= nil
+	end
+	return which
+end
+
 local function Settle(wasNew)
 	ready = true
-	if ns.db.autosave then
-		ns.AutoSnapshot()
+	local pending = ns.db.pendingReport
+	if pending then
+		ns.db.pendingReport = nil
+		ns:Print(("applied %s:"):format(tostring(pending.name)))
+		for _, line in ipairs(pending.lines or {}) do
+			print("  " .. line)
+		end
 	end
 	local c = ns.db.chars[ns.CharKey()]
 	local fresh = c and not c.onboarded and (wasNew or c.askAgain)
+	-- A brand-new character with a default chosen: apply it now, no picker. Choosing "Use For New
+	-- Characters" is the player's standing OK for this. Snapshot first so the undo point is real.
+	local default = ns.Get(ns.db.default)
+	-- Compare by id, not name: an "(earlier character)" setup shares this name but is a fine default.
+	if fresh and wasNew and ns.db.autoDefault and default and default.id ~= c.auto then
+		if InCombatLockdown() then
+			c.askAgain = true
+		else
+			if ns.db.autosave then
+				ns.AutoSnapshot()
+			end
+			local report = ns.Apply(default, AllParts(default), ns.db)
+			if report.ok then
+				c.onboarded, c.askAgain = true, nil
+				ns:Print(("new character: applied your default setup %s"):format(default.name))
+				for _, line in ipairs(report.lines) do
+					print("  " .. line)
+				end
+				if not ns.ReloadIfNeeded(default, report) then
+					lastReport = report
+				end
+				return
+			end
+		end
+	end
+	if ns.db.autosave then
+		ns.AutoSnapshot()
+	end
 	if fresh and ns.db.picker and #ns.Offers() > 0 then
 		if InCombatLockdown() then
 			c.askAgain = true -- logged in fighting: offer next time instead of never

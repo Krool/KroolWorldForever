@@ -43,8 +43,10 @@ before writing addon code.
 - **Tooltip hooks cannot be removed.** Register once in OnEnable and check `ns.enabled` inside.
 - **Advice only.** Features never delete, sell, loot or click for the player. Any action needs the
   owner's explicit OK. The one approved exception (2026-10-21) is **Setups**: it changes bars,
-  bindings, macros, layouts, CVars and the addon list, but only on a click, out of combat, after a
-  confirm, with an undo snapshot taken first. Keep those four guards on anything it gains.
+  bindings, macros, layouts, CVars and the addon list, only out of combat, with an undo snapshot
+  taken first, and either on a confirmed click or (owner's request) automatically on a brand-new
+  character's first login when the player has marked a setup "Use For New Characters". It may
+  reload the UI by itself after an apply that needs it (option, default on). Keep those guards.
 - **Never let an error reach the client.** Tooltip and event work runs under pcall (the core
   dispatcher already wraps events).
 - Saved data: `KroolWorldForeverDB.features.<key>` is the feature's slice (`ns.db`). Option values

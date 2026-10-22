@@ -20,6 +20,7 @@ ns.PARTS = {
 }
 ns.RELOAD_PARTS = { editmode = true, addons = true } -- take effect after /reload
 
+local unpack = unpack or table.unpack -- the client's Lua 5.1 global; table.unpack in the test runner
 local MAX_SLOTS = 180
 local ACCOUNT_BINDINGS, CHARACTER_BINDINGS = 1, 2
 local SELF = "KroolWorldForever"
@@ -98,7 +99,18 @@ function capture.bars()
 			n = n + 1
 		end
 	end
+	-- Which of Action Bars 2-8 are switched on: separate from the slots, stored per character.
+	out.toggles = { GetActionBarToggles() }
 	return out, n
+end
+
+local function HasSlots(data)
+	for slot = 1, MAX_SLOTS do
+		if data[slot] then
+			return true
+		end
+	end
+	return false
 end
 
 function capture.bindings()
@@ -155,20 +167,32 @@ local function PresetCount()
 	return n > 0 and n or 2
 end
 
+-- Edit Mode's own checkboxes (Show Target and Focus, Cast Bar, Party Frames, Pet Frame...): account
+-- settings, separate from the layout. setting enum -> number.
+local function EditModeAccountSettings()
+	local out = {}
+	for _, s in ipairs(C_EditMode.GetAccountSettings() or {}) do
+		out[s.setting] = s.value
+	end
+	return out
+end
+
 function capture.editmode()
 	local info = C_EditMode.GetLayouts()
 	if not info or not info.activeLayout then
 		return nil, 0
 	end
+	local account = EditModeAccountSettings()
 	local presets = PresetCount()
 	if info.activeLayout <= presets then
-		return { preset = info.activeLayout }, 1
+		-- Built-in Modern or Classic: the layout itself is just which one.
+		return { preset = info.activeLayout, account = account }, 1
 	end
 	local layout = info.layouts[info.activeLayout - presets]
 	if not layout then
 		return nil, 0
 	end
-	return { name = layout.layoutName, str = C_EditMode.ConvertLayoutInfoToString(layout) }, 1
+	return { name = layout.layoutName, str = C_EditMode.ConvertLayoutInfoToString(layout), account = account }, 1
 end
 
 -- Server-stored CVars that are game state, not preferences: copying them would carry tutorial
@@ -253,7 +277,9 @@ function capture.kwf()
 	local out, n = {}, 0
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
-		if F.db then
+		-- Not Setups itself: its options (auto default, auto reload...) say how setups behave, and an
+		-- old setup must never switch them back.
+		if F.db and key ~= "setups" then
 			local values = { enabled = F.db.enabled }
 			for _, opt in ipairs(F.options) do
 				values[opt.key] = F.db[opt.key]
@@ -342,7 +368,19 @@ end
 -- A slot whose action this character cannot use (unknown spell, item not owned) keeps whatever
 -- the character already has there; only slots the setup leaves empty are cleared (clearEmpty).
 function apply.bars(data, opts, report)
-	if next(data) == nil and not opts.isUndo then
+	local toggles = data.toggles
+	if type(toggles) == "table" and #toggles > 0 and not C_GameRules.IsMultiActionBarVisibilityForced() then
+		local now, differs, shown = { GetActionBarToggles() }, false, 0
+		for i = 1, #toggles do
+			differs = differs or (now[i] and true or false) ~= (toggles[i] and true or false)
+			shown = shown + (toggles[i] and 1 or 0)
+		end
+		if differs then
+			SetActionBarToggles(unpack(toggles, 1, #toggles))
+			report.lines[#report.lines + 1] = ("Action Bars: %d extra bars switched on, as in the setup"):format(shown)
+		end
+	end
+	if not HasSlots(data) and not opts.isUndo then
 		-- Clearing every slot from an empty capture is never what anyone wants. (Undo may: it puts
 		-- back bars that really were empty.)
 		report.lines[#report.lines + 1] = "Action Bars: the setup has no bar slots saved; left your bars alone"
@@ -456,6 +494,18 @@ function apply.editmode(data, _, report)
 		-- Its in-memory layouts (and any unsaved changes) would fight ours.
 		report.lines[#report.lines + 1] = "Edit Mode: close Edit Mode first, then apply again"
 		return
+	end
+	if data.account then
+		local changed = 0
+		local now = EditModeAccountSettings()
+		for setting, value in pairs(data.account) do
+			if now[setting] ~= nil and now[setting] ~= value and pcall(C_EditMode.SetAccountSetting, setting, value) then
+				changed = changed + 1
+			end
+		end
+		if changed > 0 then
+			report.lines[#report.lines + 1] = ("Edit Mode: %d options changed (frames shown, snap, grid...)"):format(changed)
+		end
 	end
 	if data.preset or data.restore then
 		C_EditMode.SetActiveLayout(data.preset or data.restore)
@@ -577,7 +627,9 @@ function apply.kwf(data, _, report)
 	local changed, unknown = 0, 0
 	for key, values in pairs(data) do
 		local F = root.features[key]
-		if not F or not F.db then
+		if key == "setups" then
+			-- Saved by 0.3.0; Setups' own options are never applied (see capture.kwf).
+		elseif not F or not F.db then
 			unknown = unknown + 1
 		else
 			for _, opt in ipairs(F.options) do
@@ -592,8 +644,7 @@ function apply.kwf(data, _, report)
 					end
 				end
 			end
-			-- Never switch Setups itself off in the middle of its own apply.
-			if key ~= "setups" and type(values.enabled) == "boolean" and F.db.enabled ~= values.enabled then
+			if type(values.enabled) == "boolean" and F.db.enabled ~= values.enabled then
 				root.SetOption(F, "enabled", values.enabled)
 				changed = changed + 1
 			end
@@ -625,7 +676,9 @@ function ns.Apply(setup, which, opts)
 		undoParts.macros = nil
 		if undoParts.editmode then
 			local info = C_EditMode.GetLayouts()
-			undoParts.editmode = info and info.activeLayout and { restore = info.activeLayout } or nil
+			undoParts.editmode = info and info.activeLayout
+				and { restore = info.activeLayout, account = undoParts.editmode.account }
+				or nil
 		end
 		ns.db.undo = ns.db.undo or {}
 		ns.db.undo[ns.CharKey()] = {
