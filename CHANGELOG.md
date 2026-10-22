@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+- **Setups: new characters get the default automatically.** With a setup marked Use For New
+  Characters, a brand-new character applies it a few seconds after its first login and reloads; no
+  picker (option, on by default; off brings the picker back).
+- **Setups: reloads by itself** after an apply that needs it (Edit Mode, addon list) and prints the
+  report again after the reload (option, on by default).
+- **Setups: which action bars are switched on** (Action Bars 2-8) is now part of the Action Bars part.
+- **Setups: Edit Mode's own checkboxes** (show target and focus, cast bar, party frames, pet frame,
+  grid, snap...) are now part of the Edit Mode part. The window names the built-in layout (Modern or
+  Classic).
+- Setups' own options are no longer copied by the Krool World Settings part: an old setup could
+  switch auto reload or the picker off.
+
 ## 0.3.0
 
 - **Setups: Krool World Settings part.** A setup now also holds every bundle feature's Enabled switch
