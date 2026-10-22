@@ -74,5 +74,6 @@ Design rules (keep them when changing things):
 - QuestieDB numeric fields read `0`, not nil. Test `~= 0`.
 - Tooltip work runs under `pcall` and skips secret values.
 
-Data credits: [QuestieDB](https://github.com/Questie/QuestieDB) (Questie team),
-[cmangos classic-db](https://github.com/cmangos/classic-db). MIT licensed.
+Data credits: [QuestieDB](https://github.com/Questie/QuestieDB) (Questie team; read at runtime, not
+bundled) and [cmangos classic-db](https://github.com/cmangos/classic-db) (GPL-3.0; the repeatable quest
+ids in `Repeatables.lua`). The addon code is MIT licensed.

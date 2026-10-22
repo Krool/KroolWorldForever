@@ -1,27 +1,74 @@
 # Krool World Forever
 
-**Small quality-of-life features for World of Warcraft: Forever, in one addon.** Each feature has
-its own on/off switch, so you keep what you want and turn off the rest.
+Small quality-of-life features for **World of Warcraft: Forever**, in one addon. Each feature has its
+own on/off switch, so you keep what you want and turn off the rest.
 
-- **Pick what you want.** Every feature is a page under **Options > AddOns > Krool World Forever**
-  with an Enabled switch and its own settings. `/kwf list` shows them all, `/kwf <feature> on|off`
-  toggles one, and `/kwf` opens the settings.
-- **Advice only.** The addon never deletes, sells or loots anything for you. Setups is the one
-  feature that changes your UI, and only when you click Apply (with an undo).
-- **Plays by Forever's addon rules.** Nothing reads combat data Blizzard hides from addons. Every
-  feature checks for hidden ("secret") values and steps aside instead of erroring.
+**[Download the latest release](https://github.com/Krool/KroolWorldForever/releases/latest)**
 
-## At a glance
-
-| Feature | What you get | On by default |
+| Feature | What you get | Needs |
 |---|---|---|
-| **Quest Trash** | A keep/delete verdict on quest item tooltips, and `/fqt` lists what in your bags and bank you can throw away. Needs QuestieDB. | Yes |
-| **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price. It learns real drop rates from what you loot. | Yes |
-| **Setups** | Save a character's bars, keybindings, macros, Edit Mode layout, interface settings and addon list, then apply them to another character from a window (`/kws`). New characters get a picker on first login. | Yes |
+| **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` lists everything in your bags (and bank) you can throw away. | QuestieDB |
+| **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
+| **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings and addon list, then apply them to another character. New characters can start from a saved setup. | Nothing |
+
+All three are on by default.
+
+![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
+
+*Kill Value tooltip. This shot is from the earlier 1.12 version (OctoKillValue); a Forever screenshot
+will replace it.*
+
+## How it behaves
+
+- **Advice only.** Quest Trash and Kill Value never delete, sell, loot or click anything for you.
+  Setups is the one feature that changes your UI: only out of combat, only when you click Apply (or
+  for a brand-new character, if you marked a setup for that), and always with an undo snapshot first.
+- **Plays by Forever's addon rules.** Nothing reads combat data Blizzard hides from addons. Every
+  feature checks for hidden ("secret") values and steps aside instead of erroring. Inside instances,
+  where creature tooltip data is hidden, Kill Value shows nothing.
+- **Errors stay out of your way.** Tooltip and event code runs protected, so a bad value skips a line
+  instead of throwing a Lua error.
+
+## Install
+
+1. Download `KroolWorldForever-<version>.zip` from the
+   [releases page](https://github.com/Krool/KroolWorldForever/releases/latest).
+2. Unzip it into your Forever AddOns folder, so you end up with
+   `World of Warcraft\_forever_\Interface\AddOns\KroolWorldForever\KroolWorldForever_Forever.toc`.
+3. Restart the game (or `/reload`) and check that **Krool World Forever** is enabled in the AddOns list
+   on the character screen.
+
+Optional companions:
+
+- **QuestieDB** (comes with Questie): required for Quest Trash. Without it Quest Trash says so at login
+  and the other features work normally.
+- **Auctionator**: auction house prices for Kill Value. Without it Kill Value uses vendor prices.
+
+## Slash commands
+
+| Command | What it does |
+|---|---|
+| `/kwf` | Open the settings |
+| `/kwf list` | List the features and whether each is on |
+| `/kwf <feature> on` / `off` | Turn one feature on or off (`questtrash`, `killvalue`, `setups`) |
+| `/fqt` | Scan your bags (and the bank while it is open) and print every verdict, deletables first |
+| `/fqt status` | Show whether the quest data is ready |
+| `/fkv` | Full value breakdown for your target |
+| `/fkv id <npcId>` | Breakdown for any creature by id |
+| `/fkv status` / `config` / `help` | Data sources, current settings, all commands |
+| `/fkv reset learned` | Erase the drop rates learned from your loot |
+| `/kws` | Open the Setups window |
+| `/kws save [name]` | Save this character as a setup |
+| `/kws list` | List saved setups |
+| `/kws undo` | Undo the last apply on this character |
+
+`/questtrash`, `/killvalue` and `/kwsetups` work as long forms of `/fqt`, `/fkv` and `/kws`.
 
 ## Settings
 
-Generated from the features' own definitions by `tools/settings-doc.js`. Do not edit by hand.
+Every feature has a page under **Options > AddOns > Krool World Forever** with an Enabled switch and
+its own settings. The tables below are generated from the features' own definitions by
+`tools/settings-doc.js`. Do not edit them by hand.
 
 <!-- settings:begin -->
 ### Quest Trash
@@ -68,29 +115,45 @@ On by default: yes. Toggle: `/kwf setups on|off`. Commands: `/kws, /kwsetups`.
 | Clear Bar Slots The Setup Leaves Empty | On | On: an apply makes your bars match the setup exactly. Off: only fills slots, keeping anything already in a slot the setup leaves empty. |
 <!-- settings:end -->
 
-## Install
+## FAQ
 
-Not published yet. For now, link the folder from this repo (see Development).
+**Which game is this for?** World of Warcraft: Forever only (`_forever_` install folder, Interface
+16001). It does not load on Classic Era, Anniversary or retail.
 
-Optional companions: **QuestieDB** (required for Quest Trash, comes with Questie) and
-**Auctionator** (auction prices for Kill Value; vendor prices are used without it).
+**Has it been tested in the live game?** It loaded with zero Lua errors in the Forever stress test.
+The live game launches Nov 4, 2026; expect fixes in the first weeks.
+
+**Where do Kill Value's numbers come from?** A vanilla 1.12 loot baseline (cmangos classic-db), blended
+with the drop rates you record yourself as you loot. Forever may have rebalanced some loot, so creatures
+you farm get more accurate over time.
+
+**Why does Quest Trash say "keep" so often?** Every unknown fails toward keep. Tradable items are never
+told "delete", and repeatable or seasonal quest items are always kept.
+
+**Does Setups touch other characters?** Only the character you apply a setup to. Keybindings are saved
+per character by default (a setting switches that to account-wide).
+
+**Is this allowed?** Yes. It uses only the standard addon API: tooltips, the loot window, and (for
+Setups) the same bar, binding and macro calls any action bar profile addon uses, out of combat.
 
 ## Development
 
 ```
-.\scripts\link-addon.ps1 -AddOnsPath "<WoW>\<flavor folder>\Interface\AddOns"   # junction for dev
-cd tools\test; npm install; npm test                                            # all suites + API lint
-.\scripts\build.ps1                                                             # dist\KroolWorldForever-<v>.zip
-.\scripts\release.ps1 -Version x.y.z [-Publish]                                 # see CLAUDE.md
+.\scripts\link-addon.ps1 -AddOnsPath "<WoW>\_forever_\Interface\AddOns"   # junction for dev
+cd tools\test; npm install; npm test                                       # all suites + API lint
+.\scripts\build.ps1                                                        # dist\KroolWorldForever-<v>.zip
+.\scripts\release.ps1 -Version x.y.z [-Publish]                            # see CLAUDE.md
 ```
 
 - `KroolWorldForever/` is the shipped addon: `Core/` (registry, settings panel, lifecycle) and
   `Features/<Name>/` (one folder per feature).
 - `tools/test/<feature>/` holds one suite per feature: a stub client plus behavior checks. Each suite
-  loads the whole bundle.
+  loads the whole bundle under fengari.
 - `tools/forever-api/` holds the API allowlist lint. It checks every `C_*` call, event and `Enum`
   against Forever's API docs.
 - `tools/killvalue-data/` holds the Kill Value loot data generator (cmangos classic-db).
+- `tools/bugs.js` prints the Lua errors !BugGrabber saved in your Forever install.
+- `template/HelloForever` is a minimal addon skeleton.
 
 ### Research notes
 
@@ -101,12 +164,12 @@ cd tools\test; npm install; npm test                                            
 | [docs/03-toolchain.md](docs/03-toolchain.md) | Addon anatomy, editor setup, in-game tools, libraries, packaging, addon policy |
 | [docs/04-launch-checklist.md](docs/04-launch-checklist.md) | What to verify once the game is installed |
 | [docs/05-opportunities.md](docs/05-opportunities.md) | Gaps and addon ideas |
-| [docs/06-octowow-port-review.md](docs/06-octowow-port-review.md) | Which OctoWoW (1.12) addons port to Forever |
 | [docs/07-fog-control.md](docs/07-fog-control.md) | Fog/weather control: what Blizzard locked, what is left |
 | [docs/features/](docs/features) | Per-feature design notes and honest limits |
 | [docs/sources.md](docs/sources.md) | Sources with confidence tags |
 
-Nothing here has been run in the live game yet. The game launches Nov 4, 2026. See the launch
-checklist.
+## License
 
-MIT licensed.
+Code: [MIT](LICENSE), by Krool. Kill Value's loot baseline and Quest Trash's repeatable quest list are
+extracted from [cmangos classic-db](https://github.com/cmangos/classic-db) (GPL-3.0); see LICENSE.
+Quest data is read at runtime from [QuestieDB](https://github.com/Questie/QuestieDB), which is not bundled.
