@@ -74,6 +74,9 @@ before writing addon code.
   (`-Publish` once project ids and tokens exist). It syncs the TOC version, runs the tests,
   regenerates the README settings tables, builds `dist\KroolWorldForever-x.y.z.zip`, commits only
   TOC/CHANGELOG/README, tags `vx.y.z`, and pushes. Never ship two builds under one version.
+- The public download is a GitHub release per tag with the dist zip attached
+  (`gh release create vx.y.z dist\KroolWorldForever-x.y.z.zip`); release.ps1 does not do this yet.
+  The README links `releases/latest`. `dist/` is git-ignored.
 - `scripts\publish.ps1` (CurseForge + Wago) is UNTESTED until the projects exist. Ids go in the
   TOC (`X-Curse-Project-ID`, `X-Wago-ID`); tokens are the user env vars `CF_API_KEY` and
   `WAGO_API_TOKEN`. Never write them to a file or echo them.
