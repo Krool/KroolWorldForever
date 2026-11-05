@@ -5,7 +5,7 @@ Ships one addon, **Krool World Forever** (`KroolWorldForever/`), for World of Wa
 the owner's Valheim mod KroolWorldUI. Research lives in `docs/`; read `docs/02-addon-platform.md`
 before writing addon code.
 
-## Platform facts (verified 2026-10-20, beta 1.60.1.70450)
+## Platform facts (verified 2026-10-20 on beta 1.60.1.70450; live 70790 rechecked 2026-11-05)
 
 - Forever is a **Mainline** game type (same client/API as Midnight 12.1.5), NOT Classic Era. Use
   retail docs and the `forever` branch of Gethe/wow-ui-source.
@@ -23,8 +23,11 @@ before writing addon code.
   (2026-10-21) showed no lasting change from `ffxGlow`, horizon/farclip, `volumeFogLevel` or
   Compute Effects. No fog feature. See docs/07.
 - Install folder is `World of Warcraft\_forever_`, Battle.net product `wowf` (confirmed 2026-10-20).
-  The stress test serves build 1.60.1.70245, older than the 70450 allowlist; the bundle lints clean
-  against both. The live Interface number is unconfirmed: see `docs/04-launch-checklist.md`.
+  **Live (2026-11-04) is build 1.60.1.70790, Interface still 16001**; the allowlist is built from
+  wow-ui-source `forever` at 70790 (it tracks `wowf` since Nov 2). Still no `WOW_PROJECT_FOREVER`.
+- **Protected calls need a click.** `C_UI.Reload` (and anything else hardware-event restricted) is
+  blocked with `ADDON_ACTION_BLOCKED` from a timer or event handler; the API docs carry no flag for
+  it, so the lint cannot see it. The Setups test stubs model this (`HardwareDepth`, `BlockedCalls`).
 
 ## Bundle rules
 
@@ -45,8 +48,10 @@ before writing addon code.
   owner's explicit OK. The one approved exception (2026-10-21) is **Setups**: it changes bars,
   bindings, macros, layouts, CVars and the addon list, only out of combat, with an undo snapshot
   taken first, and either on a confirmed click or (owner's request) automatically on a brand-new
-  character's first login when the player has marked a setup "Use For New Characters". It may
-  reload the UI by itself after an apply that needs it (option, default on). Keep those guards.
+  character's first login when the player has marked a setup "Use For New Characters". Brand-new
+  means level 1 with zero XP, not merely "not seen by the addon yet" (that is the picker only). It
+  may reload the UI by itself after a clicked apply that needs it (option, default on); the
+  automatic apply opens the window on its result with Reload Now instead. Keep those guards.
 - **Never let an error reach the client.** Tooltip and event work runs under pcall (the core
   dispatcher already wraps events).
 - Saved data: `KroolWorldForeverDB.features.<key>` is the feature's slice (`ns.db`). Option values

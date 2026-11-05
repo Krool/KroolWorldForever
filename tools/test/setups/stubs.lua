@@ -110,9 +110,19 @@ end
 function Widget:CreateTexture()
 	return NewWidget("Texture")
 end
+-- A click is a hardware event: protected calls made inside it are allowed (see Protected below).
+HardwareDepth = 0
+function Hardware(fn, ...)
+	HardwareDepth = HardwareDepth + 1
+	local ok, err = pcall(fn, ...)
+	HardwareDepth = HardwareDepth - 1
+	if not ok then
+		error(err, 0)
+	end
+end
 function Widget:Click()
 	if self.scripts.OnClick then
-		self.scripts.OnClick(self)
+		Hardware(self.scripts.OnClick, self)
 	end
 end
 
@@ -168,7 +178,27 @@ function AcceptPopup(text)
 	function dialog:GetEditBox()
 		return box
 	end
-	StaticPopupDialogs[p.which].OnAccept(dialog, p.data)
+	Hardware(StaticPopupDialogs[p.which].OnAccept, dialog, p.data) -- the player clicked Accept
+end
+
+-- Tooltip: records what the last OnEnter showed.
+GameTooltip = NewWidget("GameTooltip")
+GameTooltip.lines = {}
+function GameTooltip:SetOwner(owner)
+	self.owner, self.lines = owner, {}
+end
+function GameTooltip:SetText(t)
+	self.lines = { t }
+end
+function GameTooltip:AddLine(t)
+	table.insert(self.lines, t)
+end
+function Hover(widget)
+	GameTooltip.lines = {}
+	if widget.scripts.OnEnter then
+		widget.scripts.OnEnter(widget)
+	end
+	return GameTooltip.lines
 end
 
 -- Settings: same recorder as the other suites.
@@ -231,9 +261,22 @@ function CreateSettingsButtonInitializer(name, text, onClick)
 end
 
 SlashCmdList = {}
-C_UI = { Reload = function()
+-- Protected functions run only inside a hardware event (a click or key press). Anywhere else (a
+-- timer, an event handler) the live client blocks the call with ADDON_ACTION_BLOCKED and nothing
+-- happens: recorded here so a test can assert none were blocked.
+BlockedCalls = {}
+local function Protected(name, fn)
+	return function(...)
+		if HardwareDepth == 0 then
+			table.insert(BlockedCalls, name)
+			return
+		end
+		return fn(...)
+	end
+end
+C_UI = { Reload = Protected("C_UI.Reload", function()
 	Reloaded = true
-end }
+end) }
 C_ClassColor = { GetClassColor = function()
 	return nil
 end }
@@ -252,6 +295,9 @@ function UnitClass()
 end
 function UnitLevel()
 	return Player.level
+end
+function UnitXP()
+	return Player.xp or 0
 end
 function GetNormalizedRealmName()
 	return Player.realm

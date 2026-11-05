@@ -1,14 +1,41 @@
 # Forever as an addon platform
 
-Snapshot 2026-10-20, beta build 1.60.1.70450. Sources in [sources.md](sources.md). Anything marked
-**UNCONFIRMED** belongs on the [launch checklist](04-launch-checklist.md).
+Snapshot 2026-10-20, beta build 1.60.1.70450, with a live-launch update (2026-11-05, build 70790)
+below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belongs on the
+[launch checklist](04-launch-checklist.md).
+
+## Live launch update (2026-11-05, build 1.60.1.70790)
+
+- **Build:** launch shipped 70790 (`.build.info`, product `wowf`). Builds since the beta snapshot:
+  70532 (Oct 22), 70707 (Nov 2), 70755 (Nov 3), 70790 (Nov 4). wow-ui-source `forever` is at 70790
+  and tracks the `wowf` product since Nov 2.
+- **Interface stays 16001** (wiki `Template:LatestPatchInfo`, `wowf` row, 2026-11-03; Questie and
+  QuestieDB TOCs of Nov 5 agree). Not yet confirmed with `/dump` in-game.
+- **No `WOW_PROJECT_FOREVER`.** Only `WOW_PROJECT_CAMELOT = 18`. Blizzard TOCs use the `camelot`
+  load token, none use `forever`.
+- **API drift vs 70450 is tiny:** +`C_ActionBar.IsHighestSpellRank`, +`C_BattleNet.GetDefaultTitleWhisperTarget`,
+  `C_GameRules.SetForeverExperiencePreset` split into `...PreLogin` / `...PostLogin`,
+  +`C_PetInfo.IsPetOrderMoveToPending`, events +`PET_ORDER_MOVE_TO_PENDING_CHANGED`,
+  +`SETTINGS_HEADER_TEXT_UPDATE`. Enum `ForeverExperiencePreset.Modern` renamed `Enhanced`.
+- **More secrets:** loss-of-control data is always secret (even for the player), `UnitCombat`
+  amounts are secret, damage meter `specIconID` became secret, `C_Spell.IsSpellCrowdControl` takes
+  secret arguments only from untainted code.
+- **`C_UI.Reload` needs a hardware event** (a click or key press). From a timer or event handler the
+  client blocks it with `ADDON_ACTION_BLOCKED` (our Setups hit this on 2026-11-04). The generated API
+  docs carry no flag for it, so an allowlist cannot catch it; the wiki marks it `restrictedapi|hwevent`.
+- `import()` exists (Blizzard_GamepadActionBars calls it); whether addons may call it is unconfirmed.
+- Beta 5 note missing from our docs: importing an Edit Mode layout string from an older version no
+  longer raises an error.
+- **Sell prices:** of 2,110 items in both wago.tools ItemSparse (70790) and Kill Value's table, 17
+  differ (mostly Naxxramas, about 0.25x; six now sell for 0). Another 4,192 have no client row: their
+  price comes from the server at runtime, so the runtime price is the authority.
 
 ## Identity cheat sheet
 
 | Item | Value | Notes |
 |---|---|---|
-| `## Interface:` | `16001` | Confirmed for Beta and Test. Live value is **UNCONFIRMED** (wiki row blank). Check with `/dump select(4, GetBuildInfo())`. |
-| Client version | `1.60.1` | Latest build seen: 70450 (Oct 16). |
+| `## Interface:` | `16001` | Beta, Test and live 70790 (wiki, 2026-11-03). In-game `/dump select(4, GetBuildInfo())` not run yet. |
+| Client version | `1.60.1` | Live launch build: 70790 (Nov 4). |
 | Code family | **Mainline** (same as Midnight) | Family TOC suffix `_Mainline.toc` loads on Forever too. |
 | Game type | `camelot`, alias `forever` (since build 70291) | `[Game]` resolves to `"Camelot"`. The wiki says it "may be changed to Forever in the future." |
 | TOC filename | `MyAddon_Forever.toc` (or `_Camelot.toc`) | Lookup order: game suffix, then family suffix, then plain `MyAddon.toc`. |
@@ -85,13 +112,14 @@ deliberately closed.
 
 | Addon | Forever? | Notes |
 |---|---|---|
-| Questie | Yes | `Questie_Camelot.toc` (16001), v12.1.0 on Oct 12. The unofficial `questie-forever` CurseForge package is NOT theirs. Good reference repo. |
+| Questie | Yes | v12.6.1 (Nov 5) ships `Questie_Forever.toc` and `_Camelot.toc` (16001); 12.2.0 fixed map-icon errors in combat and secret-aura taint. QuestieDB is a separate install now (1.0.11, Nov 5, Forever data); the CurseForge app does not pull it in (Questie #8149, #8161). The unofficial `questie-forever` CurseForge package is NOT theirs. Good reference repo. |
 | Details! | Yes | `Details_Camelot.toc` plus plugins. |
 | DBM | Yes | Multi-interface TOC includes 16001. Secret-based alert systems extended to Forever. |
 | BigWigs | Yes | 16001 in the Interface list. Retail modules gated with `AllowLoadGameType`. Good reference for multi-flavor TOC tricks. |
 | ElvUI | Yes | Skin fixes for Forever. |
-| **WeakAuras** | **No** | No Mainline/Camelot TOC (it stopped at Midnight). A third-party "EverAuras" exists (unverified). |
-| Auctionator | Unverified | Only fan sites claim support. |
+| **WeakAuras** | **No** | Still no Mainline/Camelot TOC at launch (repo pushed Nov 2). A third-party "EverAuras" exists (unverified). |
+| Auctionator | Yes | 341 (Oct 13) declares 16001 and CurseForge lists it under WoW Forever. No public repo. |
+| BugGrabber / BugSack | Yes | v12.1.1 / v12.1.9 (Oct 26, cleanups) list 16001. |
 | Bagnonium, LibTSMCore | Patched | Fixes for the project ID change and missing classic templates are useful to read. |
 
 Lessons from what broke: the project ID switch (1 to 18), classic templates missing on a modern client
@@ -103,8 +131,12 @@ taint on map calls, GUID obfuscation, reskinned unit frames.
 - **CurseForge:** Forever is `gameVersionTypeId=88568` (game version 1.60.1). Filter:
   `https://www.curseforge.com/wow/search?class=addons&gameVersionTypeId=88568`
 - **Wago Addons:** flavor `forever`, patch `1.60.1`, TOC suffixes `_Forever`/`_Camelot`.
-- **BigWigs packager (master):** game type `forever` (alias `camelot`), auto-detected from Interface
-  `16???`. Keywords `@version-forever@` / `@non-version-forever@`, `-g forever`. Uploads to CF and Wago.
+- **BigWigs packager (v2.7.0, Nov 5):** game type `forever` (alias `camelot`), auto-detected from
+  Interface `16???`. Keywords `@version-forever@` / `@non-version-forever@`, `-g forever`. Uploads to
+  CF and Wago. **It does not know the `_Forever.toc` suffix** (its lists end at `Camelot`), so with
+  our `_Forever`-only TOC it would misname or fail to find the TOC (read from its code, not run).
+  Add a `_Camelot.toc` or a plain `.toc` before adopting it.
+- **Wago** accepts `-Forever`, `_Forever`, `-Camelot`, `_Camelot`; forever patch `1.60.1` is live.
 - **WoWInterface:** not supported by the packager yet ("No WoWInterface game type match").
 - **WowUp / CurseForge app:** not verified.
 

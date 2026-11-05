@@ -181,8 +181,23 @@ check("bars: unknown warrior spell skipped, the mage's own spell stays", Actions
 check("bars: mount placed", Actions[6] and Actions[6][2], 502)
 check("bars: item not owned is skipped", Actions[5], nil)
 check("bars: slot empty in the setup is cleared", Actions[20], nil)
-check("report lists skipped spells", has(F.report.text and { F.report.text }, "Heroic Strike"), true)
-check("report lists the unsupported flyout", has({ F.report.text }, "flyout"), true)
+local function part(key)
+	for _, cb in ipairs(F.checks) do
+		if cb.key == key then
+			return cb
+		end
+	end
+end
+local barsRow = part("bars")
+check("after apply the rows show results", F.partsHeader.text, "What Changed")
+check("bars row: skipped spells make it a warning", barsRow.result and barsRow.result.level, "warn")
+check("bars row: summary without the label", barsRow.count.text:find("^%d+ placed") ~= nil, true)
+check("bars row: status icon instead of the checkbox", barsRow.status:IsShown() and not barsRow:IsShown(), true)
+check("bars row lists skipped spells", has(barsRow.result.details, "Heroic Strike"), true)
+check("bars row lists the unsupported flyout", has(barsRow.result.details, "flyout"), true)
+check("hovering the bars row shows the details", has(Hover(barsRow.row), "Heroic Strike"), true)
+check("bindings row: ok", part("bindings").result.level, "ok")
+check("the banner says what was applied", F.banner.text:find("Applied", 1, true) ~= nil, true)
 check("bindings replaced: F no longer jumps", Bound.F, nil)
 check("bindings replaced: SPACE jumps", Bound.SPACE, "JUMP")
 check("bindings saved per character", SavedBindingSet, 2)
@@ -513,7 +528,7 @@ end
 local emLabel
 for _, cb in ipairs(F.checks) do
 	if cb.key == "editmode" then
-		emLabel = cb.label.text
+		emLabel = cb.count.text
 	end
 end
 check("window names the built-in layout", emLabel and emLabel:find("built-in Classic", 1, true) ~= nil, true)
@@ -543,7 +558,10 @@ ns.Apply({ name = "b", parts = { bindings = { { "JUMP", "SPACE" } } } }, { bindi
 check("no reload when nothing needs one", ns.ReloadIfNeeded({ name = "b" }, { reload = false }), false)
 check("and the client was not reloaded", Reloaded, false)
 
--- A brand-new character with a default set: applied at login, no picker, then reloaded.
+-- A brand-new character with a default set: applied at login with no picker. The apply runs from a
+-- timer, where the client blocks C_UI.Reload (live 2026-11-04), so the window opens on the result
+-- with a Reload Now button instead of reloading by itself.
+check("no protected call blocked so far", #BlockedCalls, 0)
 ns.db.autoDefault = true
 ns.SetDefault(classic.id)
 Player = { name = "Fresh", realm = "Realm", class = "WARRIOR", level = 1 }
@@ -553,10 +571,33 @@ Reloaded = false
 local isNewFresh = ns.Identify()
 ns.Settle(isNewFresh)
 check("default applied to the new character", EditLayouts.activeLayout, 2)
-check("no picker when the default was applied", F:IsShown(), false)
 check("the new character counts as onboarded", ns.db.chars["Fresh-Realm"].onboarded, true)
-check("and the UI reloads to finish", Reloaded, true)
+check("auto apply makes no blocked protected call", #BlockedCalls, 0)
+check("auto apply does not reload by itself", Reloaded, false)
+check("the window opens on what was applied", F:IsShown(), true)
+check("not in picker mode", F.notNow:IsShown(), false)
+check("the applied setup is selected", F.name.text, "Classic look")
+check("the banner says it was applied", F.banner.text:find("applied", 1, true) ~= nil, true)
+check("Reload Now is offered", F.reload:IsShown(), true)
+F.reload:Click()
+check("clicking Reload Now reloads", Reloaded, true)
 check("undo is available for the auto apply", ns.db.undo["Fresh-Realm"] ~= nil, true)
+F:Hide()
+-- A character this addon has not seen, but not new to the game (installed later, or a default
+-- picked later): never applied by itself. The picker opens instead.
+Player = { name = "Veteran", realm = "Realm", class = "WARRIOR", level = 30 }
+EditLayouts = { layouts = {}, activeLayout = 1 }
+ns.Settle(ns.Identify())
+check("established character: default not applied", EditLayouts.activeLayout, 1)
+check("established character: nothing to undo", ns.db.undo["Veteran-Realm"], nil)
+check("established character: the picker opens instead", F:IsShown() and F.notNow:IsShown(), true)
+check("established character: the default is preselected", F.name.text, "Classic look")
+F:Hide()
+-- Level 1 with experience already earned (logged out and back before the first ding): not new.
+Player = { name = "Started", realm = "Realm", class = "WARRIOR", level = 1, xp = 40 }
+ns.Settle(ns.Identify())
+check("level 1 with xp: default not applied", ns.db.undo["Started-Realm"], nil)
+F:Hide()
 -- Logging in again does not apply it a second time.
 EditLayouts.activeLayout = 1
 Reloaded = false
@@ -621,6 +662,8 @@ check("kwf: never turns Setups off", ns.db.enabled, true)
 ns.db.autoReload = true
 ns.Apply({ name = "old", parts = { kwf = { setups = { autoReload = false, picker = false } } } }, { kwf = true }, ns.db)
 check("kwf: Setups' own options never applied", ns.db.autoReload, true)
+
+check("no protected call was ever blocked", #BlockedCalls, 0)
 
 print(("%d checks, %d failed"):format(count, failures))
 if failures > 0 then

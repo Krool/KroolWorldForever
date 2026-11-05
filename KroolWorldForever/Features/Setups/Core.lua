@@ -231,15 +231,31 @@ ns.IsStateCVar = IsStateCVar
 
 -- Only settings Blizzard stores on its servers: those are the interface choices that follow a
 -- character, and the ones a wipe or a new character loses. Graphics and sound live in Config.wtf.
+-- Which CVars qualify does not change during a session, so the console's full command list (several
+-- thousand entries) is filtered once; later snapshots read only the values of the ones kept.
+local serverCVarNames
+
+local function Qualifies(name)
+	local value, _, account, character, locked, secure, readOnly = C_CVar.GetCVarInfo(name)
+	return value ~= nil and (account or character) and not (locked or secure or readOnly)
+end
+
 local function ServerCVars()
-	local list = {}
-	local cvarType = Enum.ConsoleCommandType and Enum.ConsoleCommandType.Cvar or 0
-	for _, cmd in ipairs(ConsoleGetAllCommands() or {}) do
-		if cmd.commandType == cvarType and not IsStateCVar(cmd.command, cmd.help) then
-			local value, default, account, character, locked, secure, readOnly = C_CVar.GetCVarInfo(cmd.command)
-			if value ~= nil and (account or character) and not (locked or secure or readOnly) then
-				list[#list + 1] = { name = cmd.command, value = value, default = default }
+	if not serverCVarNames then
+		local names = {}
+		local cvarType = Enum.ConsoleCommandType and Enum.ConsoleCommandType.Cvar or 0
+		for _, cmd in ipairs(ConsoleGetAllCommands() or {}) do
+			if cmd.commandType == cvarType and not IsStateCVar(cmd.command, cmd.help) and Qualifies(cmd.command) then
+				names[#names + 1] = cmd.command
 			end
+		end
+		serverCVarNames = names
+	end
+	local list = {}
+	for _, name in ipairs(serverCVarNames) do
+		local value, default = C_CVar.GetCVarInfo(name)
+		if value ~= nil then
+			list[#list + 1] = { name = name, value = value, default = default }
 		end
 	end
 	return list
@@ -311,6 +327,14 @@ end
 -- -------------------------------------------------------------------- apply
 
 local apply = {}
+
+-- Marks how the part being applied went, for the window: "warn" when something was skipped, "fail"
+-- when nothing was applied. A fail is never downgraded to a warn.
+local function Flag(report, level)
+	if report.flag ~= "fail" then
+		report.flag = level
+	end
+end
 
 local function Same(slot, want)
 	local kind, id = GetActionInfo(slot)
@@ -384,6 +408,7 @@ function apply.bars(data, opts, report)
 		-- Clearing every slot from an empty capture is never what anyone wants. (Undo may: it puts
 		-- back bars that really were empty.)
 		report.lines[#report.lines + 1] = "Action Bars: the setup has no bar slots saved; left your bars alone"
+		Flag(report, "warn")
 		return
 	end
 	local placed, cleared, skipped = 0, 0, {}
@@ -405,6 +430,9 @@ function apply.bars(data, opts, report)
 		end
 	end
 	report.lines[#report.lines + 1] = ("Action Bars: %d placed, %d cleared, %d not available"):format(placed, cleared, #skipped)
+	if #skipped > 0 then
+		Flag(report, "warn")
+	end
 	for i = 1, math.min(#skipped, 12) do
 		report.lines[#report.lines + 1] = "  - " .. skipped[i]
 	end
@@ -416,6 +444,7 @@ end
 function apply.bindings(data, opts, report)
 	if #data == 0 and not opts.isUndo then
 		report.lines[#report.lines + 1] = "Keybindings: the setup has no keybindings saved; left yours alone"
+		Flag(report, "warn")
 		return
 	end
 	-- Full replace: clear every current key, then bind the setup's. The undo snapshot has the old set.
@@ -442,6 +471,9 @@ function apply.bindings(data, opts, report)
 		end
 	end
 	SaveBindings(opts.perCharBinds and CHARACTER_BINDINGS or ACCOUNT_BINDINGS)
+	if failed > 0 then
+		Flag(report, "warn")
+	end
 	report.lines[#report.lines + 1] = ("Keybindings: %d keys bound%s, saved %s"):format(
 		bound,
 		failed > 0 and (", " .. failed .. " for commands not available (an addon not loaded?)") or "",
@@ -473,6 +505,7 @@ function apply.macros(data, _, report)
 	end
 	if #failed > 0 then
 		report.lines[#report.lines + 1] = "  - could not create (macro slots full?): " .. table.concat(failed, ", ")
+		Flag(report, "warn")
 	end
 end
 
@@ -493,7 +526,17 @@ function apply.editmode(data, _, report)
 	if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
 		-- Its in-memory layouts (and any unsaved changes) would fight ours.
 		report.lines[#report.lines + 1] = "Edit Mode: close Edit Mode first, then apply again"
+		Flag(report, "fail")
 		return
+	end
+	-- Every change below takes effect after a reload; the failures that change nothing do not ask for one.
+	local function Done(line)
+		report.lines[#report.lines + 1] = line
+		report.needReload = true
+	end
+	local function Fail(line)
+		report.lines[#report.lines + 1] = line
+		Flag(report, "fail")
 	end
 	if data.account then
 		local changed = 0
@@ -504,23 +547,22 @@ function apply.editmode(data, _, report)
 			end
 		end
 		if changed > 0 then
-			report.lines[#report.lines + 1] = ("Edit Mode: %d options changed (frames shown, snap, grid...)"):format(changed)
+			Done(("Edit Mode: %d options changed (frames shown, snap, grid...)"):format(changed))
 		end
 	end
 	if data.preset or data.restore then
 		C_EditMode.SetActiveLayout(data.preset or data.restore)
-		report.lines[#report.lines + 1] = data.preset and "Edit Mode: switched to a built-in layout"
-			or "Edit Mode: switched back to the previous layout"
+		Done(data.preset and "Edit Mode: switched to a built-in layout" or "Edit Mode: switched back to the previous layout")
 		return
 	end
 	local layout = data.str and C_EditMode.ConvertStringToLayoutInfo(data.str)
 	if not layout then
-		report.lines[#report.lines + 1] = "Edit Mode: the saved layout could not be read"
+		Fail("Edit Mode: the saved layout could not be read")
 		return
 	end
 	local presets = Presets()
 	if not presets then
-		report.lines[#report.lines + 1] = "Edit Mode: Blizzard's layout list is not loaded; open Edit Mode once and apply again"
+		Fail("Edit Mode: Blizzard's layout list is not loaded; open Edit Mode once and apply again")
 		return
 	end
 	local info = C_EditMode.GetLayouts()
@@ -530,7 +572,7 @@ function apply.editmode(data, _, report)
 		local ok, str = pcall(C_EditMode.ConvertLayoutInfoToString, l)
 		if ok and str == data.str then
 			C_EditMode.SetActiveLayout(#presets + i)
-			report.lines[#report.lines + 1] = ('Edit Mode: switched to your existing layout "%s"'):format(l.layoutName)
+			Done(('Edit Mode: switched to your existing layout "%s"'):format(l.layoutName))
 			return
 		end
 	end
@@ -542,7 +584,7 @@ function apply.editmode(data, _, report)
 	end
 	local max = Constants and Constants.EditModeConsts and Constants.EditModeConsts.EditModeMaxLayoutsPerType or 5
 	if count >= max then
-		report.lines[#report.lines + 1] = ("Edit Mode: this character already has %d layouts; delete one in Edit Mode and apply again"):format(max)
+		Fail(("Edit Mode: this character already has %d layouts; delete one in Edit Mode and apply again"):format(max))
 		return
 	end
 	layout.layoutType = Enum.EditModeLayoutType.Character
@@ -558,7 +600,7 @@ function apply.editmode(data, _, report)
 	all[#all + 1] = layout
 	C_EditMode.SaveLayouts({ layouts = all, activeLayout = info.activeLayout })
 	C_EditMode.OnLayoutAdded(#all, true, true)
-	report.lines[#report.lines + 1] = ('Edit Mode: added layout "%s" for this character'):format(layout.layoutName)
+	Done(('Edit Mode: added layout "%s" for this character'):format(layout.layoutName))
 end
 
 function apply.cvars(data, _, report)
@@ -575,6 +617,9 @@ function apply.cvars(data, _, report)
 				failed = failed + 1
 			end
 		end
+	end
+	if failed > 0 then
+		Flag(report, "warn")
 	end
 	report.lines[#report.lines + 1] = ("Interface Settings: %d changed%s"):format(set, failed > 0 and (", " .. failed .. " refused") or "")
 end
@@ -605,8 +650,10 @@ function apply.addons(data, _, report)
 	end
 	table.sort(missing)
 	report.lines[#report.lines + 1] = ("Addon List: %d changed"):format(changed)
+	report.needReload = changed > 0 -- an addon list that already matches needs no reload
 	if #missing > 0 then
 		report.lines[#report.lines + 1] = "  - not installed here: " .. table.concat(missing, ", ")
+		Flag(report, "warn")
 	end
 end
 
@@ -656,10 +703,38 @@ function apply.kwf(data, _, report)
 	)
 end
 
+local LABEL = {}
+for _, p in ipairs(ns.PARTS) do
+	LABEL[p.key] = p.label
+end
+
+-- One part's outcome, from the report lines it added: its last top-level line is the summary (the
+-- "Label: " prefix dropped), everything else (earlier top-level lines, "  - " detail lines) goes in
+-- details. level is ok, warn or fail (see Flag).
+local function Outcome(report, first)
+	local out = { level = report.flag or "ok", details = {} }
+	for i = first, #report.lines do
+		local line = report.lines[i]
+		local detail = line:match("^%s+%-%s*(.*)$")
+		if not detail and out.text then
+			detail = out.text -- an earlier summary line becomes a detail
+		end
+		if detail then
+			out.details[#out.details + 1] = detail
+		end
+		if not line:match("^%s+%-") then
+			out.text = line:match("^[^:]+:%s*(.*)$") or line
+		end
+	end
+	out.text = out.text or "already matches"
+	return out
+end
+
 -- Applies the chosen parts of a setup to the current character.
--- Returns report { ok, lines, reload } where reload means a /reload finishes the job.
+-- Returns report { ok, lines, reload, parts } where reload means a /reload finishes the job and
+-- parts[key] is that part's Outcome.
 function ns.Apply(setup, which, opts)
-	local report = { ok = false, lines = {}, reload = false }
+	local report = { ok = false, lines = {}, reload = false, parts = {} }
 	if InCombatLockdown() then
 		report.lines[1] = "Not in combat. Try again when combat ends."
 		return report
@@ -693,14 +768,19 @@ function ns.Apply(setup, which, opts)
 	for _, key in ipairs({ "macros", "bars", "bindings", "cvars", "addons", "kwf", "editmode" }) do
 		local data = setup.parts and setup.parts[key]
 		if which[key] and data then
+			local first = #report.lines + 1
+			report.flag, report.needReload = nil, nil
 			local ok, err = pcall(apply[key], data, opts, report)
 			if not ok then
-				report.lines[#report.lines + 1] = ("%s: failed (%s)"):format(key, tostring(err))
-			elseif ns.RELOAD_PARTS[key] then
+				report.lines[#report.lines + 1] = ("%s: failed (%s)"):format(LABEL[key], tostring(err))
+				Flag(report, "fail")
+			elseif ns.RELOAD_PARTS[key] and report.needReload then
 				report.reload = true
 			end
+			report.parts[key] = Outcome(report, first)
 		end
 	end
+	report.flag, report.needReload = nil, nil
 	ClearCursor()
 	report.ok = true
 	return report
