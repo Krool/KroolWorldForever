@@ -9,7 +9,7 @@ own on/off switch, so you keep what you want and turn off the rest.
 |---|---|---|
 | **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` lists everything in your bags (and bank) you can throw away. | QuestieDB |
 | **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
-| **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings and addon list, then apply them to another character. New characters can start from a saved setup. | Nothing |
+| **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
 
 All three are on by default.
 
@@ -21,7 +21,8 @@ All three are on by default.
 
 - **Advice only.** Quest Trash and Kill Value never delete, sell, loot or click anything for you.
   Setups is the one feature that changes your UI: only out of combat, only when you click Apply (or
-  for a brand-new character, if you marked a setup for that), and always with an undo snapshot first.
+  for a brand-new level 1 character, if you marked a setup for that), and always with an undo
+  snapshot first. A character with any experience is never changed without a click.
 - **Plays by Forever's addon rules.** Nothing reads combat data Blizzard hides from addons. Every
   feature checks for hidden ("secret") values and steps aside instead of erroring. Inside instances,
   where creature tooltip data is hidden, Kill Value shows nothing.
@@ -100,15 +101,15 @@ On by default: yes. Toggle: `/kwf killvalue on|off`. Commands: `/fkv, /killvalue
 
 ### Setups
 
-Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings and addon list, and apply them to another character. /kws opens the window.
+Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and Krool World settings, and apply them to another character. /kws opens the window.
 
 On by default: yes. Toggle: `/kwf setups on|off`. Commands: `/kws, /kwsetups`.
 
 | Setting | Default | What it does |
 |---|---|---|
-| Offer A Setup On New Characters | On | The first time a character logs in, open the Setups window so you can start from a saved setup. Preselects the setup marked for new characters. |
-| Apply The Default Setup Automatically | On | When a setup is marked Use For New Characters, a brand-new character gets it a few seconds after its first login, with no picker. Off: the picker opens instead. |
-| Reload Automatically After Apply | On | Edit Mode layouts and the addon list only take effect after a UI reload. On: applying reloads by itself when needed and prints the report again afterwards. Off: a Reload button appears. |
+| Offer A Setup On New Characters | On | The first time a character logs in with this addon, open the Setups window so you can start from a saved setup. Preselects the setup marked for new characters. |
+| Apply The Default Setup Automatically | On | When a setup is marked Use For New Characters, a brand-new character (level 1, first login) gets it a few seconds after logging in, and the Setups window shows what changed. Characters that are not brand-new get the picker instead. Off: the picker opens instead. |
+| Reload Automatically After Apply | On | Edit Mode layouts and the addon list take effect after a UI reload. On: Apply reloads by itself when needed. Off, and after the automatic apply on a new character (the game allows a reload only from a click): a Reload Now button appears. |
 | Auto Snapshot Each Character | On | Keep one automatic setup per character, refreshed after login and shortly after you change bars, keybindings, macros, Edit Mode or settings, so any character can copy any other. |
 | Applied Keybindings Are Per Character | On | On: applying a setup saves its keybindings for this character only. Off: for the whole account, which changes every character that uses account keybindings. |
 | Clear Bar Slots The Setup Leaves Empty | On | On: an apply makes your bars match the setup exactly. Off: only fills slots, keeping anything already in a slot the setup leaves empty. |
@@ -129,8 +130,10 @@ you farm get more accurate over time.
 **Why does Quest Trash say "keep" so often?** Every unknown fails toward keep. Tradable items are never
 told "delete", and repeatable or seasonal quest items are always kept.
 
-**Does Setups touch other characters?** Only the character you apply a setup to. Keybindings are saved
-per character by default (a setting switches that to account-wide).
+**Does Setups touch other characters?** Bars, macros, the addon list and per-character settings change
+only on the character you apply to. Keybindings do too by default (a setting switches them to
+account-wide). Some things the game stores for the whole account change for every character:
+account-wide interface settings, Edit Mode's own checkboxes, and this addon's settings.
 
 **Is this allowed?** Yes. It uses only the standard addon API: tooltips, the loot window, and (for
 Setups) the same bar, binding and macro calls any action bar profile addon uses, out of combat.

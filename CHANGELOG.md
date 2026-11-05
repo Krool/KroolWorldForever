@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.5.0
+
+- **Setups: redesigned window.** A card at the top shows the setup, an arrow, and the character it
+  goes onto. The list has class icons and levels, grouped into Saved Setups and Characters, with a
+  star on the setup used for new characters. Each part has its own icon and row, and the whole row
+  is clickable. After an apply the rows show a check, a warning or an X with that part's result;
+  hover a row for the details. Click a setup's name to rename it; Update and Delete are icons. Help
+  text moved into tooltips.
+- **Setups: fixed the blocked reload after a new character's automatic apply.** The game allows a
+  UI reload only from a click, so the reload after the automatic apply was blocked with an error,
+  and the Edit Mode layout and addon list never finished. Now the window opens on the result with a
+  Reload Now button.
+- **Setups: automatic apply only on brand-new characters** (level 1, no experience). Before, any
+  character the addon had not seen yet counted as new, so an existing character logging in for the
+  first time after you marked a default got it applied. Those characters get the picker instead.
+- Setups: asks for a reload only when Edit Mode or the addon list actually changed.
+- Setups: snapshots filter the game's CVar list once per session instead of on every snapshot.
+- `/kws undo` says when a reload is needed.
+- API allowlist rebuilt for the live build, 1.60.1.70790 (lint clean).
+
 ## 0.4.1
 
 - Removed legacy repeatable-quest ids not in cmangos; doc cleanup.
