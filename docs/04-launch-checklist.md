@@ -70,6 +70,13 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
       counts priced materials. Auctionator shows no second Disenchant line. Disenchant a few greens
       (or watch a disenchanter's trade) and compare with the tables: armor mostly dust, weapons
       mostly essence, about 5% shards.
+- [ ] Camp Guide 0.10.0: at a campfire (with Campfire Nearby in your buffs), hover each object: the
+      tooltip shows "Camp:" and its buff at your level. Note any object that shows nothing and the
+      exact name its tooltip shows (the data knows "Chair" and "Tent" besides the full names). Hover
+      the fire: slot count, how sitting works, and the objects you hovered. With a class buff on
+      (Blessing of Might, Fortitude...), the matching object says "Does not stack with your ...".
+      After sitting a minute, hover the Camp Benefits buff: a clash line or "None of these overlap".
+      Compare a value with the game's own (e.g. your Stamina before and after). `/kwc` lists all ten.
 - [x] Quest Trash: `/fqt status` reports QuestieDB found and the index ready (QuestieDB 1.0.6 then;
       it is a separate install, 1.0.11 on Nov 5).
 - [ ] Quest Trash: hover a quest item from a finished quest, then run `/fqt` with the bank open.

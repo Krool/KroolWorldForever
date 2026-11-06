@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0
+
+- **Camp Guide** (new): what a campfire gives you. Hover a camp object (the chair, the lodestone
+  and the rest) for its buff at your level, and whether a class buff you already have covers it:
+  "Does not stack with your Blessing of Might". Objects from skill 140 and 300 show the buff they
+  keep and what else they do. Hover the campfire for its slot count, how sitting works (a minute,
+  crafting counts, objects placed later need another sit) and the objects you have hovered around
+  it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. `/kwc`
+  lists all ten camp buffs at your level. Lines show only while you have Campfire Nearby, so an
+  inn's chair is left alone. The game cannot list a fire's objects for an addon: the campfire
+  lists the ones you hover.
+
 ## 0.9.0
 
 - **Disenchant Value** (new): weapon and armor tooltips (green and up) show what the item is worth

@@ -47,6 +47,12 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
 - **Sell prices:** of 2,110 items in both wago.tools ItemSparse (70790) and Kill Value's table, 17
   differ (mostly Naxxramas, about 0.25x; six now sell for 0). Another 4,192 have no client row: their
   price comes from the server at runtime, so the runtime price is the authority.
+- **Camping has no API** (2026-11-06, read from code, not seen in game): no camp function, event
+  or UI file in wow-ui-source `forever`. What an addon can read is the player's auras (Campfire
+  Nearby 1283391, Welcoming Campfire 1229739 / 1289723, Camp Benefits 1229741, one aura per bonus)
+  and the world tooltip of a hovered object (`Enum.TooltipDataType.Object`, name on line 1). Spell
+  ids and names: forever.warcraftdb.com's `/api/v1/tooltip/spell/<id>` (Forever client data;
+  wago.tools was down that day). Camp Guide is built on this.
 
 ## Identity cheat sheet
 

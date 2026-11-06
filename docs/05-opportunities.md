@@ -48,6 +48,10 @@ Against our features:
 - **Kill Value:** no Forever equivalent found. The nearest, Should I Grind This? (session gold per
   hour), is TBC-only with 28 downloads.
 - **Setups:** Myslot (bars, macros, bindings as an export string). Setups covers more.
+- **Camp Guide (0.10.0):** Campfire Tooltips: Forever (130 downloads, Oct 4) adds the same
+  per-object buff text; Happy Camper and SMore Skills share campfire locations; HastesSuperTweaks
+  and NaowhForever time the camp auras. Ours adds the clash with your own class buffs and the
+  campfire's list of what you hovered.
 
 ## Suggested first project
 

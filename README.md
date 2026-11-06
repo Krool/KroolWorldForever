@@ -15,8 +15,9 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
 | **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a skull button and a key that target it and mark it. Right-click the button to ignore a rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
 | **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, what that is worth at auction, and whether disenchanting it pays more than auctioning or vendoring it. Hold Shift for each material's chance and price. | Auctionator (for prices) |
+| **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
 
-All five are on by default.
+All six are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -24,7 +25,7 @@ All five are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value, Rare Alert and Disenchant Value never delete, sell, loot or click anything
+- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value and Camp Guide never delete, sell, loot or click anything
   for you. Rare Alert's marker comes from your own click or key press: the game does not let an
   addon place one by itself. Setups is the one feature that changes your UI: only out of combat,
   only when you click Apply (or for a brand-new level 1 character, if you marked a setup for that),
@@ -59,7 +60,7 @@ Optional companions:
 | `/kw` | Open the hub (again to close it) |
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
 | `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
@@ -76,10 +77,11 @@ Optional companions:
 | `/kwr test` | Show the mark button with a test entry, to place it (shift-drag) and try your key |
 | `/kwr nameplates` | Turn enemy nameplates on (rares are noticed as soon as their nameplate shows) |
 | `/kwd` | Disenchanting material prices from Auctionator (which ones still have none) |
+| `/kwc` | Every camp buff at your level, which ones a class buff of yours covers, and your Camp Benefits time |
 
 The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
-`/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert` and `/disenchantvalue` are long forms
-of `/fqt`, `/fkv`, `/kws`, `/kwr` and `/kwd`.
+`/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue` and `/campguide` are
+long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd` and `/kwc`.
 
 ## Settings
 
@@ -157,6 +159,17 @@ On by default: yes. Toggle: `/kwf disenchant on|off`. Commands: `/kwd, /disencha
 | Show On Item Tooltips | On | Adds the disenchant value to weapon and armor tooltips (green, blue and purple). |
 | Say What Pays Best | On | Compares disenchanting with the item's own auction price and its vendor price, after the 5% auction cut. Bound items are compared only when you can disenchant them yourself. |
 | Always List The Materials | Off | Lists each material with its chance and price. Off: hold Shift over the item to see them. |
+
+### Camp Guide
+
+Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it. The campfire lists the objects you have hovered around it.
+
+On by default: yes. Toggle: `/kwf camp on|off`. Commands: `/kwc, /campguide`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Show On Camp Objects | On | Adds each camp object's buff at your level to its tooltip, and on the campfire how its buffs work and the objects you have hovered there. Only while the game says a campfire is nearby. |
+| Notes On Camp Benefits | On | On the Camp Benefits buff, names any camp bonus in it that does not stack with a class buff you have, such as the Lodestone with Blessing of Might. |
 <!-- settings:end -->
 
 ## FAQ
@@ -185,6 +198,17 @@ to Forever. Forever's disenchanting looks the same so far (same dust, essence an
 if you see it differ, please open an issue. Auctionator has a disenchant line too, but on Forever it loads its retail
 tables, so items of classic levels get none. "Best" compares after the 5% auction cut, and before
 any tip you give a disenchanter.
+
+**Where do Camp Guide's numbers come from?** The camp objects' own tooltips in the 1.60.1.70790
+client, level band by level band, as Endgame Tools lists them, and the camp spells in Forever's client
+data (forever.warcraftdb.com). A camp buff does not stack with the class buff it copies (at level 60
+the class buff gives more), so with Blessing of Might on you, the Lodestone's attack power does not
+add to it.
+
+**Why doesn't the campfire list its objects by itself?** The game gives addons no way to see the
+objects around a fire. Camp Guide knows each one by the name its tooltip shows when you hover it, so
+the campfire lists the ones you have hovered. It works only while you have Campfire Nearby (the aura
+everyone close to a fire gets), so an inn's chair is left alone.
 
 **Is this allowed?** Yes. It uses only the standard addon API: tooltips, the loot window, and (for
 Setups) the same bar, binding and macro calls any action bar profile addon uses, out of combat.
