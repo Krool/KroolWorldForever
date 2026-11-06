@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0
+
+- **Disenchant Value** (new): weapon and armor tooltips (green and up) show what the item is worth
+  disenchanted, at Auctionator's prices for its dust, essences and shards, and a Best line:
+  disenchant it, sell it at auction, or sell it to a vendor, after the 5% auction cut. Hold Shift
+  for each material's chance and price. Bound items skip the auction compare and get the Best line
+  only if you can disenchant. The tables are the 1.12 ones: exact for classic items, by quality,
+  weapon or armor and item level for Forever's new items. Auctionator's own disenchant line does
+  not cover classic-level items on Forever (it loads its retail tables). `/kwd` lists the material
+  prices, so you can see which still need an auction scan.
+
 ## 0.8.0
 
 - **Rare Alert: turn enemy nameplates on in one click.** Rares are noticed as soon as their

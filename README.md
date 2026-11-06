@@ -14,8 +14,9 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
 | **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a skull button and a key that target it and mark it. Right-click the button to ignore a rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
+| **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, what that is worth at auction, and whether disenchanting it pays more than auctioning or vendoring it. Hold Shift for each material's chance and price. | Auctionator (for prices) |
 
-All four are on by default.
+All five are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -23,7 +24,7 @@ All four are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value and Rare Alert never delete, sell, loot or click anything
+- **Advice only.** Quest Trash, Kill Value, Rare Alert and Disenchant Value never delete, sell, loot or click anything
   for you. Rare Alert's marker comes from your own click or key press: the game does not let an
   addon place one by itself. Setups is the one feature that changes your UI: only out of combat,
   only when you click Apply (or for a brand-new level 1 character, if you marked a setup for that),
@@ -48,7 +49,8 @@ Optional companions:
 
 - **QuestieDB** (comes with Questie): required for Quest Trash. Without it Quest Trash says so at login
   and the other features work normally.
-- **Auctionator**: auction house prices for Kill Value. Without it Kill Value uses vendor prices.
+- **Auctionator**: auction house prices for Kill Value and Disenchant Value. Without it Kill Value
+  uses vendor prices, and Disenchant Value names the materials without prices.
 
 ## Slash commands
 
@@ -57,7 +59,7 @@ Optional companions:
 | `/kw` | Open the hub (again to close it) |
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
 | `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
@@ -73,10 +75,11 @@ Optional companions:
 | `/kwr unignore <name or id>` / `list` | Stop ignoring one; show the ignore list |
 | `/kwr test` | Show the mark button with a test entry, to place it (shift-drag) and try your key |
 | `/kwr nameplates` | Turn enemy nameplates on (rares are noticed as soon as their nameplate shows) |
+| `/kwd` | Disenchanting material prices from Auctionator (which ones still have none) |
 
 The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
-`/kw`; `/questtrash`, `/killvalue`, `/kwsetups` and `/rarealert` are long forms of `/fqt`, `/fkv`,
-`/kws` and `/kwr`.
+`/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert` and `/disenchantvalue` are long forms
+of `/fqt`, `/fkv`, `/kws`, `/kwr` and `/kwd`.
 
 ## Settings
 
@@ -142,6 +145,18 @@ On by default: yes. Toggle: `/kwf rares on|off`. Commands: `/kwr, /rarealert`.
 | Chat Message | On | One line in chat with the rare's name and level. |
 | Show The Mark Button | On | A marker button near the top of the screen while a rare is near. Click it to target the rare and mark it; right-click ignores that rare; shift-drag moves it. The key in Key Bindings > AddOns > Krool World works either way. |
 | Raid Marker | 8 (1 to 8) | Which marker the button puts on the rare: 8 skull, 7 cross, 6 square, 5 moon, 4 triangle, 3 diamond, 2 circle, 1 star. |
+
+### Disenchant Value
+
+On weapon and armor tooltips: what the item disenchants into, what that is worth at Auctionator's prices, and whether disenchanting pays more than the auction house or a vendor.
+
+On by default: yes. Toggle: `/kwf disenchant on|off`. Commands: `/kwd, /disenchantvalue`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Show On Item Tooltips | On | Adds the disenchant value to weapon and armor tooltips (green, blue and purple). |
+| Say What Pays Best | On | Compares disenchanting with the item's own auction price and its vendor price, after the 5% auction cut. Bound items are compared only when you can disenchant them yourself. |
+| Always List The Materials | Off | Lists each material with its chance and price. Off: hold Shift over the item to see them. |
 <!-- settings:end -->
 
 ## FAQ
@@ -163,6 +178,13 @@ told "delete", and repeatable or seasonal quest items are always kept.
 only on the character you apply to. Keybindings do too by default (a setting switches them to
 account-wide). Some things the game stores for the whole account change for every character:
 account-wide interface settings, Edit Mode's own checkboxes, and this addon's settings.
+
+**Where do Disenchant Value's tables come from?** The vanilla 1.12 disenchant tables (cmangos
+classic-db): exact for classic items, and by quality, weapon or armor and item level for items new
+to Forever. Forever's disenchanting looks the same so far (same dust, essence and shard tiers);
+if you see it differ, please open an issue. Auctionator has a disenchant line too, but on Forever it loads its retail
+tables, so items of classic levels get none. "Best" compares after the 5% auction cut, and before
+any tip you give a disenchanter.
 
 **Is this allowed?** Yes. It uses only the standard addon API: tooltips, the loot window, and (for
 Setups) the same bar, binding and macro calls any action bar profile addon uses, out of combat.
