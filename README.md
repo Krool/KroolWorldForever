@@ -8,7 +8,7 @@ own on/off switch, so you keep what you want and turn off the rest.
 | Feature | What you get | Needs |
 |---|---|---|
 | **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` lists everything in your bags (and bank) you can throw away. | QuestieDB |
-| **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
+| **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
 
 All three are on by default.
@@ -93,7 +93,8 @@ On by default: yes. Toggle: `/kwf killvalue on|off`. Commands: `/fkv, /killvalue
 | Learn From My Loot | On | Records what corpses drop so new or rebalanced creatures get real numbers. |
 | Use Vendor Prices | On | Vendor sell price as fallback and floor. |
 | Use Auctionator Prices | On | If Auctionator is installed, price drops from the auction house minus the cut. |
-| Show Skinning Value | Off | Adds a skinning/gathering line (not part of the total). |
+| Add My Skinning To The Total | On | When you know Skinning (or Herbalism or Mining, for creatures gathered that way) with enough skill for the creature, its skinning value is part of the total. |
+| Show Skinning Value | Off | Also shows the skinning value of creatures you cannot skin (not part of the total). |
 | Show On Friendly Creatures | Off | Also adds the line to creatures you cannot attack. |
 | Login Message | On | Prints one line at login. |
 | Contributor Lines | 3 (0 to 10) | Top drops listed under the total (0 = none). |

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0
+
+- **Kill Value: skinning is no longer learned as loot.** Skinning a corpse that had nothing to
+  loot opened the skinning window first, and its leather was recorded as that creature's drops,
+  which inflated beast values. A window with no coins and only gathering yields (skinning,
+  herbalism, mining) is now skipped when you know that profession. A one-time cleanup removes
+  the leather already learned and says so at login.
+- **Kill Value: your skinning counts in the total.** If you know Skinning (or Herbalism or Mining,
+  for creatures gathered that way) with enough skill for the creature, its skinning value is
+  added to the total and listed under it. Too low a skill shows "skinning, needs N". New option
+  Add My Skinning To The Total (on). Show Skinning Value now covers creatures you cannot skin.
+- `/fkv status` shows your gathering skills.
+- `/fkv` commands change settings through the settings panel, so the panel stays in sync, and
+  `/fkv detail` stops at 10 like the slider.
+
 ## 0.5.0
 
 - **Setups: redesigned window.** A card at the top shows the setup, an arrow, and the character it
