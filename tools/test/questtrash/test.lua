@@ -223,8 +223,11 @@ local function Capture(fn)
 end
 
 check("enabled after login", QT.enabled, true)
+check("open quest item before turning off", FQT.GetVerdict(5019), "maybe")
 SlashCmdList.KROOLWORLDFOREVER("questtrash off")
 check("/kwf questtrash off disables", QT.enabled, false)
+Completed[1019] = true
+FireEvent("QUEST_TURNED_IN", 1019) -- not delivered: events reach a feature only while it is on
 check("off state is saved", DB.enabled, false)
 check("disabled feature adds no tooltip lines", #HoverItem(5001), 0)
 check("feature slash says it is off", has(Capture(function()
@@ -233,6 +236,9 @@ end), "is off"), true)
 SettingsSet("KroolWorldForever_questtrash_enabled", true)
 check("settings checkbox turns it back on", QT.enabled, true)
 check("tooltip works again", has(HoverItem(5001), "Can be deleted"), true)
+check("a quest turned in while off is seen after turning back on", FQT.GetVerdict(5019), "safe")
+Completed[1019] = nil
+FQT.ClearCache()
 check("/kwf list names the feature", has(Capture(function()
 	SlashCmdList.KROOLWORLDFOREVER("list")
 end), "Quest Trash"), true)

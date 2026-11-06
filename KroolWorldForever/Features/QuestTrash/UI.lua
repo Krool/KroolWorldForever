@@ -269,6 +269,7 @@ end
 
 -- Tooltip hooks cannot be removed, so they are added once and check ns.enabled each time.
 function ns.OnEnable()
+	FQT.ClearCache() -- quest events are not delivered while off, so cached verdicts may be stale
 	if ns.ready then
 		return
 	end
