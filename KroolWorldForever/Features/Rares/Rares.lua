@@ -10,14 +10,20 @@
 -- from your own click or key press. Secure frames lock in combat: a rare found in combat gets the
 -- alert, and the button catches up when combat ends. Inside instances unit data is secret, so
 -- nothing is checked there.
+--
+-- The button goes as soon as its work is done: the rare carries your marker (the key still
+-- retargets it), it died, or you right-clicked it away. There is no death event an addon can read
+-- (the combat log is closed), so death is seen on its nameplate leaving, its corpse under your
+-- target or mouse, or when combat ends. In combat the button can only fade; it hides after.
 
 local _, root = ...
 local ns = root.Feature("rares")
 
 local BUTTON = "KroolWorldForeverRareButton"
 local BINDING = "CLICK " .. BUTTON .. ":LeftButton"
-local SEEN_TTL = 300 -- seconds before the same rare alerts again
-local SHOW_FOR = 120 -- seconds the button stays up after the last sighting
+local SEEN_TTL = 300 -- seconds before another spawn of the same rare alerts
+local SHOW_FOR = 60 -- seconds the button stays up after the last sighting
+local FADED = 0.35 -- the button's alpha while combat keeps it from hiding
 local MARKER_ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_"
 -- Always up, never worth a stop: ignored until you unignore them.
 local DEFAULT_IGNORE = { [3581] = "Sewer Beast" } -- the crocolisk in the Stormwind canals
@@ -26,8 +32,11 @@ local DEFAULT_IGNORE = { [3581] = "Sewer Beast" } -- the crocolisk in the Stormw
 BINDING_HEADER_KROOLWORLDFOREVER = "Krool World"
 _G["BINDING_NAME_" .. BINDING] = "Target And Mark Rare"
 
-local current -- the newest sighting: { npcId, guid, name, level, elite, at }
-local seen = {} -- npcId -> last sighting time
+local current -- the newest sighting: { npcId, guid, name, level, elite, at, marked }
+local lastAlert = {} -- npcId -> when it last alerted
+local alerted = {} -- guid -> true: this spawn has alerted (once per spawn)
+local done = {} -- guid -> "killed" | "dismissed" | "marked": no button for this spawn
+local plates = {} -- nameplate token -> the rare's guid, to read its death when the plate goes
 local pending = false -- the button needs an update once combat ends
 local expiry = false -- a timer is waiting to take the button down
 local button
@@ -276,8 +285,15 @@ local function Build()
 	b.hint = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	b.hint:SetPoint("TOP", b.label, "BOTTOM", 0, -1)
 	b:HookScript("OnClick", function(_, which, down)
-		if which == "RightButton" and not down and current and current.npcId > 0 then -- 0: the /kwr test entry
-			pcall(ns.Ignore, current.npcId, current.name)
+		if which ~= "RightButton" or down or not current then
+			return
+		end
+		if IsShiftKeyDown() then
+			if current.npcId > 0 then -- 0: the /kwr test entry
+				pcall(ns.Ignore, current.npcId, current.name)
+			end
+		else
+			pcall(ns.Dismiss)
 		end
 	end)
 	b:SetScript("OnEnter", function(self)
@@ -298,7 +314,7 @@ local function Build()
 		if not key then
 			GameTooltip:AddLine("Bind a key: Key Bindings > AddOns > Krool World.", 0.7, 0.7, 0.7, true)
 		end
-		GameTooltip:AddLine("Right-click: ignore this rare.  Shift-drag: move.", 0.7, 0.7, 0.7, true)
+		GameTooltip:AddLine("Right-click: hide it.  Shift-right-click: ignore this rare.  Shift-drag: move.", 0.7, 0.7, 0.7, true)
 		GameTooltip:Show()
 	end)
 	b:SetScript("OnLeave", function()
@@ -313,16 +329,20 @@ end
 
 local Expire -- forward
 
--- Points the button (and the key) at the newest rare, or clears it. Waits out combat.
+-- Points the button (and the key) at the newest rare, or clears it. Combat locks the secure
+-- button, so there it only fades when it should go, and the rest waits for combat to end.
 local function UpdateButton()
-	if InCombat() then
-		pending = true
-		return
-	end
-	pending = false
 	if current and (Now() - current.at > SHOW_FOR or ns.db.ignore[current.npcId]) then
 		current = nil
 	end
+	if InCombat() then
+		pending = true
+		if button and (not current or current.marked or not ns.enabled) then
+			pcall(button.SetAlpha, button, FADED) -- alpha is not locked in combat
+		end
+		return
+	end
+	pending = false
 	if not current and not button then
 		return
 	end
@@ -331,6 +351,7 @@ local function UpdateButton()
 		pending = true
 		return
 	end
+	b:SetAlpha(1)
 	if not current or not ns.enabled then
 		b:SetAttribute("macrotext1", "")
 		b:Hide()
@@ -342,7 +363,8 @@ local function UpdateButton()
 	b.label:SetText(current.name)
 	local key = BindingKey()
 	b.hint:SetText(key and ("Click or " .. key) or "Click to mark")
-	b:SetShown(ns.db.button and true or false)
+	-- Marked: the key still retargets it, the button has nothing left to do.
+	b:SetShown(ns.db.button and not current.marked and true or false)
 	if not expiry then
 		expiry = true
 		C_Timer.After(SHOW_FOR + 1, Expire)
@@ -359,6 +381,67 @@ function Expire()
 	end
 	UpdateButton()
 end
+
+-- -------------------------------------------------------------------- done with it
+
+-- A unit token for the rare, if any (its nameplate, your target or mouseover), or nil.
+local function TokenFor(guid)
+	if UnitTokenFromGUID then
+		local t = Read(UnitTokenFromGUID, guid)
+		if type(t) == "string" then
+			return t
+		end
+	end
+	for _, t in ipairs({ "target", "mouseover" }) do
+		if Read(UnitGUID, t) == guid then
+			return t
+		end
+	end
+	return nil
+end
+
+-- This spawn needs no button any more: "killed", "dismissed" or "marked".
+local function Finish(guid, why)
+	if type(guid) ~= "string" then
+		return
+	end
+	if guid ~= "" then -- "": the /kwr test entry
+		done[guid] = why
+	end
+	if current and current.guid == guid then
+		if why == "marked" then
+			current.marked = true -- keep the key on it
+		else
+			current = nil
+		end
+		UpdateButton()
+	end
+end
+ns.Finish = Finish -- test seam
+
+-- Right-click: hides the button until this rare spawns again.
+function ns.Dismiss()
+	if current then
+		Finish(current.guid, "dismissed")
+	end
+end
+
+-- Looks for the current rare's corpse, or your marker on it.
+local function Recheck()
+	if not current or current.guid == "" then
+		return
+	end
+	local t = TokenFor(current.guid)
+	if not t then
+		return
+	end
+	if Read(UnitIsDead, t) == true then
+		Finish(current.guid, "killed")
+	elseif not current.marked and Read(GetRaidTargetIndex, t) == Marker() then
+		Finish(current.guid, "marked")
+	end
+end
+ns.Recheck = Recheck -- test seam
 
 -- -------------------------------------------------------------------- alerts
 
@@ -381,22 +464,29 @@ local function Alert(r)
 	end
 end
 
--- Looks at one unit; alerts at most once per rare every SEEN_TTL seconds.
+-- Looks at one unit and returns the rare on it (nil when none, or ignored). Alerts once per
+-- spawn, and at most once every SEEN_TTL seconds for the same rare.
 local function Check(unit)
 	local r = Candidate(unit)
 	if not r or ns.db.ignore[r.npcId] then
-		return
+		return nil
 	end
 	local now = Now()
-	local last = seen[r.npcId]
-	seen[r.npcId] = now
-	r.at = now
-	current = r
 	ns.lastSeen = { name = r.name, at = now }
+	if done[r.guid] == "dismissed" then
+		return r -- you hid it: quiet until it spawns again
+	end
+	r.at = now
+	r.marked = done[r.guid] == "marked"
+	current = r
 	UpdateButton()
-	if not last or now - last >= SEEN_TTL then
+	local last = lastAlert[r.npcId]
+	if not alerted[r.guid] and (not last or now - last >= SEEN_TTL) then
+		alerted[r.guid] = true
+		lastAlert[r.npcId] = now
 		Alert(r)
 	end
+	return r
 end
 ns.Check = Check -- test seam
 
@@ -448,7 +538,7 @@ ns.options = {
 		key = "button",
 		type = "toggle",
 		label = "Show The Mark Button",
-		tooltip = "A marker button near the top of the screen while a rare is near. Click it to target the rare and mark it; right-click ignores that rare; shift-drag moves it. The key in Key Bindings > AddOns > Krool World works either way.",
+		tooltip = "A marker button near the top of the screen while a rare is near. Click it to target the rare and mark it. It goes once the rare has your marker or dies, or a minute after you last saw it. Right-click hides it; shift-right-click ignores that rare; shift-drag moves it. The key in Key Bindings > AddOns > Krool World works either way.",
 		default = true,
 	},
 	{
@@ -576,6 +666,7 @@ end
 
 function ns.OnDisable()
 	current = nil
+	wipe(plates) -- no REMOVED events while off: forget the tokens
 	UpdateButton()
 end
 
@@ -585,16 +676,36 @@ end
 
 ns:RegisterEvent("NAME_PLATE_UNIT_ADDED", function(_, unit)
 	if type(unit) == "string" and not Secret(unit) then
-		Check(unit)
+		local r = Check(unit)
+		plates[unit] = r and r.guid or nil
+	end
+end)
+-- The token still reads during this event. A dead unit's plate goes away; so does one out of range.
+ns:RegisterEvent("NAME_PLATE_UNIT_REMOVED", function(_, unit)
+	if type(unit) ~= "string" or Secret(unit) then
+		return
+	end
+	local guid = plates[unit]
+	plates[unit] = nil
+	if guid and Read(UnitIsDead, unit) == true then
+		Finish(guid, "killed")
 	end
 end)
 ns:RegisterEvent("UPDATE_MOUSEOVER_UNIT", function()
-	Check("mouseover")
+	if not Check("mouseover") then
+		Recheck() -- its corpse?
+	end
 end)
 ns:RegisterEvent("PLAYER_TARGET_CHANGED", function()
-	Check("target")
+	if not Check("target") then
+		Recheck()
+	end
+end)
+ns:RegisterEvent("RAID_TARGET_UPDATE", function()
+	Recheck() -- your marker on it?
 end)
 ns:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+	Recheck() -- killed in the fight: usually still your target
 	if pending then
 		UpdateButton()
 	end

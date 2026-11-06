@@ -106,6 +106,9 @@ end
 function Widget:SetTexture(t)
 	self.texture = t
 end
+function Widget:SetAlpha(a)
+	self.alpha = a -- not locked in combat, like the client
+end
 function Widget:CreateFontString()
 	return NewWidget()
 end
@@ -320,6 +323,25 @@ end
 function UnitIsDead(token)
 	local u = Units[token]
 	return u and u.dead or false
+end
+-- The first token that shows this guid: target, mouseover, then nameplates.
+function UnitTokenFromGUID(guid)
+	for _, t in ipairs({ "target", "mouseover" }) do
+		if Units[t] and Units[t].guid == guid and Units[t].exists ~= false then
+			return t
+		end
+	end
+	for i = 1, 40 do
+		local t = "nameplate" .. i
+		if Units[t] and Units[t].guid == guid and Units[t].exists ~= false then
+			return t
+		end
+	end
+	return nil
+end
+-- token -> the raid marker on it (Units[token].mark), or nil
+function GetRaidTargetIndex(token)
+	return Units[token] and Units[token].mark
 end
 function UnitCanAttack(_, token)
 	local u = Units[token]

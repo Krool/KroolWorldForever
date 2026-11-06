@@ -78,7 +78,7 @@ check("no button before a rare shows up", Button(), nil)
 check("/kwr registered", SLASH_KROOLWORLDFOREVER_RARES1, "/kwr")
 check("key binding named", _G["BINDING_NAME_CLICK KroolWorldForeverRareButton:LeftButton"], "Target And Mark Rare")
 check("binding header", BINDING_HEADER_KROOLWORLDFOREVER, "Krool World")
-for _, e in ipairs({ "NAME_PLATE_UNIT_ADDED", "UPDATE_MOUSEOVER_UNIT", "PLAYER_TARGET_CHANGED", "PLAYER_REGEN_ENABLED" }) do
+for _, e in ipairs({ "NAME_PLATE_UNIT_ADDED", "NAME_PLATE_UNIT_REMOVED", "UPDATE_MOUSEOVER_UNIT", "PLAYER_TARGET_CHANGED", "RAID_TARGET_UPDATE", "PLAYER_REGEN_ENABLED" }) do
 	local found = false
 	for _, f in ipairs(CreatedFrames) do
 		found = found or f.events[e] == true
@@ -163,13 +163,125 @@ Clock = Clock + 301
 capture(function()
 	FireEvent("UPDATE_MOUSEOVER_UNIT")
 end)
-check("five minutes later it alerts again", #Sounds, 2)
+check("the same spawn never alerts twice", #Sounds, 1)
+Rare("nameplate4", 462, "Vultros", { guid = G(462, "00FFFF0001") })
+capture(function()
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate4")
+end)
+check("a new spawn of it alerts", #Sounds, 2)
+Clock = Clock + 10
+Rare("nameplate5", 462, "Vultros", { guid = G(462, "00FFFF0002") })
+capture(function()
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate5")
+end)
+check("another spawn within five minutes: quiet", #Sounds, 2)
+check("but the button points at it", b.shown, true)
 
--- the button goes away two minutes after the last sighting
-Clock = Clock + 121
+-- the button goes away a minute after the last sighting
+Clock = Clock + 61
 RunTimers()
-check("button hides after two minutes", b.shown, false)
+check("button hides a minute after the last sighting", b.shown, false)
 check("and the key does nothing", b.attrs.macrotext1, "")
+
+-- ---------------------------------------------------------------- done: killed or marked
+
+local function spot(token, id, name, extra)
+	local u = Rare(token, id, name, extra)
+	capture(function()
+		FireEvent("NAME_PLATE_UNIT_ADDED", token)
+	end)
+	return u
+end
+
+reset()
+local u = spot("nameplate2", 200, "Killme")
+check("killed: shown first", Button().shown, true)
+u.dead = true
+FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate2")
+check("killed: its plate leaves dead, the button goes", Button().shown, false)
+check("killed: the key does nothing", Button().attrs.macrotext1, "")
+Units.mouseover = u
+capture(function()
+	FireEvent("UPDATE_MOUSEOVER_UNIT")
+end)
+check("killed: its corpse brings nothing back", Button().shown, false)
+check("killed: one alert in all", #Sounds, 1)
+
+reset()
+spot("nameplate2", 201, "Wanderer")
+FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate2")
+check("plate leaves alive (out of range): the button stays", Button().shown, true)
+
+reset()
+u = spot("nameplate4", 202, "Fought")
+Units.target = u
+InCombat = true
+u.dead = true
+FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate4")
+check("killed in combat: no protected call blocked", #BlockedCalls, 0)
+check("killed in combat: shown until combat ends", Button().shown, true)
+check("killed in combat: faded meanwhile", Button().alpha, 0.35)
+InCombat = false
+FireEvent("PLAYER_REGEN_ENABLED")
+check("killed in combat: gone after combat", Button().shown, false)
+check("killed in combat: alpha back for the next one", Button().alpha, 1)
+
+reset()
+u = spot("nameplate5", 203, "Unread")
+Units.target = u
+InCombat = true
+u.dead = true
+Units.nameplate5 = nil -- the plate's token no longer reads
+FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate5")
+check("death unread on its plate: still up in combat", Button().shown, true)
+InCombat = false
+FireEvent("PLAYER_REGEN_ENABLED")
+check("combat ends with its corpse targeted: gone", Button().shown, false)
+
+reset()
+u = Rare("target", 204, "Moused")
+capture(function()
+	FireEvent("PLAYER_TARGET_CHANGED")
+end)
+check("seen by target: shown", Button().shown, true)
+u.dead = true
+Units.target = nil
+Units.mouseover = u
+FireEvent("UPDATE_MOUSEOVER_UNIT")
+check("its corpse under the mouse: gone", Button().shown, false)
+
+reset()
+u = spot("nameplate1", 205, "Markme")
+Button():Click("LeftButton")
+Units.target = u
+u.mark = 5
+FireEvent("RAID_TARGET_UPDATE")
+check("someone else's marker on it: the button stays", Button().shown, true)
+u.mark = 8
+FireEvent("RAID_TARGET_UPDATE")
+check("your marker on it: the button goes", Button().shown, false)
+check("marked: the key still retargets it", Button().attrs.macrotext1:find("Markme", 1, true) ~= nil, true)
+Units.target = nil
+capture(function()
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+end)
+check("marked: seen again, the button stays away", Button().shown, false)
+check("marked: and no second alert", #Sounds, 1)
+u.dead = true
+FireEvent("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+check("marked, then killed: the key is cleared", Button().attrs.macrotext1, "")
+
+reset()
+u = spot("nameplate1", 206, "Brawl")
+InCombat = true
+Units.target = u
+u.mark = 8
+FireEvent("RAID_TARGET_UPDATE")
+check("marked in combat: faded", Button().alpha, 0.35)
+check("marked in combat: no protected call blocked", #BlockedCalls, 0)
+InCombat = false
+FireEvent("PLAYER_REGEN_ENABLED")
+check("marked in combat: hidden after", Button().shown, false)
 
 -- ---------------------------------------------------------------- what does not alert
 
@@ -271,18 +383,43 @@ Rare("nameplate1", 105, "Pest")
 capture(function()
 	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
 end)
+capture(function()
+	Button():Click("RightButton")
+end)
+check("right-click hides the button", Button().shown, false)
+check("right-click ignores nothing", db.ignore[105], nil)
+check("right-click runs no macro", #RanMacros, 0)
+check("hidden: the key does nothing", Button().attrs.macrotext1, "")
+capture(function()
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+end)
+check("hidden: seen again, it stays hidden", Button().shown, false)
+Rare("nameplate2", 108, "Other")
+capture(function()
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate2")
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+end)
+check("a hidden rare does not take the button from another", Button().label.text, "Other")
+Clock = Clock + 400
+Rare("nameplate1", 105, "Pest", { guid = G(105, "00FFFF0003") })
+capture(function()
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+end)
+check("hidden until it spawns again", Button().label.text, "Pest")
+ShiftDown = true
 out = capture(function()
 	Button():Click("RightButton")
 end)
-check("right-click ignores the rare", db.ignore[105], "Pest")
-check("right-click runs no macro", #RanMacros, 0)
+ShiftDown = false
+check("shift-right-click ignores the rare", db.ignore[105], "Pest")
 check("and says how to undo it", has(out, "/kwr unignore 105"), true)
 check("the button goes away", Button().shown, false)
+local soundsBefore = #Sounds
 Clock = Clock + 400
 capture(function()
 	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
 end)
-check("an ignored rare stays quiet", #Sounds, 1)
+check("an ignored rare stays quiet", #Sounds, soundsBefore)
 out = capture(function()
 	ns.OnSlash("list")
 end)
@@ -309,8 +446,13 @@ out = capture(function()
 end)
 check("/kwr test shows the button", Button().shown, true)
 check("with a test entry", Button().label.text, "Rare Alert Test")
+ShiftDown = true
 Button():Click("RightButton")
-check("right-click on the test entry ignores nothing", db.ignore[0], nil)
+ShiftDown = false
+check("shift-right-click on the test entry ignores nothing", db.ignore[0], nil)
+check("but the test button stays", Button().shown, true)
+Button():Click("RightButton")
+check("right-click hides the test button", Button().shown, false)
 out = capture(function()
 	ns.OnSlash("")
 end)

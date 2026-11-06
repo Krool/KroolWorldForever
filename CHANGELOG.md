@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.10.0
+## 0.10.1
+
+- **Rare Alert: the mark button goes when its work is done.** It used to stay two minutes after
+  the last sighting, even after the kill. Now it hides once the rare carries your marker (the key
+  still retargets it), and goes when the rare dies: seen when its nameplate leaves, on its corpse
+  under your target or mouse, or when combat ends. In a fight it fades and hides once combat ends
+  (the game locks it in combat). Otherwise it goes a minute after you last saw the rare.
+- **Rare Alert: right-click hides the button** for that spawn; it stays quiet even if you see the
+  rare again. Shift-right-click now ignores the rare for good (right-click did before).
+- **Rare Alert: one alert per spawn.** Seeing the same rare again no longer replays the sound and
+  message every 5 minutes; a new spawn still alerts.
 
 - **Camp Guide** (new): what a campfire gives you. Hover a camp object (the chair, the lodestone
   and the rest) for its buff at your level, and whether a class buff you already have covers it:
