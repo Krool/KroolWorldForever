@@ -1,6 +1,10 @@
 -- Rare Alert: tells you when a rare enemy is near (its nameplate shows, you mouse over it, or you
 -- target it) and offers one button and one key that target it and put a raid marker on it.
 --
+-- Nameplates are the only way to notice a rare without touching it (Forever has no vignettes), and
+-- Forever ships enemy nameplates off (nameplateShowEnemies 0, 45 yards). The hub card and the
+-- settings page offer to turn them on; the alert and the button carry Kill Value's numbers.
+--
 -- Forever, like Midnight 12.0, makes SetRaidTarget protected: addon code cannot mark anything. The
 -- button is a SecureActionButton whose macro runs /targetexact and /tm, so the mark always comes
 -- from your own click or key press. Secure frames lock in combat: a rare found in combat gets the
@@ -114,6 +118,111 @@ local function Describe(r)
 	return r.name .. lvl
 end
 
+-- -------------------------------------------------------------------- nameplates
+
+local PLATE_RANGE = 80 -- asked for; the client keeps what it allows
+
+local function GetCVarValue(name)
+	if not (C_CVar and C_CVar.GetCVar) then
+		return nil
+	end
+	local ok, v = pcall(C_CVar.GetCVar, name)
+	if ok and type(v) == "string" and not Secret(v) then
+		return v
+	end
+	return nil
+end
+
+-- true / false, or nil when the client will not say.
+function ns.EnemyPlatesOn()
+	local v = GetCVarValue("nameplateShowEnemies")
+	if v == nil then
+		return nil
+	end
+	return v == "1"
+end
+
+-- Turns enemy nameplates on and asks for the longest range. Only from the player's click or command.
+function ns.EnableNameplates()
+	if InCombat() then
+		ns:Print("leave combat first (nameplate settings are locked in combat)")
+		return false
+	end
+	if not (C_CVar and C_CVar.SetCVar) then
+		return false
+	end
+	local ok = pcall(C_CVar.SetCVar, "nameplateShowEnemies", "1")
+	pcall(C_CVar.SetCVar, "nameplateMaxDistance", tostring(PLATE_RANGE))
+	local range = tonumber(GetCVarValue("nameplateMaxDistance") or "")
+	if not ok or ns.EnemyPlatesOn() ~= true then
+		ns:Print("could not turn enemy nameplates on; press V or use Options > Interface > Nameplates")
+		return false
+	end
+	ns:Print("enemy nameplates on" .. (range and (", range " .. math.floor(range + 0.5) .. " yards") or "")
+		.. ". Rares now show up as soon as their nameplate does (V turns them off again).")
+	if root.RefreshHub then
+		pcall(root.RefreshHub)
+	end
+	return true
+end
+
+-- -------------------------------------------------------------------- what it is worth
+
+-- Kill Value's breakdown for the rare (nil when Kill Value is off or knows nothing).
+local function Worth(npcId)
+	local kv, FKV = root.features.killvalue, root.public.KillValue
+	if not (kv and kv.enabled and FKV and FKV.Compute) then
+		return nil
+	end
+	local ok, acc = pcall(FKV.Compute, npcId)
+	if not ok or type(acc) ~= "table" or acc.learning or not acc.total then
+		return nil
+	end
+	return acc, FKV
+end
+
+local function ItemName(id)
+	if not C_Item then
+		return "item " .. id
+	end
+	local ok, name = pcall(C_Item.GetItemNameByID, id)
+	if ok and type(name) == "string" then
+		return name
+	end
+	pcall(C_Item.RequestLoadItemDataByID, id) -- named on the next look
+	return "item " .. id
+end
+
+-- Its best drops by value: the main list first, then the rare tail.
+local function BestDrops(acc, n)
+	local out = {}
+	for _, list in ipairs({ acc.top or {}, acc.raretop or {} }) do
+		for _, c in ipairs(list) do
+			if #out >= n then
+				return out
+			end
+			if (c.value or 0) >= 1 then
+				out[#out + 1] = c
+			end
+		end
+	end
+	return out
+end
+
+-- "worth about 1g 20s: Vultros's Head 14%, Linen Cloth x1.2" (or nil)
+local function WorthLine(npcId)
+	local acc, FKV = Worth(npcId)
+	if not acc then
+		return nil
+	end
+	local parts = {}
+	for _, c in ipairs(BestDrops(acc, 3)) do
+		parts[#parts + 1] = ItemName(c.id) .. " " .. FKV.FmtQty(c.qty)
+	end
+	return "worth about " .. FKV.Money(acc.total) .. (#parts > 0 and (": " .. table.concat(parts, ", ")) or "")
+end
+ns.WorthLine = WorthLine -- test seam
+
 -- -------------------------------------------------------------------- the button
 
 local function SavePosition(b)
@@ -177,6 +286,13 @@ local function Build()
 		end
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
 		GameTooltip:SetText(Describe(current), 1, 0.82, 0)
+		local acc, FKV = Worth(current.npcId)
+		if acc then
+			GameTooltip:AddLine("Kill value " .. FKV.Money(acc.total), 0.2, 1, 0.6)
+			for _, c in ipairs(BestDrops(acc, 4)) do
+				GameTooltip:AddLine("  " .. ItemName(c.id) .. " " .. FKV.FmtQty(c.qty) .. "  " .. FKV.Money(c.value), 0.8, 0.8, 0.8)
+			end
+		end
 		local key = BindingKey()
 		GameTooltip:AddLine("Click" .. (key and (" or press " .. key) or "") .. ": target it and mark it.", 1, 1, 1, true)
 		if not key then
@@ -258,6 +374,10 @@ local function Alert(r)
 		local key = BindingKey()
 		local how = key and ("press " .. key .. " to target and mark it") or (db.button and "click the skull to target and mark it" or nil)
 		ns:Print("|cffffd100" .. Describe(r) .. "|r" .. (how and (" - " .. how) or ""))
+		local worth = WorthLine(r.npcId)
+		if worth then
+			print("  |cff33ff99" .. worth .. "|r")
+		end
 	end
 end
 
@@ -344,7 +464,33 @@ ns.options = {
 }
 ns.slash = { "/kwr", "/rarealert" }
 
+-- The hub card's extra button: only while enemy nameplates are off.
+function ns.HubAction()
+	if ns.EnemyPlatesOn() == false then
+		return {
+			label = "Plates On",
+			tip = "Enemy nameplates are off, so Rare Alert only sees rares you mouse over or target. Turns them on and asks for the longest range. V turns them off again.",
+			fn = ns.EnableNameplates,
+		}
+	end
+	return nil
+end
+
+-- Buttons on the settings page (Core/Settings.lua).
+ns.actions = {
+	{
+		label = "Turn On Enemy Nameplates",
+		tooltip = "Rare Alert sees a rare as soon as its nameplate shows. Forever starts with enemy nameplates off and a 45 yard range: this turns them on and asks for the longest range. V turns them off again.",
+		fn = function()
+			ns.EnableNameplates()
+		end,
+	},
+}
+
 function ns.HubStatus()
+	if ns.EnemyPlatesOn() == false then
+		return "|cffff9955Enemy nameplates are off|r" -- the card's Plates On button says why
+	end
 	local parts = {}
 	local last = ns.lastSeen
 	if last then
@@ -366,6 +512,7 @@ local function Help()
 	print("  /kwr unignore <name or id>")
 	print("  /kwr list             the ignore list")
 	print("  /kwr test             show the button with a test entry (to place it and try your key)")
+	print("  /kwr nameplates       turn enemy nameplates on (rares are seen as soon as theirs shows)")
 	print("  bind the key in Key Bindings > AddOns > Krool World")
 end
 
@@ -395,6 +542,8 @@ function ns.OnSlash(msg)
 		current = { npcId = 0, guid = "", name = "Rare Alert Test", level = nil, elite = false, at = Now() }
 		UpdateButton()
 		ns:Print(InCombat() and "leave combat first" or "test button shown for two minutes (it targets nothing real)")
+	elseif cmd == "nameplates" or cmd == "plates" then
+		ns.EnableNameplates()
 	elseif cmd == "options" or cmd == "config" then
 		root.OpenSettings(ns)
 	else
@@ -413,6 +562,15 @@ function ns.OnLoad()
 				ns.db.ignore[npcId] = name
 			end
 		end
+	end
+end
+
+-- Once per account: say why rares may go unnoticed.
+function ns.OnEnable()
+	if not ns.db.plateTip and ns.EnemyPlatesOn() == false then
+		ns.db.plateTip = true
+		ns:Print("enemy nameplates are off, so only rares you mouse over or target are noticed. "
+			.. "/kwr nameplates (or the button on the /kw hub) turns them on.")
 	end
 end
 

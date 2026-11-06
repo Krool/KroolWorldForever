@@ -26,6 +26,10 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
   `SECURE_ACTIONS.macro` calls `C_Macro.RunMacroText` (restricted to secure code, which the button
   is). `/tm` takes conditionals and `!N` (do not toggle off). Macrotext: 255 characters, no
   `/click` chaining (11.0). Rare Alert uses this; unverified in-game.
+- **Enemy nameplates start off.** Forever's CVar defaults (Ketho/BlizzardInterfaceResources `forever`
+  branch, 2026-11-05): `nameplateShowEnemies` 0, `nameplateMaxDistance` 45. There are no vignettes
+  (RareScanner's Forever notes), so nameplates are the only passive way to notice a unit at range.
+  The real cap on `nameplateMaxDistance` is unverified (RareScanner suggests 80).
 - **`C_UI.Reload` needs a hardware event** (a click or key press). From a timer or event handler the
   client blocks it with `ADDON_ACTION_BLOCKED` (our Setups hit this on 2026-11-04). The generated API
   docs carry no flag for it, so an allowlist cannot catch it; the wiki marks it `restrictedapi|hwevent`.

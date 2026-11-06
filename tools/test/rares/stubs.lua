@@ -248,6 +248,55 @@ end
 SlashCmdList = {}
 TooltipDataProcessor = { AddTooltipPostCall = function() end } -- other features hook tooltips at login
 
+-- Settings page buttons (feature actions and Open buttons).
+SettingsButtons = {}
+function CreateSettingsButtonInitializer(name, text, onClick, tooltip)
+	return { text = text, onClick = onClick, tooltip = tooltip }
+end
+SettingsPanel = {
+	GetLayout = function()
+		return {
+			AddInitializer = function(_, init)
+				SettingsButtons[init.text] = init
+			end,
+		}
+	end,
+	Hide = function() end,
+}
+
+-- Console variables. Forever's defaults: enemy nameplates off, 45 yards. The client caps the
+-- distance; 60 here stands in for whatever the real cap is.
+CVars = { nameplateShowEnemies = "0", nameplateMaxDistance = "45" }
+C_CVar = {
+	GetCVar = function(name)
+		return CVars[name]
+	end,
+	SetCVar = function(name, value)
+		if InCombat then
+			BlockedCalls[#BlockedCalls + 1] = "SetCVar " .. name
+			return false
+		end
+		value = tostring(value)
+		if name == "nameplateMaxDistance" then
+			value = tostring(math.min(tonumber(value), 60))
+		end
+		CVars[name] = value
+		return true
+	end,
+}
+
+-- Items, for Kill Value's prices and names (uncached: the baseline tables answer).
+C_Item = {
+	GetItemInfo = function()
+		return nil
+	end,
+	GetItemNameByID = function(id)
+		return ItemNames[id]
+	end,
+	RequestLoadItemDataByID = function() end,
+}
+ItemNames = {}
+
 -- ---------------------------------------------------------------- units
 
 -- token -> { guid=, name=, level=, class=, dead=, canAttack=, exists= }

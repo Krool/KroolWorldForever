@@ -15,6 +15,9 @@
 --                                     hub card gets an Open button, and so does the settings page
 --   ns.icon, ns.blurb                 the hub card: an icon file and one short line
 --   ns.HubStatus()                    optional: one short line on the hub card, what it is doing now
+--   ns.HubAction()                    optional: { label, tip, fn } for a button on the hub card, or nil
+--                                     (features without their own window only)
+--   ns.actions = { {label=, tooltip=, fn=}, ... }   optional buttons on the feature's settings page
 --
 -- File scope must stay free of game calls so tools/settings-doc.js can load the definitions
 -- outside the client. Do game work in OnLoad/OnEnable.

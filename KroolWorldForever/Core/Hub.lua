@@ -70,13 +70,13 @@ local function Card(parent, F, i)
 	card.title:SetText(F.title or F.key)
 	card.blurb = UI.Text(card, "GameFontHighlightSmall")
 	card.blurb:SetPoint("TOPLEFT", card.title, "BOTTOMLEFT", 0, -3)
-	card.blurb:SetWidth(W - 262)
+	card.blurb:SetWidth(W - 266)
 	card.blurb:SetWordWrap(false)
 	card.blurb:SetTextColor(0.8, 0.8, 0.8)
 	card.blurb:SetText(F.blurb or "")
 	card.status = UI.Text(card, "GameFontHighlightSmall")
 	card.status:SetPoint("TOPLEFT", card.blurb, "BOTTOMLEFT", 0, -3)
-	card.status:SetWidth(W - 262)
+	card.status:SetWidth(W - 266)
 	card.status:SetWordWrap(false)
 
 	-- Right side: on/off, then the way in.
@@ -88,6 +88,7 @@ local function Card(parent, F, i)
 	UI.Tip(card.gear, function()
 		return "Settings", { (F.title or F.key) .. "'s options." }
 	end)
+	card.action = false
 	if F.OnOpen then
 		card.open = UI.Button(card, "Open", 64, function()
 			Enter(F)
@@ -95,10 +96,25 @@ local function Card(parent, F, i)
 		card.open:SetPoint("RIGHT", card.gear, "LEFT", -8, 0)
 	else
 		card.open = false
+		if F.HubAction then
+			-- A feature without a window may offer one fix-it button in the same place.
+			card.action = UI.Button(card, "", 80, function()
+				local a = F.HubAction()
+				if a and a.fn then
+					a.fn()
+				end
+				Refresh()
+			end)
+			card.action:SetPoint("RIGHT", card.gear, "LEFT", -8, 0)
+			UI.Tip(card.action, function()
+				local a = F.HubAction()
+				return a and a.label, a and { a.tip }
+			end)
+		end
 	end
 	card.toggle = CreateFrame("CheckButton", nil, card, "UICheckButtonTemplate")
 	card.toggle:SetSize(26, 26)
-	card.toggle:SetPoint("RIGHT", card.open or card.gear, "LEFT", -34, 0)
+	card.toggle:SetPoint("RIGHT", card.open or card.action or card.gear, "LEFT", -34, 0)
 	card.toggle.label = UI.Text(card, "GameFontHighlightSmall")
 	card.toggle.label:SetPoint("LEFT", card.toggle, "RIGHT", 0, 1)
 	card.toggle:SetScript("OnClick", UI.Safe(function()
@@ -156,6 +172,12 @@ function Refresh()
 		card.status:SetText(StatusText(F))
 		if card.open then
 			card.open:SetEnabled(F.enabled and true or false)
+		end
+		if card.action then
+			local ok, a = pcall(F.HubAction)
+			a = ok and F.enabled and a or nil
+			card.action:SetShown(a ~= nil)
+			card.action:SetText(a and a.label or "")
 		end
 	end
 end

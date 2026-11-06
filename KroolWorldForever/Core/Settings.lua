@@ -89,6 +89,12 @@ function root.BuildSettings()
 					end
 				end, F.description, true))
 			end
+			if F.actions and CreateSettingsButtonInitializer and SettingsPanel then
+				local layout = SettingsPanel:GetLayout(category)
+				for _, a in ipairs(F.actions) do
+					layout:AddInitializer(CreateSettingsButtonInitializer("", a.label, root.UI.Safe(a.fn, F), a.tooltip, true))
+				end
+			end
 			for _, opt in ipairs(F.options) do
 				local setting = AddOption(category, F, opt)
 				F.settingObjects[opt.key] = setting

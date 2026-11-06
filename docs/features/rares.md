@@ -10,7 +10,19 @@ gives you one button and one key that target it and put a raid marker on it.
   is `rare` or `rareelite`, it is alive, you can attack it, and its GUID is a creature. Inside
   instances nothing is checked (unit data is secret there). Any secret value skips the unit.
 - **Alerts** once per rare every 5 minutes: the raid warning sound (`SOUNDKIT.RAID_WARNING`), the
-  name in the middle of the screen (`RaidNotice_AddMessage`), and a chat line naming your key.
+  name in the middle of the screen (`RaidNotice_AddMessage`), and a chat line naming your key,
+  followed by what it is worth while Kill Value is on: `worth about 1g 20s: <best drops>` (Kill
+  Value's total and its top three drops by value). The button's tooltip lists the kill value and
+  the top four drops with their chance and value.
+- **Nameplates.** Nameplates are the only way to notice a rare without touching it: Forever has no
+  vignettes. Forever starts with enemy nameplates off (`nameplateShowEnemies` 0) and a 45 yard
+  range (`nameplateMaxDistance`), so out of the box only mouseover and target find rares. While
+  they are off, the hub card says so and shows a Plates On button, the settings page has Turn On
+  Enemy Nameplates, `/kwr nameplates` does the same, and the first login prints a one-time tip.
+  Turning on sets `nameplateShowEnemies` 1 and asks for 80 yards; the client keeps what it
+  allows, and the chat line reports the range it kept. Only from the player's click or command,
+  never in combat. A "spam this key" scan for rares beyond nameplate range (RareScanner's Forever
+  macro) was considered and left out at the owner's call (2026-11-05).
 - **The mark button** (`KroolWorldForeverRareButton`, a `SecureActionButtonTemplate`) shows the
   newest rare's marker and name near the top of the screen for 2 minutes after the last sighting.
   Left click, or the key under Key Bindings > AddOns > Krool World (`Bindings.xml`), runs:
@@ -60,8 +72,9 @@ message can be turned off to run beside them.
 ## Settings and commands
 
 Options (account-wide): Play A Sound, Show A Screen Message, Chat Message, Show The Mark Button
-(the key works either way), Raid Marker (1 to 8, default 8 skull). Commands: `/kwr`
-(`/rarealert`) `ignore`, `unignore <name or id>`, `list`, `test`, `options`.
+(the key works either way), Raid Marker (1 to 8, default 8 skull). Settings page button: Turn On
+Enemy Nameplates. Commands: `/kwr` (`/rarealert`) `ignore`, `unignore <name or id>`, `list`,
+`test`, `nameplates`, `options`.
 
 ## Tests
 

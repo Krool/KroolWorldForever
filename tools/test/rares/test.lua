@@ -68,8 +68,12 @@ check("feature slice created", type(db), "table")
 check("on by default", db.enabled, true)
 check("skull by default", db.marker, 8)
 check("Sewer Beast ignored out of the box", db.ignore[3581], "Sewer Beast")
-FireEvent("PLAYER_LOGIN")
+local loginOut = capture(function()
+	FireEvent("PLAYER_LOGIN")
+end)
 check("enabled after login", ns.enabled, true)
+check("login tip when enemy nameplates are off", has(loginOut, "enemy nameplates are off"), true)
+check("tip remembered", db.plateTip, true)
 check("no button before a rare shows up", Button(), nil)
 check("/kwr registered", SLASH_KROOLWORLDFOREVER_RARES1, "/kwr")
 check("key binding named", _G["BINDING_NAME_CLICK KroolWorldForeverRareButton:LeftButton"], "Target And Mark Rare")
@@ -84,15 +88,47 @@ end
 check("guid parse", ns.NpcId(G(462)), 462)
 check("guid parse: player", ns.NpcId("Player-4170-0001ABCD"), nil)
 
+-- ---------------------------------------------------------------- nameplates
+
+check("plates off: read", ns.EnemyPlatesOn(), false)
+check("plates off: hub warns", ns.HubStatus():find("Enemy nameplates are off", 1, true) ~= nil, true)
+check("plates off: hub offers the fix", ns.HubAction() and ns.HubAction().label, "Plates On")
+check("settings page has the button", SettingsButtons["Turn On Enemy Nameplates"] ~= nil, true)
+InCombat = true
+local out = capture(function()
+	ns.OnSlash("nameplates")
+end)
+check("in combat: refuses", has(out, "leave combat first"), true)
+check("in combat: unchanged", CVars.nameplateShowEnemies, "0")
+InCombat = false
+out = capture(function()
+	SettingsButtons["Turn On Enemy Nameplates"].onClick()
+end)
+check("the settings button turns enemy plates on", CVars.nameplateShowEnemies, "1")
+check("and asks for the longest range", CVars.nameplateMaxDistance, "60")
+check("says the range the client kept", has(out, "range 60 yards"), true)
+check("plates on: no fix offered", ns.HubAction(), nil)
+check("plates on: no warning", ns.HubStatus():find("nameplates", 1, true), nil)
+CVars.nameplateShowEnemies = "0"
+capture(function()
+	ns.OnSlash("plates")
+end)
+check("/kwr nameplates does the same", CVars.nameplateShowEnemies, "1")
+local savedCVar = C_CVar
+C_CVar = nil
+check("no CVar API: unknown, no warning", ns.EnemyPlatesOn(), nil)
+C_CVar = savedCVar
+
 -- ---------------------------------------------------------------- a rare on a nameplate
 
 reset()
 Rare("nameplate3", 462, "Vultros")
-local out = capture(function()
+out = capture(function()
 	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate3")
 end)
 check("chat line names the rare", has(out, "Vultros (30)"), true)
 check("chat says how to mark it", has(out, "click the skull"), true)
+check("chat says what it is worth (Kill Value's numbers)", has(out, "worth about"), true)
 check("raid warning sound", Sounds[1], 8959)
 check("screen message", ScreenMessages[1], "Rare: Vultros (30)")
 local b = Button()
@@ -105,6 +141,16 @@ check("macro targets it and marks it with the skull", b.attrs.macrotext1, "/clea
 check("skull icon", b.icon.texture, "Interface\\TargetingFrame\\UI-RaidTargetingIcon_8")
 b:Click("LeftButton")
 check("a click runs the mark macro once", #RanMacros, 1)
+b.scripts.OnEnter(b)
+check("button tooltip: kill value", has(GameTooltip.lines, "Kill value"), true)
+check("button tooltip: its drops", #GameTooltip.lines >= 4, true)
+local best = KroolWorldForever.KillValue.Compute(462).top[1].id
+ItemNames[best] = "Named Drop"
+check("drops named once the client knows the item", ns.WorthLine(462):find("Named Drop", 1, true) ~= nil, true)
+__ns.features.killvalue.enabled = false
+check("Kill Value off: no worth line", ns.WorthLine(462), nil)
+__ns.features.killvalue.enabled = true
+check("creature Kill Value knows nothing about", ns.WorthLine(9999999), nil)
 
 out = capture(function()
 	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate3")

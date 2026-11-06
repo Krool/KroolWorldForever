@@ -697,6 +697,23 @@ check("a feature without one does not", cards.killvalue.open, false)
 check("every card has a settings button", cards.killvalue.gear ~= nil, true)
 check("card tooltip names the command", has(Hover(cards.setups), "/kws"), true)
 
+-- the Rare Alert card offers to turn enemy nameplates on while they are off
+check("plates state unknown: no button", cards.rares.action.shown, false)
+CVars.nameplateShowEnemies = { "0" }
+CVars.nameplateMaxDistance = { "45" }
+C_CVar.GetCVar = function(name)
+	return CVars[name] and CVars[name][1]
+end
+root.RefreshHub()
+check("plates off: the Rare Alert card shows a button", cards.rares.action.shown, true)
+check("labelled Plates On", cards.rares.action.text, "Plates On")
+check("and its status says why", cards.rares.status.text:find("nameplates", 1, true) ~= nil, true)
+cards.rares.action:Click()
+check("Plates On turns enemy nameplates on", CVars.nameplateShowEnemies[1], "1")
+check("and the button goes away", cards.rares.action.shown, false)
+check("cards with a window get no fix-it button", cards.setups.action, false)
+CVars.nameplateShowEnemies, CVars.nameplateMaxDistance, C_CVar.GetCVar = nil, nil, nil
+
 -- on/off from the card
 Hardware(cards.rares.toggle.scripts.OnClick, cards.rares.toggle)
 check("card switch turns the feature off", root.features.rares.enabled, false)
