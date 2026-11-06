@@ -61,9 +61,11 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 - [ ] Kill Value: hover a mob in a dungeon (nothing should show); after 3+ corpses of one mob,
       check `/fkv` for "blended".
 - [ ] Kill Value: check that a skinned-before-looted corpse and a pickpocket are not recorded as loot.
-      **Launch data says they are** (2026-11-05): 13 of 35 learned beasts carry leather that the baseline
-      lists only as skinning yield (e.g. npc 1128: Light Leather, Ruined Leather Scraps). A corpse with
-      nothing to loot opens no loot window, so skinning it is its first capture.
+      **Launch data said they were** (2026-11-05): leather on 22 learned creatures (e.g. npc 1128: Light
+      Leather, Ruined Leather Scraps). A corpse with nothing to loot opens no loot window, so skinning
+      it was its first capture. Fixed in 0.6.0; to verify: login prints "removed N skinning yields",
+      `/fkv status` shows your Skinning skill (if it says none or unavailable, the skill read is
+      wrong), and after skinning a beast that had no loot, `/fkv id <npc>` lists no leather.
 - [ ] Kill Value: compare a few vendor prices with what a merchant actually pays (Blackthornes Farmer
       reports the client's stored sell price can be wrong on Forever).
 - [ ] Kill Value: run an Auctionator full scan, then check AH-priced drops show "ah" as the source.

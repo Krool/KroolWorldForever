@@ -24,6 +24,14 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
   client blocks it with `ADDON_ACTION_BLOCKED` (our Setups hit this on 2026-11-04). The generated API
   docs carry no flag for it, so an allowlist cannot catch it; the wiki marks it `restrictedapi|hwevent`.
 - `import()` exists (Blizzard_GamepadActionBars calls it); whether addons may call it is unconfirmed.
+- **Profession skills:** `C_SkillInfo.GetSkillLineInfoByID(id)` returns `{ rank, modifier, maxRank, ... }`
+  or nil when the skill is not learned (Blizzard's Camelot PaperDollFrame reads weapon skills this
+  way). Forever's SkillLine table (wago.tools, 70790) has the classic professions plus a Forever
+  child line each: Skinning 393 / 2947, Herbalism 182 / 2944, Mining 186 / 2946. Which one carries
+  the player's rank is unverified in-game; Kill Value reads both and takes the higher.
+- Legacy globals are not in the generated API docs, so the allowlist cannot check them, but they
+  exist: `IsInGroup` (Blizzard's Forever UI calls it), and `GetLootSourceInfo` / `GetLootSlotType`
+  (Kill Value's loot capture worked in the stress test).
 - Beta 5 note missing from our docs: importing an Edit Mode layout string from an older version no
   longer raises an error.
 - **Sell prices:** of 2,110 items in both wago.tools ItemSparse (70790) and Kill Value's table, 17

@@ -66,6 +66,11 @@ local function fresh()
 	Units = {}
 	Loot = { slots = {}, fishing = false }
 	TooltipUnitToken = "mouseover"
+	SkillLines = {}
+end
+
+local function link(id)
+	return "|cffffffff|Hitem:" .. id .. "::::::::80:::::|h[Thing]|h|r"
 end
 
 -- ---------------------------------------------------------------- shipped data sentinels
@@ -98,19 +103,20 @@ do
 	check("detail slider registered", RegisteredSettings[SV .. "detail"] ~= nil, true)
 	check("cut slider registered", RegisteredSettings[SV .. "cut"] ~= nil, true)
 	local toggles = 0
-	for _, key in ipairs({ "learn", "vendor", "ah", "skin", "friendly", "hello" }) do
+	for _, key in ipairs({ "learn", "vendor", "ah", "gather", "skin", "friendly", "hello" }) do
 		if RegisteredSettings[SV .. key] then
 			toggles = toggles + 1
 		end
 	end
-	check("six toggle options registered", toggles, 6)
+	check("seven toggle options registered", toggles, 7)
+	check("skinning counts by default", slice.gather, true)
 	check("no standalone master switch option", RegisteredSettings[SV .. "enabled"].label, "Enabled")
 	check("not enabled before login", ns.enabled, false)
 	check("tooltip hook not installed before login", TooltipCallbacks[Enum.TooltipDataType.Unit], nil)
 	FireEvent("PLAYER_LOGIN")
 	check("enabled after login", ns.enabled, true)
 	check("unit tooltip hook installed", type(TooltipCallbacks[Enum.TooltipDataType.Unit]), "function")
-	for _, e in ipairs({ "LOOT_READY", "LOOT_OPENED", "GET_ITEM_INFO_RECEIVED" }) do
+	for _, e in ipairs({ "LOOT_READY", "LOOT_OPENED", "GET_ITEM_INFO_RECEIVED", "SKILL_LINES_CHANGED" }) do
 		local found = false
 		for _, f in ipairs(CreatedFrames) do
 			found = found or f.events[e] == true
@@ -333,12 +339,86 @@ do
 	check("gather type parsed", a4.gather, "H")
 	near("skinning value kept out of the total", a4.skin, 500)
 	near("total ignores skinning", a4.total, 50)
+	check("no gathering skill: not counted", a4.skinCounted, nil)
 
 	-- unpriced drops
 	ns.Data.mob[9000004] = "0:0|9100001:1,9188888:1|||1:0:10"
 	local a5 = FKV.Compute(9000004)
 	check("unpriced drop counted as unknown", a5.unknown, 1)
 	near("unpriced drop adds nothing", a5.total, 50)
+end
+
+-- ---------------------------------------------------------------- gathering: skill and need
+
+do
+	fresh()
+	setItems()
+	check("need: level 10 and below", FKV.GatherNeed(10), 1)
+	check("need: level 15", FKV.GatherNeed(15), 50)
+	check("need: level 19", FKV.GatherNeed(19), 90)
+	check("need: level 20", FKV.GatherNeed(20), 100)
+	check("need: level 25", FKV.GatherNeed(25), 125)
+	check("need: level 60", FKV.GatherNeed(60), 300)
+
+	-- level 25 beast: item1 x1 @50 as loot, skinning 0.5 x item2 @1000 = 500
+	ns.Data.mob[9000005] = "0:0|9100001:1||9100002:0.5|25:0:900"
+	local a = FKV.Compute(9000005)
+	check("no skinning: out of the total", a.skinCounted, nil)
+	near("no skinning: total is loot only", a.total, 50)
+	check("no skinning: no need shown", a.need, nil)
+
+	SkillLines[393] = { rank = 120 }
+	FKV.RefreshSkills()
+	a = FKV.Compute(9000005)
+	check("skill read", FKV.GatherSkill("S"), 120)
+	check("too low: needs 125", a.need, 125)
+	check("too low: cannot gather", a.canGather, false)
+	near("too low: total is loot only", a.total, 50)
+
+	SkillLines[393] = { rank = 120, modifier = 5 }
+	FKV.RefreshSkills()
+	a = FKV.Compute(9000005)
+	check("skill bonus counts (120 + 5)", a.canGather, true)
+	check("skinner: counted", a.skinCounted, true)
+	near("skinner: total includes skinning", a.total, 550)
+	check("public API includes it", FKV.GetKillValue(9000005), a.total)
+
+	FKV.cfg.gather = false
+	a = FKV.Compute(9000005)
+	near("option off: total is loot only", a.total, 50)
+	check("option off: can still tell", a.canGather, true)
+	FKV.cfg.gather = true
+
+	-- the Forever child skill line counts too; a skinner does not herb
+	SkillLines = { [2947] = { rank = 200 } }
+	FKV.RefreshSkills()
+	check("Forever child line read", FKV.GatherSkill("S"), 200)
+	check("no herbalism", FKV.GatherSkill("H"), 0)
+	ns.Data.mob[9000006] = "0:0|9100001:1||H:9100002:0.5|5:0:100"
+	check("a skinner does not count herbalism", FKV.Compute(9000006).skinCounted, nil)
+	SkillLines[182] = { rank = 1 }
+	FKV.RefreshSkills()
+	check("an herbalist does", FKV.Compute(9000006).skinCounted, true)
+
+	-- cached; a skill-up event or a minute later reads again
+	SkillLines = { [393] = { rank = 50 } }
+	check("cached until refreshed", FKV.GatherSkill("S"), 200)
+	FireEvent("SKILL_LINES_CHANGED")
+	check("SKILL_LINES_CHANGED rereads", FKV.GatherSkill("S"), 50)
+	SkillLines[393] = { rank = 60 }
+	Clock = Clock + 61
+	check("re-read after a minute", FKV.GatherSkill("S"), 60)
+
+	-- secret or missing skill data
+	SkillLines = { [393] = { rank = Secret() } }
+	FKV.RefreshSkills()
+	check("secret rank reads as not learned", FKV.GatherSkill("S"), 0)
+	local saved = C_SkillInfo
+	C_SkillInfo = nil
+	FKV.RefreshSkills()
+	check("no skill API: unknown", FKV.GatherSkill("S"), nil)
+	check("unknown skill: not counted", FKV.Compute(9000005).skinCounted, nil)
+	C_SkillInfo = saved
 end
 
 -- ---------------------------------------------------------------- compute: learned + blended
@@ -572,6 +652,105 @@ do
 	check("loot event swallows errors", ok, true)
 end
 
+-- ---------------------------------------------------------------- gathering windows
+
+do
+	fresh()
+	local I, M = Enum.LootSlotType.Item, Enum.LootSlotType.Money
+	local function slot(kind, l, ...)
+		Loot.slots[#Loot.slots + 1] = { type = kind, link = l, sources = { ... } }
+	end
+	ns.Data.mob[9000100] = "0:0|9100001:0.5||9100005:1|5:0:100" -- beast: skins into item5
+	ns.Data.mob[9000101] = "0:0|9100001:0.5|||2:0:50" -- beast the baseline has no skinning list for
+	ns.Data.mob[9000102] = "5:10|9100005:0.2|||10:0:200" -- drops item5 as corpse loot
+	ns.Data.mob[9000103] = "0:0|9100001:0.5||H:9100006:1|10:0:200" -- herbalism creature
+	FKV.ClearCaches()
+	SkillLines = { [393] = { rank = 50 } }
+	FKV.RefreshSkills()
+
+	local g = G(9000100, "SK1")
+	slot(I, link(9100005), g, 2)
+	check("skinning an unlooted corpse is not loot", FKV.CaptureLoot(), 0)
+	check("nothing learned from it", FKV.GetLearned(9000100), nil)
+
+	Loot.slots = {}
+	local g2 = G(9000100, "SK2")
+	slot(I, link(9100001), g2, 1)
+	check("corpse looted first", FKV.CaptureLoot(), 1)
+	Loot.slots = {}
+	slot(I, link(9100005), g2, 1)
+	check("then skinning it is deduped", FKV.CaptureLoot(), 0)
+	check("leather never stored", FKV.GetLearned(9000100).items[9100005], nil)
+
+	Loot.slots = {}
+	slot(I, link(9100005), G(9000101, "SK3"), 1)
+	check("yield known from other creatures' lists", FKV.CaptureLoot(), 0)
+	Loot.slots = {}
+	slot(I, link(9100005), G(9000109, "SK4"), 1)
+	check("creature without a baseline row", FKV.CaptureLoot(), 0)
+	check("still nothing learned", FKV.GetLearned(9000109), nil)
+
+	-- still corpse loot
+	Loot.slots = {}
+	slot(I, link(9100005), G(9000102, "SK5"), 1)
+	check("an item this creature drops is loot", FKV.CaptureLoot(), 1)
+	Loot.slots = {}
+	slot(M, nil, G(9000100, "SK6"), 5)
+	slot(I, link(9100005), G(9000100, "SK6"), 1)
+	check("a window with coins is loot", FKV.CaptureLoot(), 1)
+	Loot.slots = {}
+	slot(I, link(9100005), G(9000100, "SK7"), 1)
+	slot(I, link(9100001), G(9000100, "SK7"), 1)
+	check("mixed with a loot item is loot", FKV.CaptureLoot(), 1)
+
+	-- conditional on the profession
+	Loot.slots = {}
+	slot(I, link(9100006), G(9000103, "HB1"), 1)
+	check("herbs without Herbalism are loot", FKV.CaptureLoot(), 1)
+	SkillLines = {}
+	FKV.RefreshSkills()
+	Loot.slots = {}
+	slot(I, link(9100005), G(9000100, "NS1"), 1)
+	check("no gathering skill: leather is loot", FKV.CaptureLoot(), 1)
+	local saved = C_SkillInfo
+	C_SkillInfo = nil
+	FKV.RefreshSkills()
+	Loot.slots = {}
+	slot(I, link(9100005), G(9000100, "NS2"), 1)
+	check("skill unknown: treated as skinning", FKV.CaptureLoot(), 0)
+	C_SkillInfo = saved
+end
+
+-- ---------------------------------------------------------------- one-time cleanup of learned yields
+
+do
+	fresh()
+	FKV.ClearCaches()
+	local db = {
+		learned = {
+			[9000100] = { n = 5, coin = 0, items = { [9100005] = 3, [9100001] = 2 } },
+			[9000102] = { n = 2, coin = 10, items = { [9100005] = 1 } },
+			[9000109] = { n = 3, coin = 0, items = { [9100005] = 1, [9100007] = 4 } },
+		},
+	}
+	FKV.AttachDB(db)
+	check("cleanup counts the creatures it cleaned", FKV.cleaned, 2)
+	check("skinning yield removed", db.learned[9000100].items[9100005], nil)
+	check("real loot kept", db.learned[9000100].items[9100001], 2)
+	check("corpse count kept", db.learned[9000100].n, 5)
+	check("an item the creature drops is kept", db.learned[9000102].items[9100005], 1)
+	check("no baseline row: yield removed", db.learned[9000109].items[9100005], nil)
+	check("no baseline row: other items kept", db.learned[9000109].items[9100007], 4)
+	check("cleanup marked done", db.gatherClean, true)
+	local out = capture(ns.OnEnable)
+	check("login says what was removed", has(out, "learned loot of 2 creatures"), true)
+	check("said once", #capture(ns.OnEnable), 0)
+	db.learned[9000100].items[9100005] = 1
+	FKV.AttachDB(db)
+	check("runs once", db.learned[9000100].items[9100005], 1)
+	check("nothing removed the second time", FKV.cleaned, 0)
+end
+
 -- ---------------------------------------------------------------- tooltip
 
 do
@@ -615,6 +794,22 @@ do
 	left = Hover(G(9000072))
 	check("skinning shown when enabled", has(left, "skinning"), true)
 	FKV.cfg.skin = false
+
+	-- a skinner gets it in the total, listed like a drop
+	SkillLines[393] = { rank = 100 }
+	FKV.RefreshSkills()
+	left, right = Hover(G(9000072, "SKN"))
+	check("skinner: skinning listed", has(left, "skinning"), true)
+	check("skinner: listed without a plus", has(right, "+"), false)
+	FKV.cfg.detail = 0
+	left = Hover(G(9000072, "SKN2"))
+	check("skinner, detail 0: only the total", #left, 1)
+	FKV.cfg.detail = 3
+	ns.Data.mob[9000074] = "0:0|9100001:1||9100002:0.5|25:0:900"
+	left = Hover(G(9000074, "SKN3"))
+	check("skill too low: says what it needs", has(left, "skinning, needs 125"), true)
+	SkillLines = {}
+	FKV.RefreshSkills()
 
 	-- degrade silently
 	left = Hover(G(9999998))
@@ -698,6 +893,8 @@ end
 
 do
 	fresh()
+	-- /fkv writes through the settings objects, which are bound to the saved slice
+	FKV.AttachDB(KroolWorldForeverDB.features.killvalue)
 	setItems()
 	ns.Data.mob[9000080] = "100:200|9100001:1,9100002:0.5|||5:0:100"
 	local slash = ns.OnSlash
@@ -732,6 +929,14 @@ do
 	end)
 	check("/fkv status shows the baseline", has(out, "Era baseline"), true)
 	check("/fkv status shows learned counts", has(out, "learned:"), true)
+	check("/fkv status: no gathering skill", has(out, "gathering: none"), true)
+	SkillLines = { [393] = { rank = 75 } }
+	out = capture(function()
+		slash("status")
+	end)
+	check("/fkv status shows the skinning skill", has(out, "gathering: Skinning 75"), true)
+	SkillLines = {}
+	FKV.RefreshSkills()
 	out = capture(function()
 		slash("config")
 	end)
@@ -749,10 +954,11 @@ do
 		slash("detail 5")
 	end)
 	check("/fkv detail", FKV.cfg.detail, 5)
+	check("/fkv detail goes through the settings panel", SetValueCalls[SV .. "detail"], 5)
 	capture(function()
 		slash("detail 99")
 	end)
-	check("/fkv detail is clamped", FKV.cfg.detail, 20)
+	check("/fkv detail is clamped to the slider's 10", FKV.cfg.detail, 10)
 	capture(function()
 		slash("cut 12.5")
 	end)
@@ -769,10 +975,19 @@ do
 		slash("learn")
 	end)
 	check("/fkv learn", FKV.cfg.learn, false)
+	check("/fkv toggles go through the settings panel", SetValueCalls[SV .. "learn"], false)
+	local before = FKV.Compute(9000080)
+	capture(function()
+		slash("gather")
+	end)
+	check("/fkv gather", FKV.cfg.gather, false)
+	check("a toggle refreshes the cached breakdown", FKV.Compute(9000080) ~= before, true)
 	capture(function()
 		slash("reset")
 	end)
 	check("/fkv reset restores defaults", FKV.cfg.detail, 3)
+	check("/fkv reset restores gather", FKV.cfg.gather, true)
+	check("/fkv reset goes through the settings panel", SetValueCalls[SV .. "detail"], 3)
 	check("/fkv reset leaves the feature switch alone", ns.enabled, true)
 
 	FKV.RecordCorpse(9000081, G(9000081, "Z"), 1, {})
@@ -883,6 +1098,37 @@ do
 		ok = ok and pcall(FKV.Compute, id)
 	end
 	check("real creatures compute without error", ok, true)
+
+	-- launch data (2026-11-05): beasts skinned before looting had leather learned as loot.
+	-- 1128 lists Light Leather (2318) and Ruined Leather Scraps (2934) as skinning yield; 705
+	-- (Ragged Young Wolf) has no skinning list, yet Forever skins it for scraps.
+	fresh()
+	local db = {
+		learned = {
+			[1128] = { n = 8, coin = 0, items = { [2318] = 2, [2934] = 2, [3169] = 1, [4865] = 2 } },
+			[705] = { n = 60, coin = 0, items = { [2934] = 5, [750] = 15, [4865] = 17 } },
+			[706] = { n = 84, coin = 253, items = { [117] = 17, [2589] = 26 } },
+		},
+	}
+	FKV.AttachDB(db)
+	check("real data: Light Leather removed", db.learned[1128].items[2318], nil)
+	check("real data: Ruined Leather Scraps removed", db.learned[1128].items[2934], nil)
+	check("real data: beast drops kept", db.learned[1128].items[3169], 1)
+	check("real data: scraps removed where the baseline has no skinning list", db.learned[705].items[2934], nil)
+	check("real data: Forever's wolf meat kept", db.learned[705].items[750], 15)
+	check("real data: Linen Cloth kept", db.learned[706].items[2589], 26)
+	check("real data: tough jerky kept", db.learned[706].items[117], 17)
+	check("real data: two creatures cleaned", FKV.cleaned, 2)
+	FKV.cleaned = 0
+
+	SkillLines = { [393] = { rank = 30 } }
+	FKV.RefreshSkills()
+	Loot.slots = { { type = Enum.LootSlotType.Item, link = link(2318), sources = { G(1128, "REAL1"), 1 } } }
+	check("real data: skinning a bear is not learned", FKV.CaptureLoot(), 0)
+	Loot.slots = { { type = Enum.LootSlotType.Item, link = link(2589), sources = { G(706, "REAL2"), 1 } } }
+	check("real data: Linen Cloth alone is still loot", FKV.CaptureLoot(), 1)
+	SkillLines = {}
+	FKV.RefreshSkills()
 end
 
 realPrint(("\n%d checks, %d failed"):format(count, failures))

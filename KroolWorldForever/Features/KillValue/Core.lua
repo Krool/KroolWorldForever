@@ -14,6 +14,10 @@
 -- installed, its price minus the auction house cut. Never an AH price for bind-on-pickup or
 -- poor-quality (grey) items; quest items are worth 0.
 --
+-- Gathering (Skinning, Herbalism, Mining on creatures) comes from the baseline only. It joins the
+-- total when the player knows the profession with enough skill; a gathering loot window is
+-- never learned as corpse loot.
+--
 -- Midnight restrictions: any value that might be secret is checked with issecretvalue before it
 -- is read, and every entry point that touches game data is wrapped in pcall by its caller.
 
@@ -32,6 +36,9 @@ local REPORT_TOP, REPORT_RARE = 10, 5 -- contributor rows kept per breakdown
 local MAX_NPCS = 2500 -- learned creatures kept
 local MAX_ITEMS = 100 -- learned item rows kept per creature
 local RECENT_MAX = 200 -- looted corpse GUIDs remembered for dedupe
+local SKILL_TTL = 60 -- seconds before gathering skills are read again (SKILL_LINES_CHANGED also does)
+-- Skill lines per gathering kind: the profession and its Forever child line (SkillLine, 1.60.1.70790).
+local GATHER_SKILLS = { S = { 393, 2947 }, H = { 182, 2944 }, M = { 186, 2946 } }
 
 FKV.PSEUDO_KILLS, FKV.MIN_OBSERVED = PSEUDO_KILLS, MIN_OBSERVED
 
@@ -41,7 +48,8 @@ FKV.DEFAULTS = {
 	ah = true, -- use Auctionator prices when it is installed
 	cut = 5, -- auction house cut in percent, taken off AH values
 	rare = 0.001, -- drops with expected quantity below this (0.1%) go to a "rare drops" line
-	skin = false, -- show the skinning / gathering value (never part of the total)
+	gather = true, -- add the gathering value to the total when the player can gather the creature
+	skin = false, -- also show the gathering value of creatures the player cannot gather (not in the total)
 	friendly = false, -- show the line on friendly (non-attackable) creatures too
 	learn = true, -- record loot from corpses you open
 	hello = true, -- login message
@@ -187,6 +195,153 @@ local function GetMob(npcId)
 	return m
 end
 
+-- -------------------------------------------------------------------- gathering
+
+local gatherItems -- itemId -> "S" | "H" | "M": what any baseline creature yields to gathering
+
+local function GatherItems()
+	if gatherItems then
+		return gatherItems
+	end
+	gatherItems = {}
+	for _, s in pairs((ns.Data and ns.Data.mob) or {}) do
+		local seg = type(s) == "string" and s:match("^[^|]*|[^|]*|[^|]*|([^|]*)")
+		if seg and seg ~= "" then
+			local kind, rest = seg:match("^([HM]):(.*)$")
+			kind, seg = kind or "S", rest or seg
+			for id in seg:gmatch("(%d+):") do
+				id = tonumber(id)
+				gatherItems[id] = gatherItems[id] or kind
+			end
+		end
+	end
+	return gatherItems
+end
+
+-- Items the creature's baseline lists as corpse loot (direct drops and reference pools).
+local function LootSet(npcId)
+	local set, base = {}, GetMob(npcId)
+	if base then
+		for _, d in ipairs(base.drops) do
+			set[d[1]] = true
+		end
+		for _, r in ipairs(base.refs) do
+			for _, d in ipairs(GetRef(r[1])) do
+				set[d[1]] = true
+			end
+		end
+	end
+	return set
+end
+
+-- A gathering yield, not loot: some creature gathers into it and this one does not drop it.
+-- Checked against every creature, because the baseline lacks some creatures' gathering lists.
+local function GatherKind(itemId, loot)
+	local kind = GatherItems()[itemId]
+	if kind and not loot[itemId] then
+		return kind
+	end
+	return nil
+end
+
+-- A loot window from Skinning, Herbalism or Mining on a corpse: no coins, and every item is a
+-- gathering yield of the kind. Returns the kind, or nil for corpse loot.
+local function GatherWindow(npcId, e)
+	if e.coin > 0 then
+		return nil
+	end
+	local loot, kind = LootSet(npcId), nil
+	for id in pairs(e.items) do
+		local k = GatherKind(id, loot)
+		if not k or (kind and k ~= kind) then
+			return nil
+		end
+		kind = k
+	end
+	return kind
+end
+
+local skills, skillsAt, skillSig = nil, nil, "" -- kind -> effective skill, 0 = not learned
+
+local function ReadSkill(ids)
+	local best = 0
+	for _, id in ipairs(ids) do
+		local ok, info = pcall(C_SkillInfo.GetSkillLineInfoByID, id)
+		if ok and type(info) == "table" and not Secret(info.rank) and type(info.rank) == "number" then
+			local mod = info.modifier
+			if Secret(mod) or type(mod) ~= "number" then
+				mod = 0
+			end
+			best = math.max(best, info.rank + mod)
+		end
+	end
+	return best
+end
+
+-- Reads the player's gathering skills. Without C_SkillInfo they stay unknown (nil).
+function FKV.RefreshSkills()
+	skillsAt = Now()
+	if not (C_SkillInfo and C_SkillInfo.GetSkillLineInfoByID) then
+		skills, skillSig = nil, ""
+		return
+	end
+	skills = {}
+	for kind, ids in pairs(GATHER_SKILLS) do
+		skills[kind] = ReadSkill(ids)
+	end
+	skillSig = skills.S .. ":" .. skills.H .. ":" .. skills.M
+end
+
+local function SkillSig()
+	if not skillsAt or Now() - skillsAt > SKILL_TTL then
+		FKV.RefreshSkills()
+	end
+	return skillSig
+end
+
+-- Effective skill (rank plus bonuses) in the profession that gathers `kind` ("S", "H", "M"):
+-- 0 = not learned, nil = unknown.
+function FKV.GatherSkill(kind)
+	SkillSig()
+	return skills and skills[kind]
+end
+
+-- Skill a creature of `level` needs, by the classic rule (cmangos): (level - 10) x 10 below
+-- level 20, level x 5 from 20 on. A level 25 beast needs 125.
+function FKV.GatherNeed(level)
+	level = level or 1
+	if level < 20 then
+		return math.max(1, (level - 10) * 10)
+	end
+	return level * 5
+end
+
+-- Before 0.6.0 a corpse gathered before it was looted had the gathering yield recorded as its
+-- loot. Strips those items once. The corpse count stays: such a corpse had nothing to loot.
+-- Returns the number of creatures cleaned.
+local function CleanGatherLoot(db)
+	if db.gatherClean or not (ns.Data and ns.Data.mob) then
+		return 0
+	end
+	db.gatherClean = true
+	local cleaned = 0
+	for npcId, rec in pairs(db.learned) do
+		if type(rec) == "table" and type(rec.items) == "table" then
+			local loot, hit = LootSet(npcId), false
+			for id in pairs(rec.items) do
+				if GatherKind(id, loot) then
+					rec.items[id] = nil
+					hit = true
+				end
+			end
+			if hit then
+				cleaned = cleaned + 1 -- AttachDB has just emptied the breakdown cache
+			end
+		end
+	end
+	return cleaned
+end
+
 -- -------------------------------------------------------------------- learned data
 
 local recentList, recentSet = {}, {}
@@ -208,6 +363,7 @@ function FKV.AttachDB(db)
 	for _, g in ipairs(recentList) do
 		recentSet[g] = true
 	end
+	FKV.cleaned = CleanGatherLoot(db) -- creatures cleaned now (reported at login)
 end
 
 local function Learned(npcId)
@@ -291,7 +447,10 @@ end
 
 -- Reads the open loot window and attributes every slot to its source corpse. Only creature
 -- GUIDs count (fishing, objects and item containers have other kinds). Any secret value
--- aborts the whole capture. Returns the number of corpses newly recorded.
+-- aborts the whole capture. A gathering window is skipped when the player knows that
+-- gathering profession (or it cannot be told): skinning after looting is already deduped, and
+-- skinning first means the corpse had nothing to loot, or someone else looted it.
+-- Returns the number of corpses newly recorded.
 function FKV.CaptureLoot()
 	if not (ns.db and cfg.learn) then
 		return 0
@@ -351,7 +510,9 @@ function FKV.CaptureLoot()
 		local npcId = FKV.ParseGUID(guid)
 		if npcId and not IsLiveUnit(guid) then
 			local e = per[guid]
-			if FKV.RecordCorpse(npcId, guid, e.coin, e.items) then
+			local kind = GatherWindow(npcId, e)
+			local gathered = kind ~= nil and FKV.GatherSkill(kind) ~= 0
+			if not gathered and FKV.RecordCorpse(npcId, guid, e.coin, e.items) then
 				recorded = recorded + 1
 			end
 		end
@@ -388,6 +549,8 @@ local function Sig()
 		tostring(cfg.rare),
 		tostring(cfg.detail),
 		tostring(cfg.skin),
+		tostring(cfg.gather),
+		SkillSig(),
 	}, "|")
 end
 
@@ -475,7 +638,8 @@ end
 
 function FKV.ClearCaches()
 	FKV.ClearPriceCache()
-	mobCache, refCache = {}, {}
+	mobCache, refCache, gatherItems = {}, {}, nil
+	skillsAt = nil
 end
 
 -- Called when the client delivers item data we asked for: prices that fell back to the
@@ -506,10 +670,11 @@ local function ByValue(a, b)
 end
 
 -- Returns nil (nothing known) or a breakdown:
---   { total, gold, loot, rare, skin, gather, known, unknown, kills, source,
---     top = { {id, qty, value, src}... }, raretop = { same, below the rare threshold } }
+--   { total, gold, loot, rare, skin, gather, need, canGather, skinCounted, known, unknown,
+--     kills, source, top = { {id, qty, value, src}... }, raretop = { same, below the rare threshold } }
 -- source: "baseline" | "blended" | "learned" | "learning" (then total is nil).
--- total = gold + loot; rare drops and skinning are reported outside the total.
+-- total = gold + loot, plus skin when skinCounted (the player can gather it and the option is on).
+-- need/canGather are set when the player knows the profession; rare drops stay outside the total.
 function FKV.Compute(npcId)
 	local sig, now = Sig(), Now()
 	local hit = computeCache[npcId]
@@ -598,6 +763,17 @@ function FKV.Compute(npcId)
 			end
 		end
 		acc.total = acc.gold + acc.loot
+		if acc.skin > 0 then
+			local skill = FKV.GatherSkill(acc.gather)
+			if skill and skill > 0 then
+				acc.need = FKV.GatherNeed(acc.lvl)
+				acc.canGather = skill >= acc.need
+				if acc.canGather and cfg.gather then
+					acc.skinCounted = true
+					acc.total = acc.total + acc.skin
+				end
+			end
+		end
 		table.sort(acc.top, ByValue)
 		table.sort(acc.raretop, ByValue)
 		acc.byItem, acc.all = nil, nil

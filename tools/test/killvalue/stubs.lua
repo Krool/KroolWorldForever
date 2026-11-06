@@ -100,6 +100,7 @@ end
 -- Settings: records every registered setting by variable name; SettingsSet(variable, value)
 -- simulates the player clicking it (writes the table, then fires the change callback).
 RegisteredSettings = {}
+SetValueCalls = {} -- variable -> last value written through the setting object
 local function Category(name)
 	return {
 		name = name,
@@ -118,6 +119,14 @@ Settings = {
 		local s = { category = category, key = key, tbl = tbl, label = label, default = default }
 		function s:SetValueChangedCallback(fn)
 			self.cb = fn
+		end
+		-- what root.SetOption calls: writes the registered table and fires the change callback
+		function s:SetValue(value)
+			SetValueCalls[variable] = value
+			self.tbl[self.key] = value
+			if self.cb then
+				self.cb(self, value)
+			end
 		end
 		RegisteredSettings[variable] = s
 		return s
@@ -184,6 +193,21 @@ C_Item = {
 	GetItemNameByID = function(itemID)
 		local i = ItemCache[itemID]
 		return i and (i.name or ("Item" .. itemID)) or nil
+	end,
+}
+
+-- ---------------------------------------------------------------- skills
+
+SkillLines = {} -- [skillLineID] = { rank=, modifier= }; missing = not learned
+SkillReads = 0
+C_SkillInfo = {
+	GetSkillLineInfoByID = function(id)
+		SkillReads = SkillReads + 1
+		local s = SkillLines[id]
+		if not s then
+			return nil
+		end
+		return { skillID = id, name = "Skill" .. id, rank = s.rank, modifier = s.modifier or 0, maxRank = 300 }
 	end,
 }
 

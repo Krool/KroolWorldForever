@@ -15,6 +15,7 @@ end
 
 local SRC_TAG = { vendor = " (vendor)", quest = " (quest)", ah = " (AH)" }
 local GATHER = { S = "skinning", H = "herbalism", M = "mining" }
+local GATHER_TITLE = { S = "Skinning", H = "Herbalism", M = "Mining" }
 local RANK_TAG = { [1] = " elite", [2] = " rare-elite", [3] = " BOSS", [4] = " rare" }
 
 local function ItemName(id)
@@ -92,6 +93,9 @@ local function AddLines(tooltip, data)
 			)
 			n = n + 1
 		end
+		if acc.skinCounted then
+			tooltip:AddDoubleLine("  " .. GATHER[acc.gather], Money(acc.skin), 0.7, 0.7, 0.7, 0.8, 0.8, 0.8)
+		end
 		if acc.rare >= 100 then
 			tooltip:AddDoubleLine(
 				"  rare drops (<" .. (cfg.rare * 100) .. "%)",
@@ -105,8 +109,14 @@ local function AddLines(tooltip, data)
 			)
 		end
 	end
-	if cfg.skin and acc.skin > 0 then
-		tooltip:AddDoubleLine("  " .. GATHER[acc.gather], "+" .. Money(acc.skin), 0.7, 0.7, 0.7, 0.8, 0.8, 0.8)
+	if acc.skin > 0 and not acc.skinCounted then
+		local label = "  " .. GATHER[acc.gather]
+		if acc.canGather == false then
+			label = label .. ", needs " .. acc.need -- the player knows it, at too low a skill
+		end
+		if acc.canGather == false or cfg.skin then
+			tooltip:AddDoubleLine(label, "+" .. Money(acc.skin), 0.6, 0.6, 0.6, 0.7, 0.7, 0.7)
+		end
 	end
 end
 
@@ -181,8 +191,11 @@ local function Report(npcId, label)
 			n = n + 1
 		end
 	end
-	if acc.skin > 0 then
-		Print("  " .. GATHER[acc.gather] .. " (not in total): +" .. Money(acc.skin))
+	if acc.skinCounted then
+		Print("  " .. GATHER[acc.gather] .. " (you can, in total): " .. Money(acc.skin))
+	elseif acc.skin > 0 then
+		local why = acc.canGather == false and ("needs " .. acc.need .. ", not in total") or "not in total"
+		Print("  " .. GATHER[acc.gather] .. " (" .. why .. "): +" .. Money(acc.skin))
 	end
 	if acc.unknown > 0 then
 		Print("  " .. acc.unknown .. " drop(s) have no known price")
@@ -206,6 +219,19 @@ local function Status()
 	)
 	Print(("learned: %d creatures, %d corpses looted (learning %s)"):format(npcs, corpses, FKV.cfg.learn and "on" or "off"))
 	Print("Auctionator prices: " .. (hasAH and "available" or "not installed (vendor prices only)"))
+	FKV.RefreshSkills()
+	local known = {}
+	for _, kind in ipairs({ "S", "H", "M" }) do
+		local skill = FKV.GatherSkill(kind)
+		if skill and skill > 0 then
+			known[#known + 1] = GATHER_TITLE[kind] .. " " .. skill
+		end
+	end
+	if FKV.GatherSkill("S") == nil then
+		Print("gathering: skill info unavailable")
+	else
+		Print("gathering: " .. (#known > 0 and table.concat(known, ", ") or "none (Skinning, Herbalism, Mining)"))
+	end
 end
 
 -- -------------------------------------------------------------------- options
@@ -218,7 +244,8 @@ ns.options = {
 	{ key = "learn", type = "toggle", label = "Learn From My Loot", tooltip = "Records what corpses drop so new or rebalanced creatures get real numbers.", default = FKV.DEFAULTS.learn },
 	{ key = "vendor", type = "toggle", label = "Use Vendor Prices", tooltip = "Vendor sell price as fallback and floor.", default = FKV.DEFAULTS.vendor },
 	{ key = "ah", type = "toggle", label = "Use Auctionator Prices", tooltip = "If Auctionator is installed, price drops from the auction house minus the cut.", default = FKV.DEFAULTS.ah },
-	{ key = "skin", type = "toggle", label = "Show Skinning Value", tooltip = "Adds a skinning/gathering line (not part of the total).", default = FKV.DEFAULTS.skin },
+	{ key = "gather", type = "toggle", label = "Add My Skinning To The Total", tooltip = "When you know Skinning (or Herbalism or Mining, for creatures gathered that way) with enough skill for the creature, its skinning value is part of the total.", default = FKV.DEFAULTS.gather },
+	{ key = "skin", type = "toggle", label = "Show Skinning Value", tooltip = "Also shows the skinning value of creatures you cannot skin (not part of the total).", default = FKV.DEFAULTS.skin },
 	{ key = "friendly", type = "toggle", label = "Show On Friendly Creatures", tooltip = "Also adds the line to creatures you cannot attack.", default = FKV.DEFAULTS.friendly },
 	{ key = "hello", type = "toggle", label = "Login Message", tooltip = "Prints one line at login.", default = FKV.DEFAULTS.hello },
 	{ key = "detail", type = "range", label = "Contributor Lines", tooltip = "Top drops listed under the total (0 = none).", default = FKV.DEFAULTS.detail, min = 0, max = 10, step = 1 },
@@ -233,12 +260,13 @@ local TOGGLES = {
 	learn = { "learn", "learning from loot" },
 	vendor = { "vendor", "vendor price fallback/floor" },
 	ah = { "ah", "Auctionator prices" },
-	skin = { "skin", "skinning line" },
+	gather = { "gather", "your skinning in the total" },
+	skin = { "skin", "skinning line for creatures you cannot skin" },
 	friendly = { "friendly", "line on friendly creatures" },
 	hello = { "hello", "login message" },
 }
 
-local CONFIG_ORDER = { "detail", "cut", "rare", "learn", "vendor", "ah", "skin", "friendly", "hello" }
+local CONFIG_ORDER = { "detail", "cut", "rare", "learn", "vendor", "ah", "gather", "skin", "friendly", "hello" }
 local CONFIG_HELP = {
 	detail = "contributor lines under the total",
 	cut = "auction house cut %",
@@ -246,7 +274,8 @@ local CONFIG_HELP = {
 	learn = "record loot from corpses",
 	vendor = "vendor price as fallback/floor",
 	ah = "use Auctionator prices",
-	skin = "skinning line (not in total)",
+	gather = "your skinning in the total, when you can skin it",
+	skin = "skinning line when you cannot (not in total)",
 	friendly = "show on friendly creatures",
 	hello = "login message",
 }
@@ -264,9 +293,14 @@ local function Help()
 	Print("  /fkv                    breakdown for your target")
 	Print("  /fkv id <npcId>         breakdown for any creature")
 	Print("  /fkv status | config | options | reset [learned] | help")
-	Print("  /fkv detail <n> | cut <pct> | rare <pct>")
-	Print("  /fkv learn | vendor | ah | skin | friendly | hello    (on/off switches)")
+	Print("  /fkv detail <0-10> | cut <pct> | rare <pct>")
+	Print("  /fkv learn | vendor | ah | gather | skin | friendly | hello    (on/off switches)")
 	Print("  turn the whole feature on or off with /kwf killvalue on|off")
+end
+
+-- Through the settings panel's own objects, so an open panel and OnOptionChanged stay in sync.
+local function Set(key, value)
+	root.SetOption(ns, key, value)
 end
 
 function ns.OnSlash(msg)
@@ -277,21 +311,20 @@ function ns.OnSlash(msg)
 		Print("not loaded yet")
 	elseif TOGGLES[cmd] then
 		local key = TOGGLES[cmd][1]
-		cfg[key] = not cfg[key]
-		FKV.ClearPriceCache()
+		Set(key, not cfg[key])
 		Print(TOGGLES[cmd][2] .. " " .. (cfg[key] and "on" or "off"))
 	elseif cmd == "detail" then
 		local n = tonumber(arg)
 		if n then
-			cfg.detail = math.max(0, math.min(20, math.floor(n)))
+			Set("detail", math.max(0, math.min(10, math.floor(n))))
 		elseif arg ~= "" then
-			Print("usage: /fkv detail <0-20>")
+			Print("usage: /fkv detail <0-10>")
 		end
 		Print("detail lines: " .. cfg.detail)
 	elseif cmd == "cut" then
 		local pct = tonumber(arg)
 		if pct then
-			cfg.cut = math.max(0, math.min(100, pct))
+			Set("cut", math.max(0, math.min(100, pct)))
 		elseif arg ~= "" then
 			Print("usage: /fkv cut <0-100>")
 		end
@@ -299,7 +332,7 @@ function ns.OnSlash(msg)
 	elseif cmd == "rare" then
 		local pct = tonumber(arg)
 		if pct then
-			cfg.rare = math.max(0, math.min(100, pct)) / 100
+			Set("rare", math.max(0, math.min(100, pct)) / 100)
 		end
 		Print("drops below " .. (cfg.rare * 100) .. "% are listed as rare, outside the total")
 	elseif cmd == "status" then
@@ -324,9 +357,8 @@ function ns.OnSlash(msg)
 			Print("learned loot data erased")
 		else
 			for k, v in pairs(FKV.DEFAULTS) do
-				cfg[k] = v
+				Set(k, v)
 			end
-			FKV.ClearPriceCache()
 			Print("settings restored to defaults (/fkv reset learned erases learned loot)")
 		end
 	elseif cmd == "id" then
@@ -372,6 +404,10 @@ function ns.OnEnable()
 			Print("loaded. Hover a creature for its kill value; /fkv help for commands.")
 		end
 	end
+	if (FKV.cleaned or 0) > 0 then
+		Print(("removed skinning items from the learned loot of %d creatures (recorded as loot before 0.6.0)."):format(FKV.cleaned))
+		FKV.cleaned = 0
+	end
 end
 
 function ns.OnDisable()
@@ -391,4 +427,7 @@ ns:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(_, itemId)
 end)
 ns:RegisterEvent("AUCTION_HOUSE_CLOSED", function()
 	FKV.ClearPriceCache()
+end)
+ns:RegisterEvent("SKILL_LINES_CHANGED", function()
+	FKV.RefreshSkills() -- a skill-up changes what you can skin; the new skill signature refreshes the caches
 end)
