@@ -5,13 +5,17 @@ own on/off switch, so you keep what you want and turn off the rest.
 
 **[Download the latest release](https://github.com/Krool/KroolWorldForever/releases/latest)**
 
+`/kw` (or the addon button on the minimap) opens the **Krool World hub**: one card per feature with
+what it is doing right now, its on/off switch, and the way in (its window or its settings).
+
 | Feature | What you get | Needs |
 |---|---|---|
-| **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` lists everything in your bags (and bank) you can throw away. | QuestieDB |
+| **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` opens a window that sorts your bags (and bank) into Can Delete, Keep and Still Checking. | QuestieDB |
 | **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
+| **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, plus a skull button and a key that target it and mark it. Right-click the button to ignore a rare (the Stormwind canal crocolisk is ignored out of the box). | Nothing |
 
-All three are on by default.
+All four are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -19,10 +23,12 @@ All three are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash and Kill Value never delete, sell, loot or click anything for you.
-  Setups is the one feature that changes your UI: only out of combat, only when you click Apply (or
-  for a brand-new level 1 character, if you marked a setup for that), and always with an undo
-  snapshot first. A character with any experience is never changed without a click.
+- **Advice only.** Quest Trash, Kill Value and Rare Alert never delete, sell, loot or click anything
+  for you. Rare Alert's marker comes from your own click or key press: the game does not let an
+  addon place one by itself. Setups is the one feature that changes your UI: only out of combat,
+  only when you click Apply (or for a brand-new level 1 character, if you marked a setup for that),
+  and always with an undo snapshot first. A character with any experience is never changed without
+  a click.
 - **Plays by Forever's addon rules.** Nothing reads combat data Blizzard hides from addons. Every
   feature checks for hidden ("secret") values and steps aside instead of erroring. Inside instances,
   where creature tooltip data is hidden, Kill Value shows nothing.
@@ -48,11 +54,13 @@ Optional companions:
 
 | Command | What it does |
 |---|---|
-| `/kwf` | Open the settings |
-| `/kwf list` | List the features and whether each is on |
-| `/kwf <feature> on` / `off` | Turn one feature on or off (`questtrash`, `killvalue`, `setups`) |
-| `/fqt` | Scan your bags (and the bank while it is open) and print every verdict, deletables first |
-| `/fqt status` | Show whether the quest data is ready |
+| `/kw` | Open the hub (again to close it) |
+| `/kw settings` | Open the settings |
+| `/kw list` | List the features and whether each is on |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`) |
+| `/kw <feature> on` / `off` | Turn one feature on or off |
+| `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
+| `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
 | `/fkv` | Full value breakdown for your target |
 | `/fkv id <npcId>` | Breakdown for any creature by id |
 | `/fkv status` / `config` / `help` | Data sources, current settings, all commands |
@@ -61,8 +69,13 @@ Optional companions:
 | `/kws save [name]` | Save this character as a setup |
 | `/kws list` | List saved setups |
 | `/kws undo` | Undo the last apply on this character |
+| `/kwr ignore` | Ignore your target (or the last rare seen) |
+| `/kwr unignore <name or id>` / `list` | Stop ignoring one; show the ignore list |
+| `/kwr test` | Show the mark button with a test entry, to place it (shift-drag) and try your key |
 
-`/questtrash`, `/killvalue` and `/kwsetups` work as long forms of `/fqt`, `/fkv` and `/kws`.
+The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
+`/kw`; `/questtrash`, `/killvalue`, `/kwsetups` and `/rarealert` are long forms of `/fqt`, `/fkv`,
+`/kws` and `/kwr`.
 
 ## Settings
 
@@ -114,6 +127,20 @@ On by default: yes. Toggle: `/kwf setups on|off`. Commands: `/kws, /kwsetups`.
 | Auto Snapshot Each Character | On | Keep one automatic setup per character, refreshed after login and shortly after you change bars, keybindings, macros, Edit Mode or settings, so any character can copy any other. |
 | Applied Keybindings Are Per Character | On | On: applying a setup saves its keybindings for this character only. Off: for the whole account, which changes every character that uses account keybindings. |
 | Clear Bar Slots The Setup Leaves Empty | On | On: an apply makes your bars match the setup exactly. Off: only fills slots, keeping anything already in a slot the setup leaves empty. |
+
+### Rare Alert
+
+Tells you when a rare enemy is near and gives you a button and a key that target it and put a raid marker on it. The game lets only a click or key press set a marker, so it never marks by itself.
+
+On by default: yes. Toggle: `/kwf rares on|off`. Commands: `/kwr, /rarealert`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Play A Sound | On | The raid warning sound when a rare shows up. |
+| Show A Screen Message | On | The rare's name in the middle of the screen, like a raid warning. |
+| Chat Message | On | One line in chat with the rare's name and level. |
+| Show The Mark Button | On | A marker button near the top of the screen while a rare is near. Click it to target the rare and mark it; right-click ignores that rare; shift-drag moves it. The key in Key Bindings > AddOns > Krool World works either way. |
+| Raid Marker | 8 (1 to 8) | Which marker the button puts on the rare: 8 skull, 7 cross, 6 square, 5 moon, 4 triangle, 3 diamond, 2 circle, 1 star. |
 <!-- settings:end -->
 
 ## FAQ
@@ -138,6 +165,13 @@ account-wide interface settings, Edit Mode's own checkboxes, and this addon's se
 
 **Is this allowed?** Yes. It uses only the standard addon API: tooltips, the loot window, and (for
 Setups) the same bar, binding and macro calls any action bar profile addon uses, out of combat.
+
+**Why doesn't Rare Alert just mark the rare?** Since Midnight, which Forever is built on, setting a
+raid marker is protected: only a click or key press may do it. The button and key run
+`/targetexact <rare>` and `/tm` for you, one press. They can change only out of combat, so a rare
+found in combat gets the alert, and the button catches up when combat ends. If you already use
+RareScanner or SilverDragon (both have Forever builds), turn off Rare Alert's sound and screen
+message and keep the button.
 
 ## Development
 

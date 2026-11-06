@@ -1,8 +1,8 @@
 ## Interface: 16001
 ## Title: Krool World Forever
-## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters). /kwf
+## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters), Rare Alert (alert and a one-key marker for rare enemies). /kw
 ## Author: Krool
-## Version: 0.6.1
+## Version: 0.7.0
 ## Category: Interface Enhancements
 ## IconTexture: Interface\Icons\INV_Misc_Bag_10
 ## AddonCompartmentFunc: KroolWorldForever_OnCompartmentClick
@@ -11,10 +11,12 @@
 
 Core\Registry.lua
 Core\Settings.lua
+Core\Widgets.lua
 
 Features\QuestTrash\Repeatables.lua
 Features\QuestTrash\Core.lua
 Features\QuestTrash\UI.lua
+Features\QuestTrash\Window.lua
 
 Features\KillValue\Data.lua
 Features\KillValue\Core.lua
@@ -23,5 +25,9 @@ Features\KillValue\UI.lua
 Features\Setups\Core.lua
 Features\Setups\UI.lua
 
-# Init last: every feature has declared itself before ADDON_LOADED.
+Features\Rares\Rares.lua
+
+# Bindings.xml (Rare Alert's key) loads by itself; it is not listed here.
+# Hub, then Init last: every feature has declared itself before ADDON_LOADED.
+Core\Hub.lua
 Core\Init.lua

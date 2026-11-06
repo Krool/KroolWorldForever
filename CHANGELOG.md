@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0
+
+- **`/kw` opens the new Krool World hub** (so does the minimap addon button): one card per feature
+  with its icon, what it is doing right now (items you can delete, creatures learned, your
+  setups, the last rare), an On switch, and the way in: Open for features with a window, and a
+  gear for settings. `/kw settings` opens the settings; `/kwf` still works.
+- **Rare Alert** (new): a sound, a screen message and a chat line when a rare enemy is near (from
+  its nameplate, your mouseover or your target), once per rare every 5 minutes. A skull button and
+  a key (Key Bindings > AddOns > Krool World) target it and mark it with one press; the game lets
+  only a click or key press set a marker, so it never marks by itself. Right-click the button to
+  ignore a rare; Sewer Beast in the Stormwind canals is ignored out of the box. `/kwr test` shows
+  the button to place it (shift-drag). Options for the sound, screen message, chat line, button
+  and which marker.
+- **Quest Trash window.** `/fqt` opens a window instead of printing to chat: your bag items (and
+  bank items while it is open) in Can Delete, Keep and Still Checking, with stack totals and why.
+  Hover a row for the item's tooltip and its quests. `/fqt print` keeps the chat list.
+
 ## 0.6.1
 
 - **Quest Trash: no stale verdicts after turning it off and on.** While off it does not see
