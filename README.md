@@ -13,7 +13,7 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` opens a window that sorts your bags (and bank) into Can Delete, Keep and Still Checking. | QuestieDB |
 | **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
-| **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, plus a skull button and a key that target it and mark it. Right-click the button to ignore a rare (the Stormwind canal crocolisk is ignored out of the box). | Nothing |
+| **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a skull button and a key that target it and mark it. Right-click the button to ignore a rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
 
 All four are on by default.
 
@@ -72,6 +72,7 @@ Optional companions:
 | `/kwr ignore` | Ignore your target (or the last rare seen) |
 | `/kwr unignore <name or id>` / `list` | Stop ignoring one; show the ignore list |
 | `/kwr test` | Show the mark button with a test entry, to place it (shift-drag) and try your key |
+| `/kwr nameplates` | Turn enemy nameplates on (rares are noticed as soon as their nameplate shows) |
 
 The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
 `/kw`; `/questtrash`, `/killvalue`, `/kwsetups` and `/rarealert` are long forms of `/fqt`, `/fkv`,

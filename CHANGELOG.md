@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.8.0
+
+- **Rare Alert: turn enemy nameplates on in one click.** Rares are noticed as soon as their
+  nameplate shows, but Forever starts with enemy nameplates off (and a 45 yard range), so only
+  rares you mouse over or target were found. While they are off, the hub card says so and shows a
+  Plates On button; the settings page has Turn On Enemy Nameplates, and `/kwr nameplates` does
+  the same. It turns them on and asks for the longest range; chat says the range you got. A
+  one-time tip at login points to it.
+- **Rare Alert: what a rare is worth.** The alert's chat line is followed by its kill value and
+  best drops from Kill Value ("worth about 1g 20s: ..."), and the skull button's tooltip lists the
+  kill value and top drops with their chance.
+- Hub: a feature without its own window can show one fix-it button on its card.
+
 ## 0.7.0
 
 - **`/kw` opens the new Krool World hub** (so does the minimap addon button): one card per feature
