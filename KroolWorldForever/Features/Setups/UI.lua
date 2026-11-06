@@ -1040,6 +1040,22 @@ end
 ns.title = "Setups"
 ns.description = "Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, "
 	.. "addon list and Krool World settings, and apply them to another character. /kws opens the window."
+ns.icon = "Interface\\Icons\\INV_Misc_Book_09"
+ns.blurb = "Copy bars, keys and layouts between characters"
+
+-- The hub card: how many setups, and which one new characters get.
+function ns.HubStatus()
+	local n = 0
+	for _ in pairs((ns.db and ns.db.setups) or {}) do
+		n = n + 1
+	end
+	local text = ("%d %s"):format(n, n == 1 and "setup" or "setups")
+	local default = ns.Get(ns.db.default)
+	if default then
+		text = text .. "  ·  new characters get " .. Title(default)
+	end
+	return "|cffaaaaaa" .. text .. "|r"
+end
 ns.options = {
 	{
 		key = "picker",

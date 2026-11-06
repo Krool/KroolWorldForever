@@ -21,18 +21,65 @@ NUM_TOTAL_EQUIPPED_BAG_SLOTS = 5
 
 -- ---------------------------------------------------------------- frames / events
 
+-- Frames accept any method (unknown ones are no-ops) and keep what tests look at, so the Quest
+-- Trash window builds here.
+local Widget = {}
+local WidgetMeta = {
+	__index = function(_, k)
+		return Widget[k] or function() end
+	end,
+}
+local function NewWidget(name)
+	local w = setmetatable({ scripts = {}, events = {}, shown = true, text = "" }, WidgetMeta)
+	if name then
+		_G[name] = w
+	end
+	return w
+end
+function Widget:RegisterEvent(e)
+	self.events[e] = true
+end
+function Widget:UnregisterEvent(e)
+	self.events[e] = nil
+end
+function Widget:SetScript(which, fn)
+	self.scripts[which] = fn
+end
+function Widget:Show()
+	self.shown = true
+end
+function Widget:Hide()
+	self.shown = false
+end
+function Widget:SetShown(v)
+	self.shown = v and true or false
+end
+function Widget:IsShown()
+	return self.shown
+end
+function Widget:SetText(t)
+	self.text = t
+end
+function Widget:GetText()
+	return self.text
+end
+function Widget:Click()
+	if self.scripts.OnClick then
+		self.scripts.OnClick(self)
+	end
+end
+function Widget:CreateFontString()
+	return NewWidget()
+end
+function Widget:CreateTexture()
+	return NewWidget()
+end
+UIParent = NewWidget()
+UISpecialFrames = {}
+
 CreatedFrames = {}
-function CreateFrame()
-	local f = { scripts = {}, events = {} }
-	function f:RegisterEvent(e)
-		self.events[e] = true
-	end
-	function f:UnregisterEvent(e)
-		self.events[e] = nil
-	end
-	function f:SetScript(which, fn)
-		self.scripts[which] = fn
-	end
+function CreateFrame(_, name)
+	local f = NewWidget(name)
 	table.insert(CreatedFrames, f)
 	return f
 end
@@ -86,6 +133,15 @@ GameTooltip = { lines = {} }
 function GameTooltip:AddLine(text)
 	table.insert(self.lines, text)
 end
+function GameTooltip:SetOwner(owner)
+	self.owner = owner
+end
+function GameTooltip:SetItemByID(id) -- the client builds the item tooltip, then our hook adds the verdict
+	self.lines, self.item = {}, id
+	TooltipCallbacks[Enum.TooltipDataType.Item](self, { id = id })
+end
+function GameTooltip:Show() end
+function GameTooltip:Hide() end
 ItemRefTooltip = { lines = {}, AddLine = GameTooltip.AddLine }
 
 function HoverItem(itemID)
@@ -178,12 +234,17 @@ C_Item = {
 }
 
 Bags = {} -- [bag] = { itemID, ... }
+Stacks = {} -- [itemID] = stack size of each slot holding it (default 1)
 C_Container = {
 	GetContainerNumSlots = function(bag)
 		return Bags[bag] and #Bags[bag] or 0
 	end,
 	GetContainerItemID = function(bag, slot)
 		return Bags[bag] and Bags[bag][slot]
+	end,
+	GetContainerItemInfo = function(bag, slot)
+		local id = Bags[bag] and Bags[bag][slot]
+		return id and { itemID = id, stackCount = Stacks[id] or 1, iconFileID = 134400 } or nil
 	end,
 }
 

@@ -3,7 +3,7 @@
 **Copy one character's setup to another.** Saves action bars, keybindings, macros, the Edit Mode
 layout, interface settings and the addon list, and applies any of them to the character you are on.
 
-`/kws` (or `/kwf setups`, or the button on the Setups settings page) opens the window (0.5.0 layout):
+`/kws` (or `/kw setups`, the hub card, or the button on the Setups settings page) opens the window (0.5.0 layout):
 
 - **Banner** under the title: one line saying what to do next, or what just happened.
 - **Left:** class icon, name, level and age of every saved setup on this PC, in two groups: **Saved

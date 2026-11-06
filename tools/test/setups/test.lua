@@ -663,6 +663,70 @@ ns.db.autoReload = true
 ns.Apply({ name = "old", parts = { kwf = { setups = { autoReload = false, picker = false } } } }, { kwf = true }, ns.db)
 check("kwf: Setups' own options never applied", ns.db.autoReload, true)
 
+-- ---------------------------------------------------------------- the hub (/kw)
+
+local root = __ns
+check("/kw is the main command", SLASH_KROOLWORLDFOREVER1, "/kw")
+check("/kwf still works", SLASH_KROOLWORLDFOREVER2, "/kwf")
+local setupsWin = _G.KroolWorldForeverSetupsFrame
+if setupsWin then
+	setupsWin:Hide()
+end
+SlashCmdList.KROOLWORLDFOREVER("")
+local hub = root.HubFrame()
+check("/kw opens the hub", hub ~= nil and hub:IsShown(), true)
+check("one card per feature", #hub.cards, #root.featureOrder)
+local cards = {}
+for _, c in ipairs(hub.cards) do
+	cards[c.feature.key] = c
+end
+check("cards in TOC order", hub.cards[1].feature.key, "questtrash")
+check("a card for Rare Alert", cards.rares ~= nil, true)
+check("card title", cards.setups.title.text, "Setups")
+check("card blurb", cards.setups.blurb.text, "Copy bars, keys and layouts between characters")
+check("Setups status counts setups", cards.setups.status.text:find("setups", 1, true) ~= nil, true)
+check("Setups status names the default", cards.setups.status.text:find("new characters get", 1, true) ~= nil, true)
+-- (earlier sections switched Quest Trash and Kill Value off through the kwf part)
+check("an off feature's card says Off", cards.killvalue.status.text, "|cff888888Off|r")
+check("off: icon greyed", cards.killvalue.toggle.checked, false)
+check("Quest Trash without QuestieDB says so", root.features.questtrash.HubStatus():find("QuestieDB", 1, true) ~= nil, true)
+check("Kill Value status", root.features.killvalue.HubStatus():find("creatures learned", 1, true) ~= nil, true)
+check("on features are checked", cards.setups.toggle.checked, true)
+check("a feature with a window gets Open", cards.setups.open ~= false, true)
+check("a feature without one does not", cards.killvalue.open, false)
+check("every card has a settings button", cards.killvalue.gear ~= nil, true)
+check("card tooltip names the command", has(Hover(cards.setups), "/kws"), true)
+
+-- on/off from the card
+Hardware(cards.rares.toggle.scripts.OnClick, cards.rares.toggle)
+check("card switch turns the feature off", root.features.rares.enabled, false)
+check("and saves it", root.features.rares.db.enabled, false)
+check("card shows Off", cards.rares.status.text:find("Off", 1, true) ~= nil, true)
+check("switch unchecked", cards.rares.toggle.checked, false)
+SlashCmdList.KROOLWORLDFOREVER("rares on")
+check("turning it on elsewhere refreshes the open hub", cards.rares.toggle.checked, true)
+
+-- the way in
+cards.setups.open:Click()
+check("Open leaves the hub", hub:IsShown(), false)
+check("and opens the feature's window", _G.KroolWorldForeverSetupsFrame:IsShown(), true)
+_G.KroolWorldForeverSetupsFrame:Hide()
+SlashCmdList.KROOLWORLDFOREVER("")
+cards.killvalue:Click()
+check("a card without a window opens its settings", OpenedCategory, "Kill Value")
+SlashCmdList.KROOLWORLDFOREVER("")
+cards.setups.gear:Click()
+check("the gear opens settings", OpenedCategory, "Setups")
+SlashCmdList.KROOLWORLDFOREVER("")
+hub.settings:Click()
+check("All Settings opens the bundle page", OpenedCategory, "Krool World Forever")
+SlashCmdList.KROOLWORLDFOREVER("")
+SlashCmdList.KROOLWORLDFOREVER("")
+check("/kw again closes it", hub:IsShown(), false)
+KroolWorldForever_OnCompartmentClick()
+check("the minimap button opens the hub", hub:IsShown(), true)
+hub:Hide()
+
 check("no protected call was ever blocked", #BlockedCalls, 0)
 
 print(("%d checks, %d failed"):format(count, failures))

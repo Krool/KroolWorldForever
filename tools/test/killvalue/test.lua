@@ -127,7 +127,11 @@ do
 	check("/fkv alias", SLASH_KROOLWORLDFOREVER_KILLVALUE1, "/fkv")
 	check("compartment click defined", type(KroolWorldForever_OnCompartmentClick), "function")
 	KroolWorldForever_OnCompartmentClick()
-	check("compartment click opens the bundle settings category", OpenedCategory, "Krool World Forever")
+	check("compartment click opens the hub", __ns.HubFrame():IsShown(), true)
+	KroolWorldForever_OnCompartmentClick()
+	check("and closes it again", __ns.HubFrame():IsShown(), false)
+	SlashCmdList.KROOLWORLDFOREVER("settings")
+	check("/kw settings opens the bundle settings category", OpenedCategory, "Krool World Forever")
 end
 
 -- ---------------------------------------------------------------- GUID parsing

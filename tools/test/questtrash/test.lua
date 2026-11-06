@@ -195,12 +195,74 @@ local printed, realPrint = {}, print
 print = function(s)
 	printed[#printed + 1] = s
 end
-SlashCmdList.KROOLWORLDFOREVER_QUESTTRASH("")
+SlashCmdList.KROOLWORLDFOREVER_QUESTTRASH("print")
 print = realPrint
-check("scan lists the deletable item", has(printed, "Item5001"), true)
+check("/fqt print lists the deletable item", has(printed, "Item5001"), true)
 check("scan groups it under Deletable", has(printed, "Deletable"), true)
 check("scan lists the repeatable item as keep", has(printed, "Repeatable/seasonal demand"), true)
 check("scan skips items with no verdict", has(printed, "Item5017"), false)
+
+-- ---------------------------------------------------------------- the window
+
+Bags[0] = { 5001, 5002, 5017, 5001, 5014 }
+Stacks[5001] = 3
+SlashCmdList.KROOLWORLDFOREVER_QUESTTRASH("")
+local win = QT.WindowFrame()
+check("/fqt opens the window", win ~= nil and win:IsShown(), true)
+local function rowsShown()
+	local out = {}
+	for _, r in ipairs(win.rows) do
+		if r.shown then
+			out[#out + 1] = r
+		end
+	end
+	return out
+end
+local function headersShown()
+	local out = {}
+	for _, h in ipairs(win.headers) do
+		if h.shown then
+			out[#out + 1] = h.text
+		end
+	end
+	return out
+end
+local rows = rowsShown()
+check("one row per distinct item with a verdict", #rows, 3)
+check("deletable group first", headersShown()[1], "Can Delete (1)")
+check("keep group", headersShown()[2], "Keep (2)")
+check("stacks across slots are summed", rows[1].name.text:find("x6", 1, true) ~= nil, true)
+check("deletable row says why", rows[1].why.text, "Quests done")
+check("banner counts what you can delete", win.banner.text:find("1 item you can delete", 1, true) ~= nil, true)
+check("note says the bank is not included", win.note.text:find("Open your bank", 1, true) ~= nil, true)
+GameTooltip.lines = {}
+rows[1].scripts.OnEnter(rows[1])
+check("hovering a row shows the item tooltip", GameTooltip.item, 5001)
+check("with the verdict from the tooltip hook", has(GameTooltip.lines, "Can be deleted"), true)
+
+FireEvent("BANKFRAME_OPENED")
+check("opening the bank refreshes the window", win.note.text, "Bags and bank.")
+Bags[-1] = { 5003 }
+FireEvent("BAG_UPDATE_DELAYED")
+check("bag changes refresh it", #rowsShown(), 4)
+FireEvent("BANKFRAME_CLOSED")
+Bags[-1] = nil
+check("closing the bank drops bank items", #rowsShown(), 3)
+
+Bags[0] = { 5017 }
+FireEvent("BAG_UPDATE_DELAYED")
+check("nothing to sort: empty text", win.empty.shown, true)
+check("nothing to sort: banner", win.banner.text, "Nothing to sort.")
+win:Hide()
+Bags[0] = { 5001 }
+FireEvent("BAG_UPDATE_DELAYED")
+check("a closed window is not rebuilt", win.empty.shown, true)
+
+check("hub status counts deletable items", QT.HubStatus():find("1 item you can delete", 1, true) ~= nil, true)
+Bags[0] = {}
+check("hub status when nothing to delete", QT.HubStatus():find("Nothing to delete", 1, true) ~= nil, true)
+Bags[0] = { 5001, 5002, 5017 }
+Stacks[5001] = nil
 
 local realLib = LibQuestieDB
 LibQuestieDB = nil
@@ -242,8 +304,11 @@ FQT.ClearCache()
 check("/kwf list names the feature", has(Capture(function()
 	SlashCmdList.KROOLWORLDFOREVER("list")
 end), "Quest Trash"), true)
+QT.WindowFrame():Hide()
 SlashCmdList.KROOLWORLDFOREVER("questtrash")
-check("/kwf <feature> opens its settings page", OpenedCategory, "Quest Trash")
+check("/kw questtrash opens its window", QT.WindowFrame():IsShown(), true)
+SlashCmdList.KROOLWORLDFOREVER_QUESTTRASH("options")
+check("/fqt options opens its settings page", OpenedCategory, "Quest Trash")
 SettingsSet("KroolWorldForever_questtrash_questList", false)
 check("option checkbox writes the feature slice", DB.questList, false)
 check("option takes effect", #HoverItem(5001), 1)

@@ -1,0 +1,5 @@
+<Bindings>
+	<!-- Rare Alert: clicks the secure mark button (Features/Rares/Rares.lua). Names: BINDING_HEADER_KROOLWORLDFOREVER and BINDING_NAME_CLICK ... there. -->
+	<Binding name="CLICK KroolWorldForeverRareButton:LeftButton" header="KROOLWORLDFOREVER" category="ADDONS">
+	</Binding>
+</Bindings>

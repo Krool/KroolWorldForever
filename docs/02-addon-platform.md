@@ -20,6 +20,12 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
 - **More secrets:** loss-of-control data is always secret (even for the player), `UnitCombat`
   amounts are secret, damage meter `specIconID` became secret, `C_Spell.IsSpellCrowdControl` takes
   secret arguments only from untainted code.
+- **Raid markers are protected.** `SetRaidTarget` carries `HasRestrictions` at 70790 (wiki: protected
+  since 12.0.0), so addons cannot mark, and `GetRaidTargetIndex` on enemies is restricted. A
+  `SecureActionButtonTemplate` with `type1 = "macro"` and `macrotext1` still works:
+  `SECURE_ACTIONS.macro` calls `C_Macro.RunMacroText` (restricted to secure code, which the button
+  is). `/tm` takes conditionals and `!N` (do not toggle off). Macrotext: 255 characters, no
+  `/click` chaining (11.0). Rare Alert uses this; unverified in-game.
 - **`C_UI.Reload` needs a hardware event** (a click or key press). From a timer or event handler the
   client blocks it with `ADDON_ACTION_BLOCKED` (our Setups hit this on 2026-11-04). The generated API
   docs carry no flag for it, so an allowlist cannot catch it; the wiki marks it `restrictedapi|hwevent`.

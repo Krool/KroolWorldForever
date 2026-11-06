@@ -93,7 +93,7 @@ refreshed when settings change or when new loot is learned for that creature.
 | `/fkv reset learned` | erase learned loot data |
 | `/fkv help` | command list |
 
-The tooltip line's on/off is the bundle's per-feature switch (`/kwf killvalue on|off` or the
+The tooltip line's on/off is the bundle's per-feature switch (`/kw killvalue on|off` or the
 Enabled checkbox). While off there are no tooltip lines and no loot is recorded.
 
 Switches (all saved per account): `learn` (record loot, on),

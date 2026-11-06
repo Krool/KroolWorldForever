@@ -11,8 +11,10 @@
 --   ns.OnEnable() / ns.OnDisable()    after login, whenever the feature turns on/off
 --   ns.OnOptionChanged(key, value)
 --   ns:RegisterEvent(event, fn)       fn(event, ...) runs only while the feature is enabled
---   ns.OnOpen()                       optional: the feature's own window; /kwf <key> opens it, and
---                                     the settings page gets an "Open" button
+--   ns.OnOpen()                       optional: the feature's own window; /kw <key> opens it, the
+--                                     hub card gets an Open button, and so does the settings page
+--   ns.icon, ns.blurb                 the hub card: an icon file and one short line
+--   ns.HubStatus()                    optional: one short line on the hub card, what it is doing now
 --
 -- File scope must stay free of game calls so tools/settings-doc.js can load the definitions
 -- outside the client. Do game work in OnLoad/OnEnable.
@@ -102,5 +104,8 @@ function root.SetEnabled(F, on)
 		if not ok then
 			F:Print("|cffff5555error|r turning " .. (on and "on" or "off") .. ": " .. tostring(err))
 		end
+	end
+	if root.RefreshHub then
+		pcall(root.RefreshHub) -- an open hub shows the new state
 	end
 end

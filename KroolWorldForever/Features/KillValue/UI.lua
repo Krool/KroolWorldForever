@@ -240,6 +240,25 @@ end
 
 ns.title = "Kill Value"
 ns.description = "Adds the expected gold per kill to creature tooltips: coins plus drop table times vendor or Auctionator prices."
+ns.icon = "Interface\\Icons\\INV_Misc_Coin_02"
+ns.blurb = "Gold per kill on creature tooltips"
+
+-- The hub card: how much it has learned, and what feeds the numbers.
+function ns.HubStatus()
+	local npcs = 0
+	for _ in pairs((ns.db and ns.db.learned) or {}) do
+		npcs = npcs + 1
+	end
+	local parts = { ("%d creatures learned"):format(npcs) }
+	local skin = FKV.GatherSkill("S")
+	if skin and skin > 0 then
+		parts[#parts + 1] = "Skinning " .. skin
+	end
+	if type(Auctionator) == "table" and FKV.cfg.ah then
+		parts[#parts + 1] = "AH prices"
+	end
+	return "|cffaaaaaa" .. table.concat(parts, "  ·  ") .. "|r"
+end
 ns.options = {
 	{ key = "learn", type = "toggle", label = "Learn From My Loot", tooltip = "Records what corpses drop so new or rebalanced creatures get real numbers.", default = FKV.DEFAULTS.learn },
 	{ key = "vendor", type = "toggle", label = "Use Vendor Prices", tooltip = "Vendor sell price as fallback and floor.", default = FKV.DEFAULTS.vendor },
@@ -295,7 +314,7 @@ local function Help()
 	Print("  /fkv status | config | options | reset [learned] | help")
 	Print("  /fkv detail <0-10> | cut <pct> | rare <pct>")
 	Print("  /fkv learn | vendor | ah | gather | skin | friendly | hello    (on/off switches)")
-	Print("  turn the whole feature on or off with /kwf killvalue on|off")
+	Print("  turn the whole feature on or off with /kw killvalue on|off")
 end
 
 -- Through the settings panel's own objects, so an open panel and OnOptionChanged stay in sync.

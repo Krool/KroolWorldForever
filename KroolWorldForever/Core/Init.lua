@@ -53,9 +53,11 @@ local function MainSlash(msg)
 	local key, arg = strtrim(msg or ""):lower():match("^(%S*)%s*(.-)$")
 	local F = root.features[key]
 	if key == "" then
+		root.OpenHub()
+	elseif key == "settings" or key == "options" then
 		root.OpenSettings()
 	elseif key == "list" or key == "help" then
-		root.Print("features (/kwf <feature> on|off):")
+		root.Print("/kw opens the hub; /kw settings; /kw <feature> [on|off]:")
 		for _, k in ipairs(root.featureOrder) do
 			local f = root.features[k]
 			print(("  %s - %s %s"):format(k, f.title or k, FeatureState(f)))
@@ -68,13 +70,14 @@ local function MainSlash(msg)
 	elseif F then
 		root.OpenSettings(F)
 	else
-		root.Print("unknown feature '" .. key .. "'. /kwf list")
+		root.Print("unknown feature '" .. key .. "'. /kw list")
 	end
 end
 
 local function RegisterSlash()
-	SLASH_KROOLWORLDFOREVER1 = "/kwf"
-	SLASH_KROOLWORLDFOREVER2 = "/kroolworld"
+	SLASH_KROOLWORLDFOREVER1 = "/kw"
+	SLASH_KROOLWORLDFOREVER2 = "/kwf"
+	SLASH_KROOLWORLDFOREVER3 = "/kroolworld"
 	SlashCmdList.KROOLWORLDFOREVER = MainSlash
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
@@ -85,7 +88,7 @@ local function RegisterSlash()
 			end
 			SlashCmdList[id] = function(msg)
 				if not F.enabled then
-					F:Print("is off. Turn it on with /kwf " .. key .. " on")
+					F:Print("is off. Turn it on with /kw " .. key .. " on")
 					return
 				end
 				local ok, err = pcall(F.OnSlash, msg)
@@ -98,7 +101,7 @@ local function RegisterSlash()
 end
 
 function KroolWorldForever_OnCompartmentClick()
-	root.OpenSettings()
+	root.OpenHub()
 end
 
 -- -------------------------------------------------------------------- frame

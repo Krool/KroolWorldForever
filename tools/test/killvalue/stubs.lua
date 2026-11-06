@@ -42,18 +42,54 @@ end
 
 -- ---------------------------------------------------------------- frames / events
 
+-- Frames accept any method (unknown ones are no-ops) and keep what tests look at, so windows such
+-- as the hub can build here too.
+local Widget = {}
+local WidgetMeta = {
+	__index = function(_, k)
+		return Widget[k] or function() end
+	end,
+}
+local function NewWidget(name)
+	local w = setmetatable({ scripts = {}, events = {}, shown = true, text = "" }, WidgetMeta)
+	if name then
+		_G[name] = w
+	end
+	return w
+end
+function Widget:RegisterEvent(e)
+	self.events[e] = true
+end
+function Widget:UnregisterEvent(e)
+	self.events[e] = nil
+end
+function Widget:SetScript(which, fn)
+	self.scripts[which] = fn
+end
+function Widget:Show()
+	self.shown = true
+end
+function Widget:Hide()
+	self.shown = false
+end
+function Widget:IsShown()
+	return self.shown
+end
+function Widget:SetText(t)
+	self.text = t
+end
+function Widget:CreateFontString()
+	return NewWidget()
+end
+function Widget:CreateTexture()
+	return NewWidget()
+end
+UIParent = NewWidget()
+UISpecialFrames = {}
+
 CreatedFrames = {}
-function CreateFrame()
-	local f = { scripts = {}, events = {} }
-	function f:RegisterEvent(e)
-		self.events[e] = true
-	end
-	function f:UnregisterEvent(e)
-		self.events[e] = nil
-	end
-	function f:SetScript(which, fn)
-		self.scripts[which] = fn
-	end
+function CreateFrame(_, name)
+	local f = NewWidget(name)
 	table.insert(CreatedFrames, f)
 	return f
 end

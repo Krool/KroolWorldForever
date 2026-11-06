@@ -28,13 +28,17 @@ before writing addon code.
 - **Protected calls need a click.** `C_UI.Reload` (and anything else hardware-event restricted) is
   blocked with `ADDON_ACTION_BLOCKED` from a timer or event handler; the API docs carry no flag for
   it, so the lint cannot see it. The Setups test stubs model this (`HardwareDepth`, `BlockedCalls`).
+  `SetRaidTarget` is protected outright (secure code only): mark through a
+  `SecureActionButtonTemplate` macro (Rare Alert), whose attributes can change only out of combat.
 
 ## Bundle rules
 
 - **One folder per feature** in `KroolWorldForever/Features/<Name>/`. Every file starts
   `local _, root = ...` / `local ns = root.Feature("<key>")`. The contract (title, description,
   options, slash, OnLoad/OnEnable/OnDisable/OnOptionChanged, ns:RegisterEvent) is documented at
-  the top of `Core/Registry.lua`. Add the files to the TOC before `Core\Init.lua`.
+  the top of `Core/Registry.lua`. Add the files to the TOC before `Core\Hub.lua` and `Core\Init.lua`.
+  The `/kw` hub (`Core/Hub.lua`) shows a card per feature from `ns.icon`, `ns.blurb` and
+  `ns.HubStatus()`; give a new feature all three. Feature windows use `root.UI` (`Core/Widgets.lua`).
 - **No game calls at file scope** in feature files. `tools/settings-doc.js` and every test suite
   load all features outside the client. Do the work in OnLoad/OnEnable.
 - **Settings come from `ns.options`.** The panel (`Core/Settings.lua`) is generic. Never hand-build
@@ -52,6 +56,8 @@ before writing addon code.
   means level 1 with zero XP, not merely "not seen by the addon yet" (that is the picker only). It
   may reload the UI by itself after a clicked apply that needs it (option, default on); the
   automatic apply opens the window on its result with Reload Now instead. Keep those guards.
+  Rare Alert (owner's request, 2026-11-05) is not an exception: its target-and-mark runs only from
+  the player's click or key on the secure button; the addon only points the button at the rare.
 - **Never let an error reach the client.** Tooltip and event work runs under pcall (the core
   dispatcher already wraps events).
 - Saved data: `KroolWorldForeverDB.features.<key>` is the feature's slice (`ns.db`). Option values
@@ -90,7 +96,8 @@ before writing addon code.
 
 ## Layout
 
-- `KroolWorldForever/` shipped addon: `Core/` registry, settings, lifecycle; `Features/` one folder each.
+- `KroolWorldForever/` shipped addon: `Core/` registry, settings, widgets, hub, lifecycle; `Features/`
+  one folder each; `Bindings.xml` (Rare Alert's key, loads by itself, not in the TOC).
 - `tools/test/` test runner + suites; `tools/forever-api/` lint; `tools/killvalue-data/` loot data
   generator (cmangos classic-db); `tools/settings-doc.js` README settings tables.
 - `scripts/` link-addon (dev junction), build, release, publish. `template/HelloForever` minimal skeleton.

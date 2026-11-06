@@ -53,6 +53,14 @@ end
 function root.BuildSettings()
 	local parent = Settings.RegisterVerticalLayoutCategory("Krool World Forever")
 	root.category = parent
+	if CreateSettingsButtonInitializer and SettingsPanel then
+		pcall(function()
+			SettingsPanel:GetLayout(parent):AddInitializer(CreateSettingsButtonInitializer("", "Open Krool World", function()
+				SettingsPanel:Hide()
+				root.OpenHub()
+			end, "Every feature with its switch and the way in. Also /kw.", true))
+		end)
+	end
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
 		local ok, err = pcall(function()

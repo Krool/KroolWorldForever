@@ -52,7 +52,15 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 ## Our addons (Krool World Forever)
 
 - [x] Link the bundle, `/kwf list` shows both features (2026-10-21).
-- [ ] `/kwf killvalue off` and `/kwf killvalue on` silence and restore it.
+- [ ] `/kw killvalue off` and `/kw killvalue on` silence and restore it.
+- [ ] Hub 0.7.0: `/kw` and the minimap button open it; four cards with icons (no green squares),
+      status lines, the On switch, Open (Quest Trash, Setups) and the gear; nothing overlaps.
+- [ ] Quest Trash window: `/fqt` lists bag items in Can Delete / Keep / Still Checking; hovering a
+      row shows the item tooltip with the verdict; opening the bank adds bank items.
+- [ ] Rare Alert: `/kwr test` shows the skull button; bind Key Bindings > AddOns > Krool World >
+      Target And Mark Rare; on a real rare: sound, screen message, chat line, and the key targets
+      it and puts a skull on it (the open question: that the secure `macrotext` click runs on
+      Forever). Sewer Beast in the Stormwind canals stays quiet. BugSack empty.
 - [x] Quest Trash: `/fqt status` reports QuestieDB found and the index ready (QuestieDB 1.0.6 then;
       it is a separate install, 1.0.11 on Nov 5).
 - [ ] Quest Trash: hover a quest item from a finished quest, then run `/fqt` with the bank open.

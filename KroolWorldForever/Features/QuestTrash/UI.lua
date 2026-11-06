@@ -159,25 +159,51 @@ local function ContainersToScan()
 	return bags
 end
 
+function FQT.BankOpen()
+	return bankOpen
+end
+
+-- Every distinct item in the bags (and the open bank) that has a verdict:
+-- { { id, verdict, links, count, name, icon }, ... } in bag order.
+function FQT.Collect()
+	local list, byId = {}, {}
+	for _, bag in ipairs(ContainersToScan()) do
+		local ok, slots = pcall(C_Container.GetContainerNumSlots, bag)
+		for slot = 1, (ok and slots or 0) do
+			local itemID = C_Container.GetContainerItemID(bag, slot)
+			if itemID then
+				local e = byId[itemID]
+				if e == nil then
+					local verdict, links = FQT.GetVerdict(itemID)
+					e = false
+					if verdict then
+						local name = C_Item.GetItemNameByID(itemID) or ItemDB.name(itemID) or ("item #" .. itemID)
+						e = { id = itemID, verdict = verdict, links = links, count = 0, name = name }
+						list[#list + 1] = e
+					end
+					byId[itemID] = e
+				end
+				if e then
+					local okInfo, info = pcall(C_Container.GetContainerItemInfo, bag, slot)
+					info = okInfo and type(info) == "table" and info or nil
+					e.count = e.count + (info and tonumber(info.stackCount) or 1)
+					e.icon = e.icon or (info and info.iconFileID)
+				end
+			end
+		end
+	end
+	return list
+end
+
 function FQT.Scan()
 	local groups = {}
 	for _, key in ipairs(SCAN_ORDER) do
 		groups[key] = {}
 	end
-	local seen = {}
-	for _, bag in ipairs(ContainersToScan()) do
-		local ok, slots = pcall(C_Container.GetContainerNumSlots, bag)
-		for slot = 1, (ok and slots or 0) do
-			local itemID = C_Container.GetContainerItemID(bag, slot)
-			if itemID and not seen[itemID] then
-				seen[itemID] = true
-				local verdict, links = FQT.GetVerdict(itemID)
-				if verdict and groups[verdict] then
-					local name = C_Item.GetItemNameByID(itemID) or ItemDB.name(itemID) or ("item #" .. itemID)
-					local why = links[1] and (" |cffaaaaaa- " .. FQT.QuestName(links[1][1]) .. "|r") or ""
-					table.insert(groups[verdict], "  " .. name .. why)
-				end
-			end
+	for _, e in ipairs(FQT.Collect()) do
+		if groups[e.verdict] then
+			local why = e.links[1] and (" |cffaaaaaa- " .. FQT.QuestName(e.links[1][1]) .. "|r") or ""
+			table.insert(groups[e.verdict], "  " .. e.name .. why)
 		end
 	end
 	local total = 0
@@ -219,6 +245,8 @@ end
 
 ns.title = "Quest Trash"
 ns.description = "Marks quest items you can safely delete on their tooltips. Needs QuestieDB."
+ns.icon = "Interface\\Icons\\INV_Misc_Note_01"
+ns.blurb = "Which quest items you can delete"
 ns.options = {
 	{
 		key = "tooltip",
@@ -244,12 +272,34 @@ function ns.OnSlash(msg)
 	elseif msg == "options" or msg == "config" then
 		root.OpenSettings(ns)
 	elseif msg == "help" then
-		Print("/fqt - scan bags (and bank when open); /fqt status; /fqt options")
-	elseif not ns.ready then
-		Status()
+		Print("/fqt - the Quest Trash window (bags, and the bank while open); /fqt print - the same in chat; /fqt status; /fqt options")
+	elseif msg == "print" or msg == "list" then
+		if ns.ready then
+			FQT.Scan()
+		else
+			Status()
+		end
 	else
-		FQT.Scan()
+		ns.OnOpen()
 	end
+end
+
+-- The hub card: what is in the bags right now.
+function ns.HubStatus()
+	if not ns.ready then
+		local ok, info = FQT.ProviderStatus()
+		return ok and "|cffaaaaaaReading quest data...|r" or ("|cffff5555" .. tostring(info) .. "|r")
+	end
+	local n = 0
+	for _, e in ipairs(FQT.Collect()) do
+		if e.verdict == "safe" or e.verdict == "notyours" then
+			n = n + 1
+		end
+	end
+	if n == 0 then
+		return "|cff33ff99Nothing to delete in your bags|r"
+	end
+	return ("|cffff5555%d %s you can delete|r"):format(n, n == 1 and "item" or "items")
 end
 
 -- -------------------------------------------------------------------- lifecycle
@@ -284,14 +334,24 @@ function ns.OnEnable()
 	StartBackgroundScan()
 end
 
+-- The window (Window.lua) refreshes on the same events while it is shown.
+local function WindowChanged()
+	if ns.RefreshWindow then
+		ns.RefreshWindow()
+	end
+end
 local function ClearCache()
 	FQT.ClearCache()
+	WindowChanged()
 end
 ns:RegisterEvent("QUEST_LOG_UPDATE", ClearCache)
 ns:RegisterEvent("QUEST_TURNED_IN", ClearCache)
+ns:RegisterEvent("BAG_UPDATE_DELAYED", WindowChanged)
 ns:RegisterEvent("BANKFRAME_OPENED", function()
 	bankOpen = true
+	WindowChanged()
 end)
 ns:RegisterEvent("BANKFRAME_CLOSED", function()
 	bankOpen = false
+	WindowChanged()
 end)

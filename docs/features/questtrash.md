@@ -17,8 +17,12 @@ Hover any item. Quest items, and items any quest uses, get a verdict line:
 Tradable items are **never** told "delete". The strongest advice they get is "sell or AH it". Up to
 four quests and their status are listed under the verdict.
 
-`/fqt` (or `/questtrash`) scans your bags (and the bank while it is open) and prints every verdict,
-deletables first. `/fqt status` shows the data source state. `/fqt options` opens the settings.
+`/fqt` (or `/questtrash`, `/kw questtrash`, the hub card) opens the **Quest Trash window** (0.7.0):
+every quest item in your bags, and the bank while it is open, one row per item with its icon,
+stack total and a few words of why, grouped into Can Delete, Keep and Still Checking. Hovering a
+row shows the item's tooltip with the verdict and its quests. It refreshes on bag, bank and quest
+changes while open. Advice only: it deletes nothing. `/fqt print` lists the same in chat,
+`/fqt status` shows the data source state, `/fqt options` opens the settings.
 
 ## Requires
 
