@@ -37,7 +37,8 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 ## Tooling
 
 - [ ] Install BugGrabber, BugSack, DevTool, TextureAtlasViewer, and check each has a Forever build.
-- [ ] Browse CurseForge's Forever filter (`gameVersionTypeId=88568`) to see what exists at launch.
+- [x] Browse CurseForge's Forever filter (`gameVersionTypeId=88568`) to see what exists at launch:
+      2026-11-05, summary in [05-opportunities.md](05-opportunities.md#launch-landscape-curseforge-forever-filter-2026-11-05).
 - [x] Re-check WeakAuras / Auctionator Forever status (2026-11-05): WeakAuras still none, Auctionator
       341 listed under Forever on CurseForge.
 

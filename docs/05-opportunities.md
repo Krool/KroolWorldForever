@@ -30,6 +30,25 @@ Where a new addon author can actually win at launch. This is opinion built on th
    helper, a legacy points tracker, transmog/collection helpers for the account-wide collections.
 6. **Profession and economy tools** if Auctionator/TSM lag behind.
 
+## Launch landscape (CurseForge Forever filter, 2026-11-05)
+
+8,511 projects list a 1.60.1 file. Sorted by popularity (lifetime downloads, all flavors) the top
+is retail ports: DBM, Details, Questie, Auctionator, RareScanner, Leatrix Plus/Maps, TomTom, Plater,
+Bagnon, BigWigs, Baganator, Pawn, GTFO, ATT, Scrap. TradeSkillMaster is listed too (pre-launch
+guides said it had no Forever build). Built for Forever and doing well: OpenMap (492K),
+DungeonJournal, GearQuest Forever, AtlasLoot Classic Forever, Keep or Toss: Forever (42K), Forever
+Loot Sparkles, Node Sight, Lueur, Musca Auras and ForeverAuras (WeakAuras forks), NeedRoll, Happy
+Camper (campfires), Books on Map Forever, Talents Forever, Forever Threat.
+
+Against our features:
+
+- **Rare Alert:** RareScanner (5th overall) and SilverDragon. Ours stays the light option.
+- **Quest Trash:** Keep or Toss: Forever covers every item, not just quest items, and flags items
+  new to Forever. Look at it before growing Quest Trash.
+- **Kill Value:** no Forever equivalent found. The nearest, Should I Grind This? (session gold per
+  hour), is TBC-only with 28 downloads.
+- **Setups:** Myslot (bars, macros, bindings as an export string). Setups covers more.
+
 ## Suggested first project
 
 Start small to learn the platform: a classic-mechanics panel (ammo + pet happiness + weapon skill
