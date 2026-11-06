@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- **Quest Trash: no stale verdicts after turning it off and on.** While off it does not see
+  quests accepted or turned in, and turning it back on kept the verdicts from before, so an item
+  from a quest finished in the meantime could still read "keep". Turning it on now rechecks.
+
 ## 0.6.0
 
 - **Kill Value: skinning is no longer learned as loot.** Skinning a corpse that had nothing to
