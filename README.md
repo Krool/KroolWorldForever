@@ -145,7 +145,7 @@ On by default: yes. Toggle: `/kwf rares on|off`. Commands: `/kwr, /rarealert`.
 | Play A Sound | On | The raid warning sound when a rare shows up. |
 | Show A Screen Message | On | The rare's name in the middle of the screen, like a raid warning. |
 | Chat Message | On | One line in chat with the rare's name and level. |
-| Show The Mark Button | On | A marker button near the top of the screen while a rare is near. Click it to target the rare and mark it; right-click ignores that rare; shift-drag moves it. The key in Key Bindings > AddOns > Krool World works either way. |
+| Show The Mark Button | On | A marker button near the top of the screen while a rare is near. Click it to target the rare and mark it. It goes once the rare has your marker or dies, or a minute after you last saw it. Right-click hides it; shift-right-click ignores that rare; shift-drag moves it. The key in Key Bindings > AddOns > Krool World works either way. |
 | Raid Marker | 8 (1 to 8) | Which marker the button puts on the rare: 8 skull, 7 cross, 6 square, 5 moon, 4 triangle, 3 diamond, 2 circle, 1 star. |
 
 ### Disenchant Value
