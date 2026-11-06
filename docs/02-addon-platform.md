@@ -136,7 +136,7 @@ deliberately closed.
 | BigWigs | Yes | 16001 in the Interface list. Retail modules gated with `AllowLoadGameType`. Good reference for multi-flavor TOC tricks. |
 | ElvUI | Yes | Skin fixes for Forever. |
 | **WeakAuras** | **No** | Still no Mainline/Camelot TOC at launch (repo pushed Nov 2). A third-party "EverAuras" exists (unverified). |
-| Auctionator | Yes | 341 (Oct 13) declares 16001 and CurseForge lists it under WoW Forever. No public repo. |
+| Auctionator | Yes | 341 (Oct 13) declares 16001 and CurseForge lists it under WoW Forever. No public repo. Its TOC uses `[AllowLoadGameType mainline]` / `classic` / `camelot` per folder: on Forever the Mainline sources load and the Classic ones do not, so its disenchant tables are retail ones (Warlords onward) and items whose expansion is classic get no disenchant line (read from the installed 341's code, 2026-11-05; not seen in game). |
 | BugGrabber / BugSack | Yes | v12.1.1 / v12.1.9 (Oct 26, cleanups) list 16001. |
 | Bagnonium, LibTSMCore | Patched | Fixes for the project ID change and missing classic templates are useful to read. |
 

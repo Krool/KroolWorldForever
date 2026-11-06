@@ -38,7 +38,10 @@ before writing addon code.
   options, slash, OnLoad/OnEnable/OnDisable/OnOptionChanged, ns:RegisterEvent) is documented at
   the top of `Core/Registry.lua`. Add the files to the TOC before `Core\Hub.lua` and `Core\Init.lua`.
   The `/kw` hub (`Core/Hub.lua`) shows a card per feature from `ns.icon`, `ns.blurb` and
-  `ns.HubStatus()`; give a new feature all three. Feature windows use `root.UI` (`Core/Widgets.lua`).
+  `ns.HubStatus()`; give a new feature all three. Feature windows use `root.UI` (`Core/Widgets.lua`);
+  Auctionator prices and money text come from `root.AuctionPrice` / `root.Money` (`Core/Prices.lua`).
+- **Test stubs chain tooltip post-calls** like the client (every feature's hook runs), so a new
+  tooltip feature must leave other features' tooltips alone and survive their fixture items.
 - **No game calls at file scope** in feature files. `tools/settings-doc.js` and every test suite
   load all features outside the client. Do the work in OnLoad/OnEnable.
 - **Settings come from `ns.options`.** The panel (`Core/Settings.lua`) is generic. Never hand-build
@@ -98,7 +101,8 @@ before writing addon code.
 
 - `KroolWorldForever/` shipped addon: `Core/` registry, settings, widgets, hub, lifecycle; `Features/`
   one folder each; `Bindings.xml` (Rare Alert's key, loads by itself, not in the TOC).
-- `tools/test/` test runner + suites; `tools/forever-api/` lint; `tools/killvalue-data/` loot data
-  generator (cmangos classic-db); `tools/settings-doc.js` README settings tables.
+- `tools/test/` test runner + suites; `tools/forever-api/` lint; `tools/killvalue-data/` the cmangos
+  classic-db generators (`classicdb.js` reader; `gen-data.js` Kill Value loot, `gen-disenchant.js`
+  Disenchant Value tables); `tools/settings-doc.js` README settings tables.
 - `scripts/` link-addon (dev junction), build, release, publish. `template/HelloForever` minimal skeleton.
 - Lint/format config: `.luacheckrc`, `stylua.toml` (tabs, Lua51).

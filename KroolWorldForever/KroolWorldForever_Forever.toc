@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: Krool World Forever
-## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters), Rare Alert (alert and a one-key marker for rare enemies). /kw
+## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters), Rare Alert (alert and a one-key marker for rare enemies), Disenchant Value (what a green is worth disenchanted). /kw
 ## Author: Krool
 ## Version: 0.8.0
 ## Category: Interface Enhancements
@@ -12,6 +12,7 @@
 Core\Registry.lua
 Core\Settings.lua
 Core\Widgets.lua
+Core\Prices.lua
 
 Features\QuestTrash\Repeatables.lua
 Features\QuestTrash\Core.lua
@@ -26,6 +27,9 @@ Features\Setups\Core.lua
 Features\Setups\UI.lua
 
 Features\Rares\Rares.lua
+
+Features\Disenchant\Data.lua
+Features\Disenchant\Disenchant.lua
 
 # Bindings.xml (Rare Alert's key) loads by itself; it is not listed here.
 # Hub, then Init last: every feature has declared itself before ADDON_LOADED.

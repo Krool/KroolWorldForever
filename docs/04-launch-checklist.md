@@ -65,6 +65,11 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 - [ ] Rare Alert 0.8.0: with enemy nameplates off the hub card shows Plates On; clicking it turns
       them on and chat reports the range the client kept (asked for 80; note the real cap here).
       A rare's alert ends with "worth about ...", and the button tooltip lists its drops.
+- [ ] Disenchant Value 0.9.0: after an Auctionator scan, a BoE green's tooltip shows Disenchant with a
+      value and a Best line; Shift lists the materials; `/kwd` lists material prices; the hub card
+      counts priced materials. Auctionator shows no second Disenchant line. Disenchant a few greens
+      (or watch a disenchanter's trade) and compare with the tables: armor mostly dust, weapons
+      mostly essence, about 5% shards.
 - [x] Quest Trash: `/fqt status` reports QuestieDB found and the index ready (QuestieDB 1.0.6 then;
       it is a separate install, 1.0.11 on Nov 5).
 - [ ] Quest Trash: hover a quest item from a finished quest, then run `/fqt` with the bank open.

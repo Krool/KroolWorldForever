@@ -110,20 +110,7 @@ end
 
 -- -------------------------------------------------------------------- formatting
 
-function FKV.Money(copper)
-	copper = math.floor((copper or 0) + 0.5)
-	local g = math.floor(copper / 10000)
-	local s = math.floor((copper % 10000) / 100)
-	local c = copper % 100
-	local out = ""
-	if g > 0 then
-		out = out .. "|cffffd700" .. g .. "g|r "
-	end
-	if g > 0 or s > 0 then
-		out = out .. "|cffc7c7cf" .. s .. "s|r "
-	end
-	return out .. "|cffeda55f" .. c .. "c|r"
-end
+FKV.Money = root.Money -- Core/Prices.lua
 
 function FKV.FmtQty(q)
 	if q >= 1 then
@@ -554,18 +541,9 @@ local function Sig()
 	}, "|")
 end
 
--- Auctionator is optional: every step is checked and the call is pcall-wrapped.
+-- Auctionator is optional (Core/Prices.lua checks every step).
 function FKV.AuctionPrice(itemId)
-	local A = Auctionator
-	local api = type(A) == "table" and type(A.API) == "table" and A.API.v1
-	if type(api) ~= "table" or type(api.GetAuctionPriceByItemID) ~= "function" then
-		return nil
-	end
-	local ok, price = pcall(api.GetAuctionPriceByItemID, "KroolWorldForever", itemId)
-	if ok and type(price) == "number" and price > 0 then
-		return price
-	end
-	return nil
+	return root.AuctionPrice(itemId)
 end
 
 -- Quality, bonding, vendor price, quest flag. Client item info when cached; otherwise ask the

@@ -122,10 +122,19 @@ end
 
 -- ---------------------------------------------------------------- tooltip / settings / UI
 
+-- Like the client, every post-call registered for a tooltip type runs, in order.
 TooltipCallbacks = {}
+TooltipChains = {}
 TooltipDataProcessor = {
 	AddTooltipPostCall = function(kind, fn)
-		TooltipCallbacks[kind] = fn
+		local chain = TooltipChains[kind] or {}
+		TooltipChains[kind] = chain
+		table.insert(chain, fn)
+		TooltipCallbacks[kind] = function(...)
+			for _, f in ipairs(chain) do
+				f(...)
+			end
+		end
 	end,
 }
 

@@ -682,6 +682,9 @@ for _, c in ipairs(hub.cards) do
 end
 check("cards in TOC order", hub.cards[1].feature.key, "questtrash")
 check("a card for Rare Alert", cards.rares ~= nil, true)
+check("a card for Disenchant Value", cards.disenchant ~= nil, true)
+check("Disenchant Value without Auctionator says so", cards.disenchant.status.text:find("Needs Auctionator", 1, true) ~= nil, true)
+check("Disenchant Value has no window: no Open", cards.disenchant.open, false)
 check("card title", cards.setups.title.text, "Setups")
 check("card blurb", cards.setups.blurb.text, "Copy bars, keys and layouts between characters")
 check("Setups status counts setups", cards.setups.status.text:find("setups", 1, true) ~= nil, true)
