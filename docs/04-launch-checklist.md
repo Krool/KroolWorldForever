@@ -84,6 +84,15 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
       (Blessing of Might, Fortitude...), the matching object says "Does not stack with your ...".
       After sitting a minute, hover the Camp Benefits buff: a clash line or "None of these overlap".
       Compare a value with the game's own (e.g. your Stamina before and after). `/kwc` lists all ten.
+- [ ] Skill-Up Odds 0.11.0: open a crafting profession. Each recipe with an arrow shows a % (or ?%)
+      at the row's right edge, the name never overlaps it, and clicking the % still selects the
+      recipe. Hover it: yellow/green/grey skills, crafts behind it, what a craft and a point cost.
+      The Next Skill Point panel docks to the right of the window (no overlap, no green squares),
+      ranks recipes, and a row click selects that recipe; closing it leaves an icon tab that brings
+      it back. Craft a few yellow or green recipes, then `/kwu status`: crafts logged go up, "skill
+      read through" names an API, and the mismatch count stays 0 (if not, note your race and
+      profession). `/kwu` shows the counts per range. Visit a thread vendor, then hover a recipe
+      that uses thread: the thread says (vendor).
 - [x] Quest Trash: `/fqt status` reports QuestieDB found and the index ready (QuestieDB 1.0.6 then;
       it is a separate install, 1.0.11 on Nov 5).
 - [ ] Quest Trash: hover a quest item from a finished quest, then run `/fqt` with the bank open.

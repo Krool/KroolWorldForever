@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.11.0
+
+- **Skill-Up Odds** (new): the real chance a craft gives a skill point, and the cheapest way to your
+  next one. The game shows only three skill-up arrows, and the chance behind them is rolled on
+  Blizzard's servers and was never published, so Skill-Up Odds measures it: every craft on every
+  character of your account records your skill before it and the points it gave, pooled by where
+  your skill sat between the recipe's yellow and grey (ten ranges). Each recipe in the crafting
+  window shows the measured chance beside its arrow once its range has ten crafts (?% until then);
+  hover it for the crafts behind it, the likely span, the yellow, green and grey skills, and what a
+  craft and a point cost. Orange shows 100% and grey 0%, the game's rule, measured as well.
+- **Next Skill Point panel**, docked beside the crafting window: your learned recipes ranked by the
+  gold a point costs on average (a craft's reagents at the cheaper of their auction and vendor
+  price, minus what the result sells for, divided by the points a craft gives). Click a row to
+  select the recipe. Vendor prices are learned from the merchants you visit. `/kwu` lists the
+  measured odds range by range; `/kwu status` says where the numbers come from.
+- Recipe thresholds come from Forever's own recipe data (build 1.60.1.70862, 2,544 recipes).
+
 ## 0.10.1
 
 - **Rare Alert: the mark button goes when its work is done.** It used to stay two minutes after

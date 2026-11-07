@@ -104,6 +104,10 @@ before writing addon code.
   one folder each; `Bindings.xml` (Rare Alert's key, loads by itself, not in the TOC).
 - `tools/test/` test runner + suites; `tools/forever-api/` lint; `tools/killvalue-data/` the cmangos
   classic-db generators (`classicdb.js` reader; `gen-data.js` Kill Value loot, `gen-disenchant.js`
-  Disenchant Value tables); `tools/settings-doc.js` README settings tables.
+  Disenchant Value tables); `tools/skillup-data/gen-skillup.js` Skill-Up Odds recipe thresholds from
+  wago.tools `SkillLineAbility` (regenerate when a build changes recipes); `tools/settings-doc.js`
+  README settings tables.
+- Skill-up chances are server-side and unpublished: Skill-Up Odds shows only measured rates (orange
+  100% / grey 0% are the game's rule). Do not add a formula estimate; see docs/features/skillup.md.
 - `scripts/` link-addon (dev junction), build, release, publish. `template/HelloForever` minimal skeleton.
 - Lint/format config: `.luacheckrc`, `stylua.toml` (tabs, Lua51).

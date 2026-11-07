@@ -16,8 +16,9 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a skull button and a key that target it and mark it. One alert per spawn. The button goes once the rare has your marker or dies; right-click hides it, shift-right-click ignores that rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
 | **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, what that is worth at auction, and whether disenchanting it pays more than auctioning or vendoring it. Hold Shift for each material's chance and price. | Auctionator (for prices) |
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
+| **Skill-Up Odds** | In the crafting window: the real chance each recipe gives a skill point, measured from your own crafts, beside its arrow (hover for the crafts behind it and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average. | Nothing (Auctionator optional) |
 
-All six are on by default.
+All seven are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -25,8 +26,8 @@ All six are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value and Camp Guide never delete, sell, loot or click anything
-  for you. Rare Alert's marker comes from your own click or key press: the game does not let an
+- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide and Skill-Up Odds never delete, sell,
+  loot, craft or click anything for you. Rare Alert's marker comes from your own click or key press: the game does not let an
   addon place one by itself. Setups is the one feature that changes your UI: only out of combat,
   only when you click Apply (or for a brand-new level 1 character, if you marked a setup for that),
   and always with an undo snapshot first. A character with any experience is never changed without
@@ -50,8 +51,9 @@ Optional companions:
 
 - **QuestieDB** (comes with Questie): required for Quest Trash. Without it Quest Trash says so at login
   and the other features work normally.
-- **Auctionator**: auction house prices for Kill Value and Disenchant Value. Without it Kill Value
-  uses vendor prices, and Disenchant Value names the materials without prices.
+- **Auctionator**: auction house prices for Kill Value, Disenchant Value and Skill-Up Odds. Without it
+  Kill Value uses vendor prices, Disenchant Value names the materials without prices, and Skill-Up
+  Odds prices only the reagents it has seen at a vendor.
 
 ## Slash commands
 
@@ -60,7 +62,7 @@ Optional companions:
 | `/kw` | Open the hub (again to close it) |
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
 | `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
@@ -78,10 +80,12 @@ Optional companions:
 | `/kwr nameplates` | Turn enemy nameplates on (rares are noticed as soon as their nameplate shows) |
 | `/kwd` | Disenchanting material prices from Auctionator (which ones still have none) |
 | `/kwc` | Every camp buff at your level, which ones a class buff of yours covers, and your Camp Benefits time |
+| `/kwu` | The skill-up odds measured on your account, range by range |
+| `/kwu status` / `panel` | Where the numbers come from (data build, crafts logged); show or hide the Next Skill Point panel |
 
 The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
-`/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue` and `/campguide` are
-long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd` and `/kwc`.
+`/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide` and
+`/skillup` are long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd`, `/kwc` and `/kwu`.
 
 ## Settings
 
@@ -209,6 +213,18 @@ add to it.
 objects around a fire. Camp Guide knows each one by the name its tooltip shows when you hover it, so
 the campfire lists the ones you have hovered. It works only while you have Campfire Nearby (the aura
 everyone close to a fire gets), so an inn's chair is left alone.
+
+**Where do Skill-Up Odds' chances come from? Why do recipes show ?%?** From your own crafts. The
+game client knows each recipe's yellow and grey skill (Skill-Up Odds reads them from Forever's own
+recipe data), but the chance of a point is rolled on Blizzard's servers and has never been
+published, so no addon can know it in advance. Skill-Up Odds records every craft on all your
+characters (your skill before it, the points it gave) and pools them by where your skill sat
+between the recipe's yellow and grey, in ten ranges. A range shows its measured rate once ten
+crafts are in, with the likely span in the tooltip; until then its recipes show ?%. Orange always
+gives a point and grey never does: that is the game's rule, and it is measured too. The gold a
+point costs is a craft's cost (each reagent at the cheaper of its auction price and the vendor
+price you have seen, minus what the result sells for) divided by the points a craft gives on
+average.
 
 **Is this allowed?** Yes. It uses only the standard addon API: tooltips, the loot window, and (for
 Setups) the same bar, binding and macro calls any action bar profile addon uses, out of combat.

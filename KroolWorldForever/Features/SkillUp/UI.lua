@@ -1,0 +1,717 @@
+-- Skill-Up Odds: the crafting window's side of it. A measured chance beside each recipe's skill-up
+-- arrow (with the numbers behind it on hover), and a Next Skill Point panel docked to the right of
+-- the professions window that ranks learned recipes by the gold a skill point costs on average.
+-- Advice only: clicking a row selects the recipe; crafting stays the player's click.
+
+local _, root = ...
+local ns = root.Feature("skillup")
+local UI = root.UI
+
+local Num, Call = ns.Num, ns.Call
+local PANEL_ROWS = 8
+
+local BAND_HEX = { orange = "ffff8040", yellow = "ffffff00", green = "ff40bf40", grey = "ff808080" }
+local BAND_NAME = { orange = "orange", yellow = "yellow", green = "green", grey = "grey" }
+
+local function Hex(band, text)
+	return "|c" .. (BAND_HEX[band] or "ffffffff") .. text .. "|r"
+end
+
+local function Pct(x)
+	return ("%d%%"):format(math.floor(x * 100 + 0.5))
+end
+
+local function Grey(text)
+	return "|cffaaaaaa" .. text .. "|r"
+end
+
+-- -------------------------------------------------------------------- text
+
+-- The short label beside the arrow: "63%", or "?%" while its range is still being measured.
+function ns.OddsText(o)
+	if not o or o.capped or o.band == "grey" then
+		return nil
+	end
+	if o.chance then
+		return Hex(o.band, Pct(o.chance))
+	end
+	return Grey("?%")
+end
+
+local function PerPointText(o)
+	if o.perPoint then
+		if o.perPoint < 0 then
+			return "|cff33ff99+" .. root.Money(-o.perPoint) .. "|r" .. Grey(" a point")
+		end
+		return root.Money(o.perPoint) .. Grey(" a point")
+	end
+	if o.craft and o.craft.net then
+		return Grey("measuring")
+	end
+	return Grey("no price")
+end
+
+local SOURCE = { vendor = "vendor", ah = "auction" }
+
+-- Tooltip title and lines for one evaluated recipe.
+function ns.TipLines(o)
+	local lines = {}
+	local function add(t)
+		lines[#lines + 1] = t
+	end
+	local r = o.r
+	local title
+	if o.capped then
+		title = "Skill-Up Odds: at your skill cap"
+	elseif o.chance and not o.rule then
+		title = "Skill-Up Odds: " .. Hex(o.band, Pct(o.chance)) .. " measured"
+	elseif o.chance then
+		title = "Skill-Up Odds: " .. Hex(o.band, Pct(o.chance))
+	else
+		title = "Skill-Up Odds: still measuring"
+	end
+	add(
+		("%s at %d, %s at %d, %s at %d. Your skill: %d."):format(
+			Hex("yellow", "Yellow"),
+			r.y,
+			Hex("green", "green"),
+			ns.Green(r),
+			Hex("grey", "grey"),
+			r.g,
+			o.skill or 0
+		)
+	)
+	if o.capped then
+		add("No point can come until you train the next rank.")
+	elseif o.band == "orange" and o.rule then
+		add("Orange always gives a point (the game's rule).")
+		if (o.n or 0) > 0 then
+			add(Grey(("Measured so far: %d of %d crafts gave a point."):format(o.up, o.n)))
+		end
+	elseif o.chance then
+		local where = o.bin and ("at " .. ns.BinRange(o.bin) .. " of the way from yellow to grey") or "on orange recipes"
+		add(("Measured on your account: %d of %d crafts gave a point %s."):format(o.up, o.n, where))
+		add(Grey(("Likely between %s and %s."):format(Pct(o.lo), Pct(o.hi))))
+		if o.pts and o.pts > o.up then
+			add(Grey(("Some gave two points: %.2f points a craft on average."):format(o.perCraft)))
+		end
+	else
+		add(
+			("Still measuring this part of the range (%s from yellow to grey): %d of %d crafts so far."):format(
+				o.bin and ns.BinRange(o.bin) or "?",
+				o.n or 0,
+				ns.MIN_SHOWN
+			)
+		)
+		add(Grey("Every yellow or green craft on any of your characters counts."))
+	end
+	local rc = ns.Stats().recipes[o.id]
+	if rc and rc.n > 0 then
+		add(Grey(("This recipe: %d of %d crafts gave a point."):format(rc.up, rc.n)))
+	end
+	local c = o.craft
+	if c then
+		add(" ")
+		if c.cost then
+			local parts = {}
+			for _, rg in ipairs(c.reagents) do
+				parts[#parts + 1] = ("%s x%d (%s)"):format(ns.ItemName(rg.id), rg.qty, SOURCE[rg.source] or "?")
+			end
+			add("A craft costs " .. root.Money(c.cost) .. Grey(": " .. table.concat(parts, ", ")))
+			if c.resale and c.resale > 0 then
+				add("The result sells for " .. root.Money(c.resale) .. Grey(" (" .. (SOURCE[c.resaleSource] or "vendor") .. ")"))
+			end
+			if o.perPoint then
+				add("A point costs " .. PerPointText(o) .. Grey(" on average"))
+			end
+		else
+			add("|cffff9955No price for " .. tostring(c.missing) .. "|r" .. Grey(": scan the auction house or visit a vendor that sells it."))
+		end
+	end
+	return title, lines
+end
+
+local function ShowTip(owner, o)
+	if not (GameTooltip and o) then
+		return
+	end
+	local title, lines = ns.TipLines(o)
+	GameTooltip:SetOwner(owner, "ANCHOR_RIGHT")
+	GameTooltip:SetText(title, 1, 0.82, 0)
+	for _, line in ipairs(lines) do
+		GameTooltip:AddLine(line, 1, 1, 1, true)
+	end
+	GameTooltip:Show()
+end
+
+-- -------------------------------------------------------------------- recipe rows
+
+local function RowInfo(node)
+	local data = type(node) == "table" and node.GetData and node:GetData() or nil
+	local info = type(data) == "table" and data.recipeInfo or nil
+	return type(info) == "table" and info or nil
+end
+
+-- Runs after Blizzard's own row setup (ScrollBox OnInitializedFrame): the measured chance at the
+-- row's right edge, the recipe name kept clear of it.
+local function DecorateRow(_, row, node)
+	if type(row) ~= "table" or not row.CreateFontString then
+		return
+	end
+	local fs = row.kwfOdds
+	if not fs then
+		fs = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+		fs:SetPoint("RIGHT", row, "RIGHT", -6, 0)
+		fs:SetJustifyH("RIGHT")
+		row.kwfOdds = fs
+		local hit = CreateFrame("Button", nil, row)
+		hit:SetAllPoints(fs)
+		if hit.SetPropagateMouseClicks then
+			hit:SetPropagateMouseClicks(true) -- a click still selects the recipe
+		end
+		hit:SetScript("OnEnter", function(self)
+			pcall(function()
+				local o = ns.Evaluate(row.kwfRecipe, nil, nil, true)
+				ShowTip(self, o)
+			end)
+		end)
+		hit:SetScript("OnLeave", function()
+			if GameTooltip then
+				GameTooltip:Hide()
+			end
+		end)
+		row.kwfHit = hit
+	end
+	fs:Hide()
+	row.kwfHit:Hide()
+	row.kwfRecipe = nil
+	if not (ns.enabled and ns.db and ns.db.list) then
+		return
+	end
+	local info = RowInfo(node)
+	if not info or not info.learned or not info.canSkillUp then
+		return
+	end
+	local id = Num(info.recipeID)
+	local o = id and ns.Evaluate(id, info, nil, false)
+	local text = ns.OddsText(o)
+	if not text then
+		return
+	end
+	fs:SetText(text)
+	fs:Show()
+	row.kwfHit:Show()
+	row.kwfRecipe = id
+	local label = row.Label
+	local width = Num(row.GetWidth and row:GetWidth())
+	local textWidth = Num(fs.GetStringWidth and fs:GetStringWidth()) or 24
+	if label and width and label.GetWidth then
+		local skill = row.SkillUps and Num(row.SkillUps:GetWidth()) or 0
+		local count = row.Count and row.Count.IsShown and row.Count:IsShown() and Num(row.Count:GetStringWidth()) or 0
+		local room = width - skill - count - textWidth - 22
+		local current = Num(label:GetWidth())
+		if current and room > 20 and current > room then
+			label:SetWidth(room)
+		end
+	end
+end
+ns.DecorateRow = DecorateRow -- test seam
+
+local function RecipeBox()
+	local page = ProfessionsFrame and ProfessionsFrame.CraftingPage
+	local list = page and page.RecipeList
+	return list and list.ScrollBox
+end
+
+-- Redraws the rows on screen (an option changed, a craft was counted).
+function ns.RedecorateRows()
+	local box = RecipeBox()
+	if box and box.ForEachFrame then
+		box:ForEachFrame(function(frame, node)
+			pcall(DecorateRow, nil, frame, node)
+		end)
+	end
+end
+
+-- -------------------------------------------------------------------- next point panel
+
+local panel, tab
+local refreshQueued = false
+
+local function SelectRecipe(id)
+	if C_TradeSkillUI and C_TradeSkillUI.OpenRecipe then
+		pcall(C_TradeSkillUI.OpenRecipe, id)
+	end
+end
+
+local function FadeIn(f)
+	if not f.kwfFade and f.CreateAnimationGroup then
+		local ag = f:CreateAnimationGroup()
+		if ag and ag.CreateAnimation then
+			local a = ag:CreateAnimation("Alpha")
+			if a then
+				a:SetFromAlpha(0)
+				a:SetToAlpha(1)
+				a:SetDuration(0.15)
+				f.kwfFade = ag
+			end
+		end
+	end
+	if f.kwfFade then
+		f.kwfFade:Stop()
+		f.kwfFade:Play()
+	end
+end
+
+local function BuildRow(parent, i)
+	local b = CreateFrame("Button", nil, parent)
+	b:SetHeight(40)
+	b:SetPoint("TOPLEFT", 0, -(i - 1) * 42)
+	b:SetPoint("RIGHT", parent, "RIGHT", 0, 0)
+	UI.Hover(b)
+	b.rank = UI.Text(b, "GameFontNormalSmall", "CENTER")
+	b.rank:SetPoint("LEFT", 2, 0)
+	b.rank:SetWidth(16)
+	b.icon = b:CreateTexture(nil, "ARTWORK")
+	b.icon:SetSize(30, 30)
+	b.icon:SetPoint("LEFT", 20, 0)
+	b.name = UI.Text(b, "GameFontNormal")
+	b.name:SetPoint("TOPLEFT", b.icon, "TOPRIGHT", 6, -1)
+	b.name:SetPoint("RIGHT", b, "RIGHT", -4, 0)
+	b.name:SetWordWrap(false)
+	b.cost = UI.Text(b, "GameFontHighlight", "RIGHT")
+	b.cost:SetPoint("BOTTOMRIGHT", b, "BOTTOMRIGHT", -4, 5)
+	b.detail = UI.Text(b, "GameFontHighlightSmall")
+	b.detail:SetPoint("BOTTOMLEFT", b.icon, "BOTTOMRIGHT", 6, 1)
+	b.detail:SetPoint("RIGHT", b.cost, "LEFT", -6, 0)
+	b.detail:SetWordWrap(false)
+	b:SetScript("OnEnter", function(self)
+		pcall(ShowTip, self, self.o)
+	end)
+	b:SetScript("OnLeave", function()
+		if GameTooltip then
+			GameTooltip:Hide()
+		end
+	end)
+	b:SetScript(
+		"OnClick",
+		UI.Safe(function(self)
+			if self.o then
+				SelectRecipe(self.o.id)
+				if PlaySound and SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON then
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
+				end
+			end
+		end, ns)
+	)
+	return b
+end
+
+local function BuildPanel()
+	local f = CreateFrame("Frame", "KroolWorldForeverSkillUpPanel", ProfessionsFrame, "ButtonFrameTemplate")
+	f:SetSize(300, 470)
+	f:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 2, 0)
+	f:SetClampedToScreen(true)
+	f:EnableMouse(true)
+	if ButtonFrameTemplate_HidePortrait then
+		pcall(ButtonFrameTemplate_HidePortrait, f)
+	end
+	if f.SetTitle then
+		f:SetTitle("Next Skill Point")
+	end
+	if f.CloseButton and f.CloseButton.HookScript then
+		f.CloseButton:HookScript(
+			"OnClick",
+			UI.Safe(function()
+				root.SetOption(ns, "panel", false)
+			end, ns)
+		)
+	end
+	local inset = f.Inset
+	if type(inset) == "table" and inset.ClearAllPoints then
+		inset:ClearAllPoints()
+		inset:SetPoint("TOPLEFT", 4, -84)
+		inset:SetPoint("BOTTOMRIGHT", -6, 46)
+	end
+	f.skill = UI.Text(f, "GameFontNormalLarge")
+	f.skill:SetPoint("TOPLEFT", 14, -30)
+	f.skill:SetPoint("RIGHT", f, "RIGHT", -14, 0)
+	f.sub = UI.Text(f, "GameFontHighlightSmall")
+	f.sub:SetPoint("TOPLEFT", f.skill, "BOTTOMLEFT", 0, -4)
+	f.sub:SetPoint("RIGHT", f, "RIGHT", -14, 0)
+	f.sub:SetHeight(30)
+	f.sub:SetJustifyV("TOP")
+	local list = CreateFrame("Frame", nil, f)
+	list:SetPoint("TOPLEFT", 10, -90)
+	list:SetPoint("BOTTOMRIGHT", -12, 50)
+	f.rows = {}
+	for i = 1, PANEL_ROWS do
+		f.rows[i] = BuildRow(list, i)
+	end
+	f.empty = UI.Text(list, "GameFontDisable", "CENTER")
+	f.empty:SetPoint("TOPLEFT", 10, -20)
+	f.empty:SetPoint("RIGHT", list, "RIGHT", -10, 0)
+	f.note = UI.Text(f, "GameFontDisableSmall")
+	f.note:SetPoint("BOTTOMLEFT", 14, 14)
+	f.note:SetPoint("RIGHT", f, "RIGHT", -14, 0)
+	f.note:SetHeight(28)
+	f.note:SetJustifyV("BOTTOM")
+	f:SetScript("OnShow", function(self)
+		FadeIn(self)
+		ns.QueueRefresh()
+	end)
+	f:Hide() -- shown by UpdatePanel, so even the first show fades in
+	return f
+end
+
+local function BuildTab()
+	local b = UI.IconButton(ProfessionsFrame, 32, ns.icon, function()
+		root.SetOption(ns, "panel", true)
+	end)
+	b:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 4, -60)
+	UI.Tip(b, function()
+		return "Next Skill Point", { "Shows which of your recipes gets the next skill point for the least gold." }
+	end)
+	return b
+end
+
+local function RangesReady()
+	local st, ready = ns.Stats(), 0
+	for i = 1, ns.BINS do
+		if st.bins[i].n >= ns.MIN_SHOWN then
+			ready = ready + 1
+		end
+	end
+	return ready
+end
+
+function ns.RefreshPanel()
+	if not (panel and panel:IsShown()) then
+		return
+	end
+	local list, prof = ns.Rank()
+	for _, row in ipairs(panel.rows) do
+		row:Hide()
+		row.o = nil
+	end
+	panel.empty:SetText("")
+	if not prof then
+		panel.skill:SetText("Next Skill Point")
+		panel.sub:SetText(Grey("Open a crafting profession to see its recipes."))
+		return
+	end
+	local capped = prof.max and prof.max > 0 and prof.lvl >= prof.max
+	panel.skill:SetText(("%s %d / %d"):format(prof.name or "Skill", prof.lvl, prof.max or 0))
+	if capped then
+		panel.sub:SetText("|cffff9955At your cap: train the next rank to keep going.|r")
+	else
+		panel.sub:SetText(
+			Grey(("Odds measured on this account: %d of %d ranges ready. Gold a point = a craft's cost / the points it gives."):format(RangesReady(), ns.BINS))
+		)
+	end
+	local shown = 0
+	if not capped then
+		for i, o in ipairs(list or {}) do
+			if i > PANEL_ROWS then
+				break
+			end
+			local row = panel.rows[i]
+			row.o = o
+			row.rank:SetText(o.perPoint and ("|cffffd100" .. i .. "|r") or Grey(tostring(i)))
+			UI.SetIcon(row.icon, o.icon or ns.icon)
+			row.name:SetText(o.name or "?")
+			row.cost:SetText(PerPointText(o))
+			local bits = {}
+			local odds = ns.OddsText(o)
+			if odds then
+				bits[#bits + 1] = odds
+			end
+			if o.craft and o.craft.net then
+				bits[#bits + 1] = root.Money(o.craft.net) .. Grey(" a craft")
+			end
+			local have = C_TradeSkillUI and Num(Call(C_TradeSkillUI.GetCraftableCount, o.id))
+			if have and have > 0 then
+				bits[#bits + 1] = Grey("[" .. have .. "]")
+			end
+			row.detail:SetText(table.concat(bits, Grey("  ")))
+			row:Show()
+			shown = shown + 1
+		end
+		if shown == 0 then
+			panel.empty:SetText("No learned recipe here can give a point. Train new ones.")
+		end
+	end
+	local sources = root.HasAuctionator() and "Auctionator and vendors you have visited" or "vendors you have visited (Auctionator adds auction prices)"
+	panel.note:SetText(("Prices: %s. %s"):format(sources, ns.db.resale and "The result's sale value comes off." or ""))
+end
+
+function ns.QueueRefresh()
+	if refreshQueued or not (panel and panel:IsShown()) then
+		return -- one refresh at a time, and only for a panel on screen
+	end
+	if not (C_Timer and C_Timer.After) then
+		pcall(ns.RefreshPanel)
+		return
+	end
+	refreshQueued = true
+	C_Timer.After(0.2, function()
+		refreshQueued = false
+		pcall(ns.RefreshPanel)
+	end)
+end
+
+function ns.UpdatePanel()
+	if not ProfessionsFrame then
+		return
+	end
+	local want = ns.enabled and ns.db.panel and ProfessionsFrame:IsShown()
+	if want and not panel then
+		panel = BuildPanel()
+	end
+	if not tab and ns.enabled then
+		tab = BuildTab()
+	end
+	if panel then
+		panel:SetShown(want and true or false)
+	end
+	if tab then
+		tab:SetShown(ns.enabled and not ns.db.panel and true or false)
+	end
+	if want then
+		ns.QueueRefresh()
+	end
+end
+
+function ns.Panel()
+	return panel
+end
+
+-- -------------------------------------------------------------------- hooking the window
+
+local hooked = false
+function ns.SetupProfessions()
+	if hooked then
+		return true
+	end
+	local box = RecipeBox()
+	if not (box and ScrollUtil and ScrollUtil.AddInitializedFrameCallback) then
+		return false
+	end
+	hooked = true
+	ScrollUtil.AddInitializedFrameCallback(box, UI.Safe(DecorateRow, ns), ns, false)
+	ns.RedecorateRows()
+	return true
+end
+
+-- -------------------------------------------------------------------- definition
+
+ns.title = "Skill-Up Odds"
+ns.description = "In the crafting window: the measured chance each recipe gives a skill point, and a Next Skill Point panel "
+	.. "that ranks your recipes by the gold a point costs. The chance is measured from your own crafts: Blizzard never "
+	.. "published it, so until enough crafts are in, a recipe shows ?%."
+ns.icon = "Interface\\Icons\\Trade_BlackSmithing"
+ns.blurb = "Measured skill-up odds and the cheapest next point"
+ns.options = {
+	{
+		key = "list",
+		type = "toggle",
+		label = "Show Odds In The Recipe List",
+		tooltip = "Puts the measured skill-up chance beside each recipe's arrow. Hover it for the crafts behind it and what a point costs.",
+		default = true,
+	},
+	{
+		key = "panel",
+		type = "toggle",
+		label = "Show The Next Skill Point Panel",
+		tooltip = "Docks a panel beside the crafting window that ranks your learned recipes by the gold a skill point costs on average.",
+		default = true,
+	},
+	{
+		key = "resale",
+		type = "toggle",
+		label = "Subtract What The Result Sells For",
+		tooltip = "Takes the crafted item's vendor price off the cost of a craft.",
+		default = true,
+	},
+	{
+		key = "resaleAH",
+		type = "toggle",
+		label = "Value The Result At Auction",
+		tooltip = "Uses the crafted item's Auctionator price (after the 5% cut) when it beats the vendor price. Only if you will really sell it there.",
+		default = false,
+	},
+	{
+		key = "learn",
+		type = "toggle",
+		label = "Measure Your Crafts",
+		tooltip = "Records each craft's skill before and after, account-wide. This is where the chances come from.",
+		default = true,
+	},
+}
+ns.slash = { "/kwu", "/skillup" }
+
+local function CounterText(c)
+	if c.n == 0 then
+		return Grey("none yet")
+	end
+	local lo, hi = ns.Wilson(c.up, c.n)
+	return ("%d of %d gave a point (%s, likely %s-%s)"):format(c.up, c.n, Pct(c.up / c.n), Pct(lo), Pct(hi))
+end
+
+local function PrintTable()
+	local st = ns.Stats()
+	ns:Print("measured on this account (where your skill was between a recipe's yellow and grey):")
+	print("  " .. Hex("orange", "orange") .. ": " .. CounterText(st.orange))
+	local empty = {}
+	for i = 1, ns.BINS do
+		local c = st.bins[i]
+		if c.n > 0 then
+			local band = (i <= ns.BINS / 2) and "yellow" or "green"
+			print("  " .. Hex(band, ns.BinRange(i)) .. ": " .. CounterText(c) .. (c.n < ns.MIN_SHOWN and Grey(" (measuring)") or ""))
+		else
+			empty[#empty + 1] = ns.BinRange(i)
+		end
+	end
+	if #empty > 0 then
+		print("  " .. Grey("no crafts yet at " .. table.concat(empty, ", ")))
+	end
+	print("  " .. Hex("grey", "grey") .. ": " .. CounterText(st.grey))
+end
+
+local function PrintStatus()
+	local st = ns.Stats()
+	local vendors = 0
+	for _ in pairs(ns.db.vendor) do
+		vendors = vendors + 1
+	end
+	ns:Print(("recipe data from build %s; %d crafts logged, %d skipped (no reading before the cast, capped), %d where the arrow disagreed."):format(
+		tostring(ns.Data and ns.Data.build),
+		#st.log,
+		st.skipped,
+		st.mismatch
+	))
+	print(("  skill read through: %s; vendor prices known: %d; Auctionator: %s"):format(
+		tostring(ns.source or "not yet"),
+		vendors,
+		root.HasAuctionator() and "yes" or "no"
+	))
+	local prof = ns.OpenProfession()
+	if prof then
+		print(("  open now: %s %d / %d (bonus %d)"):format(prof.name or "?", prof.lvl, prof.max or 0, prof.mod or 0))
+	end
+	if ns.last then
+		print(("  last craft: recipe %d at %d, +%d (%s)"):format(ns.last.id, ns.last.before, ns.last.gain, tostring(ns.last.band)))
+	end
+end
+
+function ns.OnSlash(msg)
+	msg = strtrim(msg or ""):lower()
+	if msg == "options" or msg == "config" then
+		root.OpenSettings(ns)
+	elseif msg == "status" then
+		PrintStatus()
+	elseif msg == "panel" then
+		root.SetOption(ns, "panel", not ns.db.panel)
+	elseif msg == "help" then
+		ns:Print("/kwu - the measured odds; /kwu status; /kwu panel shows or hides the Next Skill Point panel; /kwu options.")
+	else
+		PrintTable()
+	end
+end
+
+function ns.HubStatus()
+	local st = ns.Stats()
+	local total = st.orange.n + st.grey.n
+	for i = 1, ns.BINS do
+		total = total + st.bins[i].n
+	end
+	if total == 0 then
+		return "|cffff9955No crafts measured yet: craft a yellow or green recipe|r"
+	end
+	return ("%d crafts measured; odds ready in %d of %d ranges"):format(total, RangesReady(), ns.BINS)
+end
+
+-- -------------------------------------------------------------------- lifecycle
+
+function ns.OnRecorded()
+	if ns.justReady then
+		local bin = ns.justReady
+		ns.justReady = nil
+		local c = ns.Stats().bins[bin]
+		ns:Print(("measured odds now show at %s of a recipe's range: %d of %d crafts gave a point."):format(ns.BinRange(bin), c.up, c.n))
+	end
+	ns.ForgetProfession()
+	ns.QueueRefresh()
+end
+
+function ns.OnLoad()
+	ns.db.vendor = type(ns.db.vendor) == "table" and ns.db.vendor or {}
+	ns.Stats()
+	ns:RegisterEvent("UNIT_SPELLCAST_START", function(_, unit, guid, spellID)
+		ns.OnCastStart(unit, guid, spellID)
+	end)
+	ns:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, guid, spellID)
+		ns.OnCastSucceeded(unit, guid, spellID)
+	end)
+	ns:RegisterEvent("SKILL_LINES_CHANGED", function()
+		ns.OnSkillChanged()
+		ns.ForgetProfession()
+		ns.QueueRefresh()
+	end)
+	ns:RegisterEvent("TRADE_SKILL_LIST_UPDATE", function()
+		ns.OnSkillChanged()
+		ns.ForgetProfession()
+		ns.QueueRefresh()
+	end)
+	ns:RegisterEvent("ADDON_LOADED", function(_, name)
+		if name == "Blizzard_Professions" then
+			ns.SetupProfessions()
+		end
+	end)
+	ns:RegisterEvent("TRADE_SKILL_SHOW", function()
+		ns.SetupProfessions()
+		ns.ForgetProfession()
+		ns.UpdatePanel()
+	end)
+	ns:RegisterEvent("TRADE_SKILL_DATA_SOURCE_CHANGED", function()
+		ns.ForgetProfession()
+		ns.QueueRefresh()
+	end)
+	ns:RegisterEvent("TRADE_SKILL_CLOSE", function()
+		if panel then
+			panel:Hide()
+		end
+	end)
+	ns:RegisterEvent("BAG_UPDATE_DELAYED", function()
+		if panel and panel:IsShown() then
+			ns.QueueRefresh()
+		end
+	end)
+	ns:RegisterEvent("MERCHANT_SHOW", function()
+		if ns.LearnMerchant() > 0 then
+			ns.QueueRefresh()
+		end
+	end)
+end
+
+function ns.OnEnable()
+	ns.SetupProfessions()
+	ns.UpdatePanel()
+	ns.RedecorateRows()
+end
+
+function ns.OnDisable()
+	ns.UpdatePanel()
+	ns.RedecorateRows()
+end
+
+function ns.OnOptionChanged(key)
+	if key == "list" then
+		ns.RedecorateRows()
+	elseif key == "panel" then
+		ns.UpdatePanel()
+	else
+		ns.QueueRefresh()
+		ns.RedecorateRows()
+	end
+end
