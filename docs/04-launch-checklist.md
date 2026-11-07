@@ -8,8 +8,9 @@ Things the research could not confirm. Each is 30 seconds to check in-game. Upda
 - [x] Install Forever from Battle.net. Download started 2026-10-20 (stress test). Battle.net product
       `wowf`, serving build 1.60.1.70245, older than beta 70450. The bundle lints clean against 70245.
 - [x] Flavor folder: `C:\Program Files (x86)\World of Warcraft\_forever_` (seen 2026-10-20).
-- [ ] Once the download finishes, create `Interface\AddOns` there if missing, then run:
+- [x] Once the download finishes, create `Interface\AddOns` there if missing, then run:
       `.\scripts\link-addon.ps1 -AddOnsPath "C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns"`
+      Done: `KroolWorldForever` there is a junction to the repo folder (2026-11-07).
 
 ## Identity (run in chat)
 
@@ -23,7 +24,8 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 
 ## Restrictions (learn the boundaries)
 
-- [ ] Enable `/console scriptErrors 1` and install BugSack.
+- [x] Install BugSack: BugGrabber and BugSack are in the dev install and capturing (`node tools\bugs.js`,
+      34 sessions by 2026-11-07). BugGrabber catches errors without `scriptErrors`.
 - [ ] Use `/etrace` while questing, in combat and in a dungeon to learn the event flow.
 - [ ] Check which values are secret: `/dump UnitPower("player", Enum.PowerType.ComboPoints)` in and
       out of combat, `issecretvalue` (or the current secret-check API, see `/api`) on threat, health, auras.
@@ -36,7 +38,8 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 
 ## Tooling
 
-- [ ] Install BugGrabber, BugSack, DevTool, TextureAtlasViewer, and check each has a Forever build.
+- [ ] Install DevTool and TextureAtlasViewer and check each has a Forever build (BugGrabber and
+      BugSack are in and working).
 - [x] Browse CurseForge's Forever filter (`gameVersionTypeId=88568`) to see what exists at launch:
       2026-11-05, summary in [05-opportunities.md](05-opportunities.md#launch-landscape-curseforge-forever-filter-2026-11-05).
 - [x] Re-check WeakAuras / Auctionator Forever status (2026-11-05): WeakAuras still none, Auctionator
@@ -47,8 +50,9 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 - [ ] Launch with `-console`, run `ExportInterfaceFiles code`, and diff the export against
       wow-ui-source at the matching build. It is the exact UI code of the installed build.
 - [x] Rebuild the allowlist: done 2026-11-05 from wow-ui-source `forever` at 70790 (it now tracks
-      the live `wowf` product), lint clean. Diffing an `ExportInterfaceFiles` export is still open.
-- [x] `.build.info` in `World of Warcraft\` lists 1.60.1.70790 (2026-11-05).
+      the live `wowf` product), lint clean. Rebuilt again 2026-11-07 at 70862: no API change since
+      70790. Diffing an `ExportInterfaceFiles` export is still open.
+- [x] `.build.info` in `World of Warcraft\` lists 1.60.1.70790 (2026-11-05), 70862 (2026-11-07).
 
 ## Our addons (Krool World Forever)
 
@@ -93,6 +97,8 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
       it was its first capture. Fixed in 0.6.0; to verify: login prints "removed N skinning yields",
       `/fkv status` shows your Skinning skill (if it says none or unavailable, the skill read is
       wrong), and after skinning a beast that had no loot, `/fkv id <npc>` lists no leather.
+      Saved data 2026-11-07: the cleanup ran (`gatherClean`) and none of the 140 learned creatures
+      holds a leather or hide; the skill read and a fresh skin-first corpse are still to see.
 - [ ] Kill Value: compare a few vendor prices with what a merchant actually pays (Blackthornes Farmer
       reports the client's stored sell price can be wrong on Forever).
 - [ ] Kill Value: run an Auctionator full scan, then check AH-priced drops show "ah" as the source.
@@ -101,7 +107,10 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 - [ ] Setups 0.5.0 window: `/kws` shows the class icons, part icons, star, refresh and red X art (none
       is a green square), the from/to card reads right, and hovering a part row after an apply lists
       its details. Then make a new level 1 character with a default set: the window opens on the
-      result with Reload Now, and BugSack stays empty (`node tools\bugs.js`).
+      result with Reload Now, and BugSack stays empty (`node tools\bugs.js`). Half seen 2026-11-07
+      (from the saved data, 70862): Krool-Mule, a new level 1 warrior, got the default (Sz-Sd)
+      automatically with an undo snapshot 16 seconds after first login, and BugSack logged nothing.
+      Still to see: the window opening on the result with Reload Now, and the art.
 
 ## Before publishing anything
 

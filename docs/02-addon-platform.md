@@ -7,10 +7,13 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
 ## Live launch update (2026-11-05, build 1.60.1.70790)
 
 - **Build:** launch shipped 70790 (`.build.info`, product `wowf`). Builds since the beta snapshot:
-  70532 (Oct 22), 70707 (Nov 2), 70755 (Nov 3), 70790 (Nov 4). wow-ui-source `forever` is at 70790
-  and tracks the `wowf` product since Nov 2.
+  70532 (Oct 22), 70707 (Nov 2), 70755 (Nov 3), 70790 (Nov 4), 70840 (Nov 6), 70862 (Nov 7).
+  wow-ui-source `forever` tracks the `wowf` product since Nov 2. 70840 and 70862 change no API
+  (allowlist rebuilt at 70862 on 2026-11-07: same functions, events and enums) and touch only the
+  barbershop, gamepad, character select, social toast and subscription screens.
 - **Interface stays 16001** (wiki `Template:LatestPatchInfo`, `wowf` row, 2026-11-03; Questie and
-  QuestieDB TOCs of Nov 5 agree). Not yet confirmed with `/dump` in-game.
+  QuestieDB TOCs of Nov 5 agree). The bundle at 16001 loaded and ran on live 70862 (2026-11-07);
+  `/dump` on a live build not run yet.
 - **No `WOW_PROJECT_FOREVER`.** Only `WOW_PROJECT_CAMELOT = 18`. Blizzard TOCs use the `camelot`
   load token, none use `forever`.
 - **API drift vs 70450 is tiny:** +`C_ActionBar.IsHighestSpellRank`, +`C_BattleNet.GetDefaultTitleWhisperTarget`,
@@ -58,8 +61,8 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
 
 | Item | Value | Notes |
 |---|---|---|
-| `## Interface:` | `16001` | Beta, Test and live 70790 (wiki, 2026-11-03). In-game `/dump select(4, GetBuildInfo())` not run yet. |
-| Client version | `1.60.1` | Live launch build: 70790 (Nov 4). |
+| `## Interface:` | `16001` | Beta, Test and live 70790 (wiki, 2026-11-03). In-game `/dump select(4, GetBuildInfo())` gave 16001 on the stress test (70245, 2026-10-21); the bundle loads on live 70862. |
+| Client version | `1.60.1` | Live launch build: 70790 (Nov 4). Current: 70862 (Nov 7). |
 | Code family | **Mainline** (same as Midnight) | Family TOC suffix `_Mainline.toc` loads on Forever too. |
 | Game type | `camelot`, alias `forever` (since build 70291) | `[Game]` resolves to `"Camelot"`. The wiki says it "may be changed to Forever in the future." |
 | TOC filename | `MyAddon_Forever.toc` (or `_Camelot.toc`) | Lookup order: game suffix, then family suffix, then plain `MyAddon.toc`. |

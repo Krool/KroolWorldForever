@@ -63,8 +63,9 @@ quantity per corpse, so they are comparable with the baseline's `chance x averag
 * Quest-conditional loot rows and pickpocket loot are not in the baseline. Container contents
   (clams, lockboxes) are not valued.
 * Forever GUIDs have obfuscated server and spawn parts; only the 6th dash field (the NPC id) is
-  read, and a GUID that does not parse is treated as "unknown creature". This is unverified
-  against a live client.
+  read, and a GUID that does not parse is treated as "unknown creature". Verified live: by
+  2026-11-07 the saved data held 140 creatures learned this way, including ids the classic
+  baseline does not have (260157).
 
 ## Prices
 

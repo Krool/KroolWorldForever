@@ -5,7 +5,7 @@ Ships one addon, **Krool World Forever** (`KroolWorldForever/`), for World of Wa
 the owner's Valheim mod KroolWorldUI. Research lives in `docs/`; read `docs/02-addon-platform.md`
 before writing addon code.
 
-## Platform facts (verified 2026-10-20 on beta 1.60.1.70450; live 70790 rechecked 2026-11-05)
+## Platform facts (verified 2026-10-20 on beta 1.60.1.70450; live rechecked 2026-11-05 and 2026-11-07)
 
 - Forever is a **Mainline** game type (same client/API as Midnight 12.1.5), NOT Classic Era. Use
   retail docs and the `forever` branch of Gethe/wow-ui-source.
@@ -23,8 +23,9 @@ before writing addon code.
   (2026-10-21) showed no lasting change from `ffxGlow`, horizon/farclip, `volumeFogLevel` or
   Compute Effects. No fog feature. See docs/07.
 - Install folder is `World of Warcraft\_forever_`, Battle.net product `wowf` (confirmed 2026-10-20).
-  **Live (2026-11-04) is build 1.60.1.70790, Interface still 16001**; the allowlist is built from
-  wow-ui-source `forever` at 70790 (it tracks `wowf` since Nov 2). Still no `WOW_PROJECT_FOREVER`.
+  Live launched (2026-11-04) on 1.60.1.70790. **Live is now 70862 (2026-11-07), Interface still
+  16001** (the bundle loads on it). The allowlist is built from wow-ui-source `forever` at 70862 (it
+  tracks `wowf` since Nov 2); 70840 and 70862 changed no API. Still no `WOW_PROJECT_FOREVER`.
 - **Protected calls need a click.** `C_UI.Reload` (and anything else hardware-event restricted) is
   blocked with `ADDON_ACTION_BLOCKED` from a timer or event handler; the API docs carry no flag for
   it, so the lint cannot see it. The Setups test stubs model this (`HardwareDepth`, `BlockedCalls`).
