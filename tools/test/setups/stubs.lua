@@ -48,7 +48,7 @@ local WidgetMeta = {
 	end,
 }
 local function NewWidget(kind, name)
-	local w = setmetatable({ kind = kind, scripts = {}, events = {}, shown = true, enabled = true, text = "", children = {} }, WidgetMeta)
+	local w = setmetatable({ kind = kind, scripts = {}, hooked = {}, events = {}, shown = true, enabled = true, text = "", children = {} }, WidgetMeta)
 	if name then
 		_G[name] = w
 		w.name = name
@@ -67,15 +67,38 @@ end
 function Widget:UnregisterEvent(e)
 	self.events[e] = nil
 end
+-- HookScript adds to the script like the client: the set script runs first, then each hook.
+function Widget:HookScript(which, fn)
+	self.hooked[which] = self.hooked[which] or {}
+	table.insert(self.hooked[which], fn)
+end
+local function RunHooks(self, which)
+	for _, fn in ipairs(self.hooked[which] or {}) do
+		fn(self)
+	end
+end
 function Widget:Show()
+	local was = self.shown
 	self.shown = true
+	if not was then
+		if self.scripts.OnShow then
+			self.scripts.OnShow(self)
+		end
+		RunHooks(self, "OnShow") -- real frames fire OnShow when a hidden frame shows
+	end
 end
 function Widget:Hide()
 	local was = self.shown
 	self.shown = false
-	if was and self.scripts.OnHide then
-		self.scripts.OnHide(self) -- real frames fire OnHide when a shown frame hides
+	if was then
+		if self.scripts.OnHide then
+			self.scripts.OnHide(self) -- real frames fire OnHide when a shown frame hides
+		end
+		RunHooks(self, "OnHide")
 	end
+end
+function Widget:SetAtlas(a)
+	self.atlas = a
 end
 function Widget:SetShown(v)
 	self.shown = v and true or false
@@ -124,6 +147,84 @@ function Widget:Click()
 	if self.scripts.OnClick then
 		Hardware(self.scripts.OnClick, self)
 	end
+end
+
+-- Animation groups (the polish in Core/Widgets.lua): created, played, stopped. FinishAnimations()
+-- runs what each played, non-looping group does when it ends.
+Animations = {}
+local AnimObj = {}
+local AnimMeta = {
+	__index = function(_, k)
+		return AnimObj[k] or function() end
+	end,
+}
+function Widget:CreateAnimationGroup()
+	local g = setmetatable({ owner = self, anims = {}, scripts = {}, playing = false, plays = 0 }, AnimMeta)
+	table.insert(Animations, g)
+	return g
+end
+function AnimObj:CreateAnimation(kind)
+	local a = setmetatable({ kind = kind, scripts = {} }, AnimMeta)
+	table.insert(self.anims, a)
+	return a
+end
+function AnimObj:Play()
+	self.playing, self.plays = true, self.plays + 1
+end
+AnimObj.Restart = AnimObj.Play
+function AnimObj:Stop()
+	self.playing = false
+end
+function AnimObj:IsPlaying()
+	return self.playing
+end
+function AnimObj:SetLooping(how)
+	self.looping = how
+end
+function AnimObj:SetScript(which, fn)
+	self.scripts[which] = fn
+end
+function FinishAnimations()
+	for _, g in ipairs(Animations) do
+		local looping = rawget(g, "looping")
+		if g.playing and (looping == nil or looping == "NONE") then
+			g.playing = false
+			if g.scripts.OnFinished then
+				g.scripts.OnFinished(g)
+			end
+		end
+	end
+end
+-- The animation groups made on one region.
+function AnimationsOn(region)
+	local out = {}
+	for _, g in ipairs(Animations) do
+		if g.owner == region then
+			out[#out + 1] = g
+		end
+	end
+	return out
+end
+
+-- Sounds: PlaySound records the id; SOUNDKIT carries the names the polish asks for.
+Sounds = {}
+function PlaySound(id)
+	table.insert(Sounds, id)
+end
+SOUNDKIT = {
+	IG_CHARACTER_INFO_OPEN = 839,
+	IG_CHARACTER_INFO_CLOSE = 840,
+	IG_MAINMENU_OPTION = 852,
+	IG_MAINMENU_OPTION_CHECKBOX_ON = 856,
+	IG_MAINMENU_OPTION_CHECKBOX_OFF = 857,
+}
+function HeardSound(id)
+	for _, s in ipairs(Sounds) do
+		if s == id then
+			return true
+		end
+	end
+	return false
 end
 
 CreatedFrames = {}

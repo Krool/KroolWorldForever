@@ -25,6 +25,8 @@ local SEEN_TTL = 300 -- seconds before another spawn of the same rare alerts
 local SHOW_FOR = 60 -- seconds the button stays up after the last sighting
 local FADED = 0.35 -- the button's alpha while combat keeps it from hiding
 local MARKER_ICON = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_"
+-- The classification badges Blizzard's nameplates use (Blizzard_NamePlateClassificationFrame.lua).
+local BADGE = { rare = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare-Star", rareelite = "nameplates-icon-elite-silver" }
 -- Always up, never worth a stop: ignored until you unignore them.
 local DEFAULT_IGNORE = { [3581] = "Sewer Beast" } -- the crocolisk in the Stormwind canals
 
@@ -280,10 +282,36 @@ local function Build()
 	glow:SetBlendMode("ADD")
 	glow:SetAlpha(0.5)
 	b.glow = glow
+	-- A soft ring breathes behind the skull while the button waits (the minimap's looping glow).
+	-- Only child textures animate: nothing about the secure frame itself changes in combat.
+	b.ring = b:CreateTexture(nil, "BACKGROUND")
+	b.ring:SetSize(80, 80)
+	b.ring:SetPoint("CENTER")
+	b.ring:SetAtlas(root.UI.ATLAS.glow)
+	b.ring:SetBlendMode("ADD")
+	b.ring:SetVertexColor(1, 0.85, 0.4)
+	b.pulse = root.UI.Pulse(b.ring, 0.2, 0.75, 1)
 	b.label = b:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	b.label:SetPoint("TOP", b, "BOTTOM", 0, -2)
+	b.badge = b:CreateTexture(nil, "OVERLAY")
+	b.badge:SetSize(16, 16)
+	b.badge:SetPoint("RIGHT", b.label, "LEFT", -2, 0)
 	b.hint = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	b.hint:SetPoint("TOP", b.label, "BOTTOM", 0, -1)
+	b:HookScript("OnShow", function()
+		pcall(b.pulse.Start)
+		pcall(root.UI.Pop, b.icon)
+	end)
+	b:HookScript("OnHide", function()
+		pcall(b.pulse.Stop)
+	end)
+	-- Pressed look: the skull darkens while the mouse button is down (a color, never a position).
+	b:HookScript("OnMouseDown", function()
+		b.icon:SetVertexColor(0.7, 0.7, 0.7)
+	end)
+	b:HookScript("OnMouseUp", function()
+		b.icon:SetVertexColor(1, 1, 1)
+	end)
 	b:HookScript("OnClick", function(_, which, down)
 		if which ~= "RightButton" or down or not current then
 			return
@@ -301,16 +329,17 @@ local function Build()
 			return
 		end
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:SetText(Describe(current), 1, 0.82, 0)
+		local badge = BADGE[current.elite and "rareelite" or "rare"]
+		GameTooltip:SetText(root.UI.InlineAtlas(badge, 16) .. " " .. Describe(current), 1, 0.82, 0)
 		local acc, FKV = Worth(current.npcId)
 		if acc then
 			GameTooltip:AddLine("Kill value " .. FKV.Money(acc.total), 0.2, 1, 0.6)
 			for _, c in ipairs(BestDrops(acc, 4)) do
-				GameTooltip:AddLine("  " .. ItemName(c.id) .. " " .. FKV.FmtQty(c.qty) .. "  " .. FKV.Money(c.value), 0.8, 0.8, 0.8)
+				GameTooltip:AddLine("  " .. root.UI.ItemIcon(c.id, 14) .. ItemName(c.id) .. " " .. FKV.FmtQty(c.qty) .. "  " .. FKV.Money(c.value), 0.8, 0.8, 0.8)
 			end
 		end
 		local key = BindingKey()
-		GameTooltip:AddLine("Click" .. (key and (" or press " .. key) or "") .. ": target it and mark it.", 1, 1, 1, true)
+		GameTooltip:AddLine(root.UI.InlineIcon(MARKER_ICON .. Marker(), 14, true) .. " Click" .. (key and (" or press " .. key) or "") .. ": target it and mark it.", 1, 1, 1, true)
 		if not key then
 			GameTooltip:AddLine("Bind a key: Key Bindings > AddOns > Krool World.", 0.7, 0.7, 0.7, true)
 		end
@@ -361,6 +390,7 @@ local function UpdateButton()
 	b.icon:SetTexture(MARKER_ICON .. Marker())
 	b.glow:SetTexture(MARKER_ICON .. Marker())
 	b.label:SetText(current.name)
+	b.badge:SetAtlas(BADGE[current.elite and "rareelite" or "rare"])
 	local key = BindingKey()
 	b.hint:SetText(key and ("Click or " .. key) or "Click to mark")
 	-- Marked: the key still retargets it, the button has nothing left to do.
@@ -456,7 +486,8 @@ local function Alert(r)
 	if db.chat then
 		local key = BindingKey()
 		local how = key and ("press " .. key .. " to target and mark it") or (db.button and "click the skull to target and mark it" or nil)
-		ns:Print("|cffffd100" .. Describe(r) .. "|r" .. (how and (" - " .. how) or ""))
+		local badge = root.UI.InlineAtlas(BADGE[r.elite and "rareelite" or "rare"], 14)
+		ns:Print(badge .. " |cffffd100" .. Describe(r) .. "|r" .. (how and (" - " .. how) or ""))
 		local worth = WorthLine(r.npcId)
 		if worth then
 			print("  |cff33ff99" .. worth .. "|r")

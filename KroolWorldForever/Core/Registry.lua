@@ -29,8 +29,11 @@ root.featureOrder = {}
 root.public = {}
 KroolWorldForever = root.public -- public API: KroolWorldForever.QuestTrash, .KillValue, ...
 
+-- Chat lines start with the addon's bag icon (border trimmed, sized to the chat font) and its name.
+local PREFIX = "|TInterface\\Icons\\INV_Misc_Bag_10:0:0:0:0:64:64:5:59:5:59|t |cff33ffccKrool|cffffffffWorld|r"
+
 local function Print(self, msg)
-	print("|cff33ffccKrool|cffffffffWorld|r " .. (self.title or self.key) .. ": " .. msg)
+	print(PREFIX .. " " .. (self.title or self.key) .. ": " .. msg)
 end
 
 local function RegisterEvent(self, event, fn)
@@ -49,7 +52,7 @@ function root.Feature(key)
 end
 
 function root.Print(msg)
-	print("|cff33ffccKrool|cffffffffWorld|r: " .. msg)
+	print(PREFIX .. ": " .. msg)
 end
 
 -- Events: one frame for the whole bundle, dispatched to enabled features.

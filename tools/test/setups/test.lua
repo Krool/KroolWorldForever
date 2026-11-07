@@ -155,6 +155,11 @@ check("picker shows the new-character banner", F.banner.text:find("New character
 check("picker preselects the default setup", F.name.text, "Main")
 check("class mismatch warning", F.warning.text:find("Different class", 1, true) ~= nil, true)
 check("Alt got its own auto snapshot", ns.Get(ns.db.chars["Alt-Realm"].auto) ~= nil, true)
+-- polish: the window opened with Blizzard's open sound and its intro animation
+check("polish: opening the window plays the open sound", HeardSound(839), true)
+local intro = AnimationsOn(F)[1]
+check("polish: the window's intro animation played", intro ~= nil and intro.plays >= 1, true)
+check("polish: the selected row uses Blizzard's selected-row art", F.rows[1].sel.atlas, "PetList-ButtonSelect")
 
 -- ---------------------------------------------------------------- refusals
 
@@ -198,6 +203,18 @@ check("bars row lists the unsupported flyout", has(barsRow.result.details, "flyo
 check("hovering the bars row shows the details", has(Hover(barsRow.row), "Heroic Strike"), true)
 check("bindings row: ok", part("bindings").result.level, "ok")
 check("the banner says what was applied", F.banner.text:find("Applied", 1, true) ~= nil, true)
+local toast = __ns.UI.ToastOf(F)
+check("polish: a toast says what was applied", toast and toast.text.text, "Applied Main")
+check("polish: the toast is showing", toast and toast:IsShown(), true)
+local popped = AnimationsOn(barsRow.status)[1]
+check("polish: the result icon popped in", popped ~= nil and popped.plays, 1)
+ns.Refresh()
+check("polish: and only once, not on every refresh", popped and popped.plays, 1)
+FinishAnimations()
+check("polish: the toast goes away by itself", toast:IsShown(), false)
+local pulse = AnimationsOn(F.reloadBar.glow)[1]
+check("polish: the reload glow breathes while a reload waits", pulse ~= nil and pulse.playing, true)
+check("polish: and it loops", pulse and pulse.looping, "BOUNCE")
 check("bindings replaced: F no longer jumps", Bound.F, nil)
 check("bindings replaced: SPACE jumps", Bound.SPACE, "JUMP")
 check("bindings saved per character", SavedBindingSet, 2)
@@ -232,6 +249,7 @@ check("undo: cvar restored", CVars.autoLootDefault[1], "0")
 check("undo: addon restored", AddonOn.Alt.Auctionator, true)
 check("undo: edit mode switched back", EditLayouts.activeLayout, 1)
 check("undo is one level", ns.db.undo["Alt-Realm"], nil)
+check("polish: a toast says the undo finished", __ns.UI.ToastOf(F).text.text, "Undo finished")
 check("undo keeps created macros", GetMacroIndexByName("Charge+") > 0, true)
 
 -- ---------------------------------------------------------------- edge cases
@@ -672,10 +690,15 @@ local setupsWin = _G.KroolWorldForeverSetupsFrame
 if setupsWin then
 	setupsWin:Hide()
 end
+wipe(Sounds)
 SlashCmdList.KROOLWORLDFOREVER("")
 local hub = root.HubFrame()
 check("/kw opens the hub", hub ~= nil and hub:IsShown(), true)
 check("one card per feature", #hub.cards, #root.featureOrder)
+check("polish: the hub opens with the open sound", HeardSound(839), true)
+local cardFade = AnimationsOn(hub.cards[3])[1]
+check("polish: the cards fade in one after another", cardFade ~= nil and cardFade.plays >= 1, true)
+check("polish: each card has its on/off bar", hub.cards[1].accent ~= nil, true)
 local cards = {}
 for _, c in ipairs(hub.cards) do
 	cards[c.feature.key] = c
@@ -726,13 +749,19 @@ check("card switch turns the feature off", root.features.rares.enabled, false)
 check("and saves it", root.features.rares.db.enabled, false)
 check("card shows Off", cards.rares.status.text:find("Off", 1, true) ~= nil, true)
 check("switch unchecked", cards.rares.toggle.checked, false)
+check("polish: a toast confirms the switch", root.UI.ToastOf(hub).text.text, "Rare Alert off")
+check("polish: and the switch made a checkbox sound", HeardSound(856) or HeardSound(857), true)
 SlashCmdList.KROOLWORLDFOREVER("rares on")
 check("turning it on elsewhere refreshes the open hub", cards.rares.toggle.checked, true)
 
 -- the way in
+wipe(Sounds)
 cards.setups.open:Click()
 check("Open leaves the hub", hub:IsShown(), false)
 check("and opens the feature's window", _G.KroolWorldForeverSetupsFrame:IsShown(), true)
+check("polish: the hub steps aside without its close sound", HeardSound(840), false)
+check("polish: the window that opens makes the open sound", HeardSound(839), true)
+check("polish: the Open button clicks", HeardSound(852), true)
 _G.KroolWorldForeverSetupsFrame:Hide()
 SlashCmdList.KROOLWORLDFOREVER("")
 cards.killvalue:Click()

@@ -184,7 +184,7 @@ local function Annotate(tooltip, data)
 		return
 	end
 
-	local label = "|cffb48cffDisenchant|r"
+	local label = root.UI.InlineIcon(ns.icon, 14) .. " |cffb48cffDisenchant|r"
 	if e.value then
 		tooltip:AddDoubleLine(label, root.Money(e.value))
 	elseif not e.hasAH then
@@ -209,7 +209,7 @@ local function Annotate(tooltip, data)
 		for _, r in ipairs(e.rows) do
 			local count = CountText(r)
 			tooltip:AddDoubleLine(
-				"|cffaaaaaa  " .. MatName(r.id) .. (count ~= "" and (" " .. count) or "") .. ", " .. PctText(r.p) .. "|r",
+				"  " .. root.UI.ItemIcon(r.id, 12) .. "|cffaaaaaa" .. MatName(r.id) .. (count ~= "" and (" " .. count) or "") .. ", " .. PctText(r.p) .. "|r",
 				r.price and (root.Money(r.price) .. " |cffaaaaaaeach|r") or "|cffaaaaaano price|r"
 			)
 		end
@@ -293,7 +293,7 @@ local function PrintPrices()
 	ns:Print("material prices from Auctionator:")
 	for _, id in ipairs(MatOrder()) do
 		local price = root.AuctionPrice(id)
-		print("  " .. MatName(id) .. ": " .. (price and root.Money(price) or "|cffaaaaaano price|r"))
+		print("  " .. root.UI.ItemIcon(id) .. MatName(id) .. ": " .. (price and root.Money(price) or "|cffaaaaaano price|r"))
 	end
 end
 

@@ -74,6 +74,66 @@ end
 function Widget:CreateTexture()
 	return NewWidget()
 end
+function Widget:SetAtlas(a)
+	self.atlas = a
+end
+
+-- Animation groups (the polish in Core/Widgets.lua): created, played, stopped. FinishAnimations()
+-- runs what each played, non-looping group does when it ends.
+Animations = {}
+local AnimObj = {}
+local AnimMeta = {
+	__index = function(_, k)
+		return AnimObj[k] or function() end
+	end,
+}
+function Widget:CreateAnimationGroup()
+	local g = setmetatable({ owner = self, anims = {}, scripts = {}, playing = false, plays = 0 }, AnimMeta)
+	table.insert(Animations, g)
+	return g
+end
+function AnimObj:CreateAnimation(kind)
+	local a = setmetatable({ kind = kind, scripts = {} }, AnimMeta)
+	table.insert(self.anims, a)
+	return a
+end
+function AnimObj:Play()
+	self.playing, self.plays = true, self.plays + 1
+end
+AnimObj.Restart = AnimObj.Play
+function AnimObj:Stop()
+	self.playing = false
+end
+function AnimObj:IsPlaying()
+	return self.playing
+end
+function AnimObj:SetLooping(how)
+	self.looping = how
+end
+function AnimObj:SetScript(which, fn)
+	self.scripts[which] = fn
+end
+function FinishAnimations()
+	for _, g in ipairs(Animations) do
+		local looping = rawget(g, "looping")
+		if g.playing and (looping == nil or looping == "NONE") then
+			g.playing = false
+			if g.scripts.OnFinished then
+				g.scripts.OnFinished(g)
+			end
+		end
+	end
+end
+function AnimationsOn(region)
+	local out = {}
+	for _, g in ipairs(Animations) do
+		if g.owner == region then
+			out[#out + 1] = g
+		end
+	end
+	return out
+end
+
 UIParent = NewWidget()
 UISpecialFrames = {}
 
