@@ -115,7 +115,7 @@ function ns.TipLines(o)
 		if c.cost then
 			local parts = {}
 			for _, rg in ipairs(c.reagents) do
-				parts[#parts + 1] = ("%s x%d (%s)"):format(ns.ItemName(rg.id), rg.qty, SOURCE[rg.source] or "?")
+				parts[#parts + 1] = ("%s%s x%d (%s)"):format(UI.ItemIcon(rg.id, 14), ns.ItemName(rg.id), rg.qty, SOURCE[rg.source] or "?")
 			end
 			add("A craft costs " .. root.Money(c.cost) .. Grey(": " .. table.concat(parts, ", ")))
 			if c.resale and c.resale > 0 then
@@ -244,30 +244,12 @@ local function SelectRecipe(id)
 	end
 end
 
-local function FadeIn(f)
-	if not f.kwfFade and f.CreateAnimationGroup then
-		local ag = f:CreateAnimationGroup()
-		if ag and ag.CreateAnimation then
-			local a = ag:CreateAnimation("Alpha")
-			if a then
-				a:SetFromAlpha(0)
-				a:SetToAlpha(1)
-				a:SetDuration(0.15)
-				f.kwfFade = ag
-			end
-		end
-	end
-	if f.kwfFade then
-		f.kwfFade:Stop()
-		f.kwfFade:Play()
-	end
-end
-
 local function BuildRow(parent, i)
 	local b = CreateFrame("Button", nil, parent)
 	b:SetHeight(40)
 	b:SetPoint("TOPLEFT", 0, -(i - 1) * 42)
 	b:SetPoint("RIGHT", parent, "RIGHT", 0, 0)
+	b.best = UI.Selected(b) -- the cheapest point stands out
 	UI.Hover(b)
 	b.rank = UI.Text(b, "GameFontNormalSmall", "CENTER")
 	b.rank:SetPoint("LEFT", 2, 0)
@@ -297,10 +279,8 @@ local function BuildRow(parent, i)
 		"OnClick",
 		UI.Safe(function(self)
 			if self.o then
+				UI.Sound("click")
 				SelectRecipe(self.o.id)
-				if PlaySound and SOUNDKIT and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON then
-					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON)
-				end
 			end
 		end, ns)
 	)
@@ -341,6 +321,8 @@ local function BuildPanel()
 	f.sub:SetPoint("RIGHT", f, "RIGHT", -14, 0)
 	f.sub:SetHeight(30)
 	f.sub:SetJustifyV("TOP")
+	local line = UI.Divider(f, 272)
+	line:SetPoint("TOPLEFT", 14, -80)
 	local list = CreateFrame("Frame", nil, f)
 	list:SetPoint("TOPLEFT", 10, -90)
 	list:SetPoint("BOTTOMRIGHT", -12, 50)
@@ -348,19 +330,23 @@ local function BuildPanel()
 	for i = 1, PANEL_ROWS do
 		f.rows[i] = BuildRow(list, i)
 	end
-	f.empty = UI.Text(list, "GameFontDisable", "CENTER")
-	f.empty:SetPoint("TOPLEFT", 10, -20)
-	f.empty:SetPoint("RIGHT", list, "RIGHT", -10, 0)
+	f.empty = UI.Empty(list, UI.ATLAS.ok, 250)
 	f.note = UI.Text(f, "GameFontDisableSmall")
 	f.note:SetPoint("BOTTOMLEFT", 14, 14)
 	f.note:SetPoint("RIGHT", f, "RIGHT", -14, 0)
 	f.note:SetHeight(28)
 	f.note:SetJustifyV("BOTTOM")
+	UI.ToastAt(f, 0, 50) -- above the price note
+	-- The kit's open animation; no open sound: the crafting window just played its own.
 	f:SetScript("OnShow", function(self)
-		FadeIn(self)
+		local intro = UI.Intro(self)
+		if intro then
+			pcall(intro.Restart, intro)
+		end
+		self.fresh = true -- the next fill staggers its rows in
 		ns.QueueRefresh()
 	end)
-	f:Hide() -- shown by UpdatePanel, so even the first show fades in
+	f:Hide() -- shown by UpdatePanel, so even the first show animates
 	return f
 end
 
@@ -385,16 +371,28 @@ local function RangesReady()
 	return ready
 end
 
+local function SetEmpty(text)
+	panel.empty:SetText(text or "")
+	if panel.empty.art then
+		panel.empty.art:SetShown(text ~= nil)
+	end
+end
+
 function ns.RefreshPanel()
 	if not (panel and panel:IsShown()) then
 		return
 	end
 	local list, prof = ns.Rank()
+	local fresh = panel.fresh
+	panel.fresh = false
+	local flash = ns.flashRecipe
+	ns.flashRecipe = nil
 	for _, row in ipairs(panel.rows) do
 		row:Hide()
 		row.o = nil
+		row.best:Hide()
 	end
-	panel.empty:SetText("")
+	SetEmpty(nil)
 	if not prof then
 		panel.skill:SetText("Next Skill Point")
 		panel.sub:SetText(Grey("Open a crafting profession to see its recipes."))
@@ -434,11 +432,17 @@ function ns.RefreshPanel()
 				bits[#bits + 1] = Grey("[" .. have .. "]")
 			end
 			row.detail:SetText(table.concat(bits, Grey("  ")))
+			row.best:SetShown(i == 1 and o.perPoint ~= nil)
 			row:Show()
+			if fresh then
+				UI.FadeIn(row, (i - 1) * 0.04) -- rows arrive one after another
+			elseif flash and o.id == flash then
+				UI.Flash(row.cost) -- the recipe just crafted: its numbers moved
+			end
 			shown = shown + 1
 		end
 		if shown == 0 then
-			panel.empty:SetText("No learned recipe here can give a point. Train new ones.")
+			SetEmpty("No learned recipe here can give a point. Train new ones.")
 		end
 	end
 	local sources = root.HasAuctionator() and "Auctionator and vendors you have visited" or "vendors you have visited (Auctionator adds auction prices)"
@@ -633,13 +637,17 @@ end
 
 -- -------------------------------------------------------------------- lifecycle
 
-function ns.OnRecorded()
+function ns.OnRecorded(last)
 	if ns.justReady then
 		local bin = ns.justReady
 		ns.justReady = nil
 		local c = ns.Stats().bins[bin]
 		ns:Print(("measured odds now show at %s of a recipe's range: %d of %d crafts gave a point."):format(ns.BinRange(bin), c.up, c.n))
+		if panel and panel:IsShown() then
+			UI.Toast(panel, ("Odds ready at %s: %s"):format(ns.BinRange(bin), Pct(c.up / c.n)))
+		end
 	end
+	ns.flashRecipe = last and last.id
 	ns.ForgetProfession()
 	ns.QueueRefresh()
 end

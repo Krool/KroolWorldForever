@@ -84,6 +84,43 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
       (Blessing of Might, Fortitude...), the matching object says "Does not stack with your ...".
       After sitting a minute, hover the Camp Benefits buff: a clash line or "None of these overlap".
       Compare a value with the game's own (e.g. your Stamina before and after). `/kwc` lists all ten.
+- [ ] UI polish 0.12.0, hub:
+      - `/kw` fades and grows in with the open sound, and the cards arrive one after another.
+      - Hovering a card shows a soft highlight. Judge whether it looks stretched on the wide
+        cards (if so, use the row style).
+      - The left bar is green when a feature is on, grey when off.
+      - Flipping a switch plays a checkbox sound and shows a toast "<Feature> on/off" that rises
+        and fades within about 2.5 s.
+      - Right-clicking a card opens its settings.
+      - Opening a feature from the hub plays one open sound and no close sound.
+- [ ] UI polish 0.12.0, `/fqt`:
+      - The window animates in.
+      - Headers show a red X, check mark or magnifying glass with a divider. Rows are striped and
+        the first rows fade in.
+      - Refresh shows "Rechecked: ..." and fades. With nothing to sort, a faded check mark sits
+        above the text.
+- [ ] UI polish 0.12.0, `/kws`:
+      - List rows show the pet-list hover and selected art.
+      - Ticking a part plays the checkbox sound.
+      - Apply shows the "Applied X" toast above the Reload Now bar (not over it), and the result
+        icons pop in once. The glow behind the Reload Now icon breathes.
+      - Star, rename, update and delete each show a toast.
+- [ ] UI polish 0.12.0, Rare Alert (`/kwr test`, then a real rare):
+      - The badge sits left of the name: a star for a rare, a silver dragon for a rare elite.
+      - A gold ring breathes behind the skull, which pops in on appear and darkens while pressed.
+      - The tooltip has the badge, item icons and the marker icon. The chat alert starts with the
+        badge.
+      - In combat nothing moves, and BugSack stays empty.
+- [ ] UI polish 0.12.0, tooltips and chat:
+      - Kill Value drop lines and Disenchant materials (hold Shift) show item icons, and the
+        Disenchant line has its icon.
+      - Chat lines start with the bag icon.
+      - No green squares anywhere.
+- [ ] UI polish 0.12.0, Next Skill Point panel:
+      - It grows in with the crafting window, and its rows arrive one after another.
+      - The top row has the selected-row highlight. After a counted craft, that recipe's cost
+        flashes.
+      - When a range reaches 10 crafts, "Odds ready at ..." rises in above the price note.
 - [ ] Skill-Up Odds 0.11.0: open a crafting profession. Each recipe with an arrow shows a % (or ?%)
       at the row's right edge, the name never overlaps it, and clicking the % still selects the
       recipe. Hover it: yellow/green/grey skills, crafts behind it, what a craft and a point cost.

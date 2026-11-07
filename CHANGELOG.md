@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.12.0
+
+- **Polish everywhere.**
+  - **Windows:** they fade and grow in when they open, with Blizzard's own open, close, click and
+    checkbox sounds.
+  - **Done messages:** a short note rises in at the bottom of a window and fades: "Applied",
+    "Saved", "Rechecked: 3 to delete", "Rare Alert off".
+  - **Rows and cards:** they use Blizzard's list highlights, and icons sink a little when pressed.
+- **Hub:**
+  - Cards arrive one after another. Each has a hover highlight and a green bar down its edge while
+    the feature is on.
+  - Flipping a switch flashes the card's status line.
+  - Right-click a card for its settings.
+- **Quest Trash window:**
+  - Group headers carry an icon (red X, check mark, magnifying glass) and a divider.
+  - Rows are striped, and each reason takes its group's color.
+  - An empty list shows a picture.
+- **Setups window:**
+  - A note confirms apply, undo, save, rename, update, delete and the new-character star.
+  - Result icons pop in, and the Reload Now bar glows while a reload is waiting.
+- **Rare Alert:**
+  - The rare or rare-elite badge Blizzard's nameplates use shows beside the name, in the tooltip
+    and in the chat alert.
+  - A gold ring breathes behind the skull, and the skull pops in when the button appears.
+  - Only colors and art change: the button never moves, so combat is unaffected.
+- **Item icons** on Kill Value drop lines, Disenchant Value materials, Rare Alert's drop list and
+  Skill-Up Odds' reagents. Chat lines start with the addon's icon.
+- **Skill-Up Odds:**
+  - The Next Skill Point panel animates in, and its rows arrive one after another.
+  - The cheapest point is highlighted, and the row of the recipe you just crafted flashes.
+  - A note says when a range has enough crafts to show its odds.
+
 ## 0.11.0
 
 - **Skill-Up Odds** (new): the real chance a craft gives a skill point, and the cheapest way to your

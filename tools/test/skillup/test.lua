@@ -323,8 +323,10 @@ RunTimers()
 local panel = ns.Panel()
 check("panel built", panel ~= nil, true)
 check("panel shown with the window", panel.shown, true)
-check("panel faded in", panel.kwfFade ~= nil and panel.kwfFade.played >= 1, true)
 check("panel title", panel.title, "Next Skill Point")
+check("the cheapest point is highlighted", panel.rows[1].best.shown, true)
+check("only that one", panel.rows[2].best.shown, false)
+check("no empty-state art over a full list", panel.empty.art.shown, false)
 check("panel heading", panel.skill.text, "Tailoring 50 / 75")
 check("best row first", panel.rows[1].o.id, VEST)
 check("its gold a point", tostring(panel.rows[1].cost.text):find("a point", 1, true) ~= nil, true)
@@ -333,6 +335,23 @@ panel.rows[1]:Click()
 check("click selects the recipe", Opened[#Opened], VEST)
 panel.rows[1].scripts.OnEnter(panel.rows[1])
 check("row hover tooltip", has(GameTooltip.lines, "A point costs"), true)
+
+-- A range filling up while the panel is open: a toast says so, and the crafted row is flashed.
+for _ = 1, 9 do
+	Skill[197] = 66 -- Brown Linen Vest bin 9 (80-90%)
+	Craft(VEST, "Fill-" .. _, 0)
+end
+Skill[197] = 66
+capture(function()
+	Craft(VEST, "Fill-10", 1)
+end)
+local toast = root.UI.ToastOf(panel)
+check("a ready range gets a toast on the panel", toast ~= nil and tostring(toast.text.text):find("80-90%", 1, true) ~= nil, true)
+check("the toast is shown", toast and toast.shown, true)
+Skill[197] = 50
+Clock = Clock + 1
+FireEvent("TRADE_SKILL_LIST_UPDATE")
+RunTimers()
 
 panel.CloseButton:Click()
 check("closing turns the panel option off", db.panel, false)
@@ -373,7 +392,7 @@ end)
 check("/kwu status names the data build", has(out, "1.60.1.70862"), true)
 check("/kwu status names the skill source", has(out, "recipe"), true)
 check("hub status counts crafts", ns.HubStatus():find("crafts measured", 1, true) ~= nil, true)
-check("hub status counts ready ranges", ns.HubStatus():find("1 of 10", 1, true) ~= nil, true)
+check("hub status counts ready ranges", ns.HubStatus():find("2 of 10", 1, true) ~= nil, true)
 
 -- ---------------------------------------------------------------- off means off
 

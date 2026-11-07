@@ -41,6 +41,11 @@ before writing addon code.
   The `/kw` hub (`Core/Hub.lua`) shows a card per feature from `ns.icon`, `ns.blurb` and
   `ns.HubStatus()`; give a new feature all three. Feature windows use `root.UI` (`Core/Widgets.lua`);
   Auctionator prices and money text come from `root.AuctionPrice` / `root.Money` (`Core/Prices.lua`).
+- **Polish comes from the kit** (0.12.0): `UI.Window`/`UI.Polish` (open animation and sounds),
+  `UI.Toast` for "done", `UI.Hover`/`UI.Selected`/`UI.Divider`/`UI.Empty`, `UI.FadeIn`/`Flash`/
+  `Pop`/`Pulse`, `UI.Sound`, inline `UI.ItemIcon`/`InlineAtlas`. Animations are AnimationGroups
+  only (no OnUpdate, no timers). A missing texture shows as a green square: use only atlases in
+  `UI.ATLAS` or ones you prove in the forever atlas list and Blizzard's forever code, and note where.
 - **Test stubs chain tooltip post-calls** like the client (every feature's hook runs), so a new
   tooltip feature must leave other features' tooltips alone and survive their fixture items.
 - **No game calls at file scope** in feature files. `tools/settings-doc.js` and every test suite
@@ -75,6 +80,9 @@ before writing addon code.
   `tools/forever-api/forever-api.json` before using it. Regenerate the allowlist with
   `build-allowlist.js` when a new build drops.
 - A new feature gets its own suite folder, including a check that `/kwf <key> off` silences it.
+- Most suites' stub widgets return a no-op function for ANY unset key, so `frame.myField` reads
+  truthy under test. Check fields with `type(x) == "table"`, or use a stub that returns nil for
+  lowercase keys (the skillup suite does).
 - Quest data comes from QuestieDB's public `LibQuestieDB`/`QuestDB`/`ItemDB` globals
   (github.com/Questie/QuestieDB docs/api.md). Numeric fields read 0, not nil. Race masks exceed
   32 bits: use arithmetic, not `bit.band`.
