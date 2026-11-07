@@ -174,6 +174,20 @@ On by default: yes. Toggle: `/kwf camp on|off`. Commands: `/kwc, /campguide`.
 |---|---|---|
 | Show On Camp Objects | On | Adds each camp object's buff at your level to its tooltip, and on the campfire how its buffs work and the objects you have hovered there. Only while the game says a campfire is nearby. |
 | Notes On Camp Benefits | On | On the Camp Benefits buff, names any camp bonus in it that does not stack with a class buff you have, such as the Lodestone with Blessing of Might. |
+
+### Skill-Up Odds
+
+In the crafting window: the measured chance each recipe gives a skill point, and a Next Skill Point panel that ranks your recipes by the gold a point costs. The chance is measured from your own crafts: Blizzard never published it, so until enough crafts are in, a recipe shows ?%.
+
+On by default: yes. Toggle: `/kwf skillup on|off`. Commands: `/kwu, /skillup`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Show Odds In The Recipe List | On | Puts the measured skill-up chance beside each recipe's arrow. Hover it for the crafts behind it and what a point costs. |
+| Show The Next Skill Point Panel | On | Docks a panel beside the crafting window that ranks your learned recipes by the gold a skill point costs on average. |
+| Subtract What The Result Sells For | On | Takes the crafted item's vendor price off the cost of a craft. |
+| Value The Result At Auction | Off | Uses the crafted item's Auctionator price (after the 5% cut) when it beats the vendor price. Only if you will really sell it there. |
+| Measure Your Crafts | On | Records each craft's skill before and after, account-wide. This is where the chances come from. |
 <!-- settings:end -->
 
 ## FAQ
