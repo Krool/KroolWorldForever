@@ -57,13 +57,10 @@ local PART_TIP = {
 local LEVEL_COLOR = { ok = { 0.55, 0.9, 0.55 }, warn = { 1, 0.82, 0 }, fail = { 1, 0.4, 0.35 } }
 local DIM = 0.5
 
+local UI = root.UI
+
 local function Safe(fn)
-	return function(...)
-		local ok, err = pcall(fn, ...)
-		if not ok then
-			ns:Print("|cffff5555error|r: " .. tostring(err))
-		end
-	end
+	return UI.Safe(fn, ns)
 end
 
 local function Ago(t)
@@ -158,26 +155,7 @@ local function Status(tex, level)
 end
 
 -- fn(widget) returns the tooltip's title and its lines (or nothing for no tooltip).
-local function Tip(widget, fn)
-	widget:SetScript("OnEnter", function(self)
-		local ok, title, lines = pcall(fn, self)
-		if not ok or not title or not GameTooltip then
-			return
-		end
-		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-		GameTooltip:SetText(title, 1, 0.82, 0)
-		for _, line in ipairs(lines or {}) do
-			GameTooltip:AddLine(line, 1, 1, 1, true)
-		end
-		GameTooltip:Show()
-	end)
-	widget:SetScript("OnLeave", function()
-		if GameTooltip then
-			GameTooltip:Hide()
-		end
-	end)
-	widget:SetMotionScriptsWhileDisabled(true) -- a disabled button still says why
-end
+local Tip = UI.Tip
 
 -- -------------------------------------------------------------------- popups
 
@@ -250,64 +228,30 @@ end
 
 -- -------------------------------------------------------------------- widgets
 
-local function Text(parent, font, justify)
-	local fs = parent:CreateFontString(nil, "OVERLAY", font)
-	fs:SetJustifyH(justify or "LEFT")
-	return fs
-end
+-- The shared kit (Core/Widgets.lua): click and on/off sounds, pressed icons, list highlights.
+local Text = UI.Text
 
 -- A standard red button; with an atlas, a small icon sits before its label.
 local function Button(parent, text, width, onClick, atlas)
-	local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-	b:SetSize(width, 22)
-	b:SetText(text)
-	b:SetScript("OnClick", Safe(onClick))
-	b.kwfIcon = false
-	if atlas then
-		local icon = b:CreateTexture(nil, "ARTWORK")
-		icon:SetSize(14, 14)
-		icon:SetAtlas(atlas)
-		local label = b:GetFontString()
-		if label then
-			label:ClearAllPoints()
-			label:SetPoint("CENTER", 8, 0)
-			icon:SetPoint("RIGHT", label, "LEFT", -4, 0)
-		end
-		b.kwfIcon = icon
-	end
-	return b
+	return UI.Button(parent, text, width, Safe(onClick), atlas)
 end
 
--- A bare icon that glows under the mouse.
+-- A bare texture (not an icon file) that glows under the mouse and sinks when pressed.
 local function IconButton(parent, size, file, onClick)
-	local b = CreateFrame("Button", nil, parent)
-	b:SetSize(size, size)
-	b.kwfIcon = b:CreateTexture(nil, "ARTWORK")
-	b.kwfIcon:SetAllPoints()
-	b.kwfIcon:SetTexture(file)
-	local glow = b:CreateTexture(nil, "HIGHLIGHT")
-	glow:SetAllPoints()
-	glow:SetTexture(file)
-	glow:SetBlendMode("ADD")
-	glow:SetAlpha(0.5)
-	b:SetScript("OnClick", Safe(onClick))
-	return b
+	return UI.IconButton(parent, size, file, Safe(onClick), true)
 end
 
-local function Enable(b, on)
-	on = on and true or false
-	b:SetEnabled(on)
-	if b.kwfIcon then -- set by Button and IconButton; false when there is none
-		b.kwfIcon:SetDesaturated(not on)
-		b.kwfIcon:SetAlpha(on and 1 or 0.45)
+local Enable = UI.Enable
+
+local function Hover(parent, style) -- Blizzard's list highlight for clickable rows
+	return UI.Hover(parent, style)
+end
+
+-- The toast at the bottom of the window: what just happened.
+local function Toast(text, kind)
+	if frame then
+		UI.Toast(frame, text, kind)
 	end
-end
-
-local function Hover(parent) -- a faint highlight for clickable rows
-	local hl = parent:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetAllPoints()
-	hl:SetColorTexture(1, 1, 1, 0.06)
-	return hl
 end
 
 -- -------------------------------------------------------------------- state
@@ -371,7 +315,10 @@ local function DoApply()
 				ns:Print("applied " .. Title(s))
 				Onboarded()
 				needReload = needReload or report.reload
+				Toast("Applied " .. Title(s), "ok")
 				ns.ReloadIfNeeded(s, report) -- a click: the client allows the reload here
+			else
+				Toast("Nothing applied", "fail")
 			end
 			Refresh()
 		end
@@ -385,6 +332,7 @@ local function DoUndo()
 			result = { setupId = selected, report = report, undo = true }
 			PrintReport(report)
 			needReload = needReload or report.reload
+			Toast("Undo finished", "ok")
 		end
 		Refresh()
 	end)
@@ -441,6 +389,10 @@ local function Build()
 			onboarding = false
 		end
 	end)
+	UI.Polish(frame) -- open animation, open and close sounds (hooks, so OnHide above still runs)
+	frame.shownResult = false -- the result whose icons last popped in
+	-- Toasts sit over the right panel, between the warning line and the Reload Now bar.
+	UI.ToastAt(frame, (LIST_W + 12 + W - 14) / 2 - W / 2, 76)
 	if frame.SetTitle then
 		frame:SetTitle("Krool World Setups")
 	end
@@ -520,9 +472,12 @@ local function Build()
 	Hover(frame.rename)
 	frame.rename:SetScript("OnClick", Safe(function()
 		local s = ns.Get(selected)
+		UI.Sound("click")
 		AskName("Rename this setup:", s.name, function(name)
 			ns.Rename(s.id, name)
 			Refresh()
+			UI.Flash(frame.name)
+			Toast("Renamed to " .. name, "ok")
 		end)
 	end))
 	Tip(frame.rename, function()
@@ -550,6 +505,15 @@ local function Build()
 	frame.default:SetScript("OnClick", Safe(function()
 		ns.SetDefault(selected)
 		Refresh()
+		local on = selected ~= nil and ns.db.default == selected
+		UI.Sound(on and "on" or "off")
+		if on then
+			UI.Pop(frame.default.icon)
+			local s = ns.Get(selected)
+			Toast("New characters get " .. (s and Title(s) or "this setup"), "ok")
+		else
+			Toast("No setup for new characters", "warn")
+		end
 	end))
 	Tip(frame.default, function()
 		local on = selected ~= nil and ns.db.default == selected
@@ -566,9 +530,11 @@ local function Build()
 		local text = s.auto and "Delete %s? It comes back at that character's next login while Auto Snapshot is on."
 			or "Delete %s? This cannot be undone."
 		Confirm(text:format(Title(s)), function()
+			local name = Title(s)
 			ns.Delete(s.id)
 			selected = nil
 			Refresh()
+			Toast("Deleted " .. name, "warn")
 		end)
 	end)
 	frame.delete:SetPoint("TOPRIGHT", card, "BOTTOMRIGHT", -4, -7)
@@ -581,6 +547,7 @@ local function Build()
 		Confirm(("Update %s from %s?\nIts saved bars, keys and settings are replaced."):format(Title(s), ns.CharKey()), function()
 			ns.Update(s.id)
 			Refresh()
+			Toast("Updated " .. Title(s), "ok")
 		end)
 	end)
 	frame.overwrite:SetPoint("RIGHT", frame.delete, "LEFT", -10, 0)
@@ -605,8 +572,11 @@ local function Build()
 		row:SetPoint("TOPLEFT", partsHeader, "BOTTOMLEFT", -4, -6 - (i - 1) * PART_H)
 		row:SetSize(RW, PART_H - 2)
 		Hover(row)
-		local cb = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
-		cb:SetSize(24, 24)
+		local cb = UI.Check(row, 24, function(self, on)
+			applyParts[p.key] = on
+			result = nil -- back from the result to choosing
+			Refresh()
+		end)
 		cb:SetPoint("LEFT", 2, 0)
 		cb.key, cb.row = p.key, row
 		cb.status = row:CreateTexture(nil, "OVERLAY")
@@ -629,11 +599,6 @@ local function Build()
 			cb.reload:SetPoint("RIGHT", -5, 0)
 			cb.reload:SetTexture(ART.refresh)
 		end
-		cb:SetScript("OnClick", function(self)
-			applyParts[p.key] = self:GetChecked() and true or false
-			result = nil -- back from the result to choosing
-			Refresh()
-		end)
 		row:SetScript("OnClick", function()
 			if cb:IsShown() and cb:IsEnabled() then
 				cb:Click()
@@ -668,6 +633,14 @@ local function Build()
 	bar.icon:SetSize(20, 20)
 	bar.icon:SetPoint("LEFT", 8, 0)
 	bar.icon:SetTexture(ART.refresh)
+	-- A soft glow breathes behind the icon while the reload is waiting.
+	bar.glow = bar:CreateTexture(nil, "BORDER")
+	bar.glow:SetSize(40, 40)
+	bar.glow:SetPoint("CENTER", bar.icon, "CENTER")
+	bar.glow:SetAtlas(UI.ATLAS.glow)
+	bar.glow:SetBlendMode("ADD")
+	bar.pulse = UI.Pulse(bar.glow, 0.15, 0.8, 0.9)
+	bar.pulse.Stop()
 	bar.text = Text(bar, "GameFontHighlight")
 	bar.text:SetPoint("LEFT", bar.icon, "RIGHT", 6, 0)
 	bar.text:SetText("Reload to finish Edit Mode and addons.")
@@ -676,6 +649,9 @@ local function Build()
 		C_UI.Reload()
 	end)
 	frame.reload:SetPoint("RIGHT", -6, 0)
+	Tip(frame.reload, function()
+		return "Reload Now", { "Reloads the interface so the new Edit Mode layout and addon list take effect." }
+	end)
 
 	-- Bottom bar: New Setup on the left; Apply (and Undo, or the new-character choices) on the right.
 	frame.saveNew = Button(frame, "New Setup", 130, function()
@@ -683,6 +659,7 @@ local function Build()
 			local s = ns.SaveNew(name)
 			ns:Print("saved " .. name)
 			Select(s.id)
+			Toast("Saved " .. name, "ok")
 		end)
 	end, ATLAS.plus)
 	frame.saveNew:SetPoint("BOTTOMLEFT", 6, 4)
@@ -753,10 +730,8 @@ local function Row(i)
 	end
 	row = CreateFrame("Button", nil, frame.content)
 	row:SetSize(LIST_W - 36, ROW_H - 2)
-	row.sel = row:CreateTexture(nil, "BACKGROUND")
-	row.sel:SetAllPoints()
-	row.sel:SetColorTexture(1, 0.82, 0, 0.16)
-	Hover(row)
+	row.sel = UI.Selected(row)
+	Hover(row, "card")
 	row.icon = row:CreateTexture(nil, "ARTWORK")
 	row.icon:SetSize(28, 28)
 	row.icon:SetPoint("LEFT", 4, 0)
@@ -773,6 +748,9 @@ local function Row(i)
 	row.line2:SetWidth(LIST_W - 100)
 	row.line2:SetWordWrap(false)
 	row:SetScript("OnClick", function(self)
+		if self.id ~= selected then
+			UI.Sound("click")
+		end
 		Select(self.id)
 	end)
 	Tip(row, function(self)
@@ -923,6 +901,9 @@ end
 local function RefreshParts(s)
 	local has = s ~= nil
 	local showResult = has and result and not result.undo and result.setupId == s.id and result.report.ok
+	-- The result icons pop in once, when a new result arrives, not on every refresh after.
+	local fresh = showResult and frame.shownResult ~= result
+	frame.shownResult = showResult and result or nil
 	frame.partsHeader:SetShown(has)
 	frame.partsHeader:SetText(showResult and "What Changed" or "What To Copy")
 	for _, cb in ipairs(frame.checks) do
@@ -936,6 +917,9 @@ local function RefreshParts(s)
 			cb.status:SetShown(r ~= nil)
 			if r then
 				Status(cb.status, r.level)
+				if fresh then
+					UI.Pop(cb.status)
+				end
 				cb.count:SetText(r.text)
 				cb.count:SetTextColor(unpack(LEVEL_COLOR[r.level] or LEVEL_COLOR.ok))
 			else
@@ -979,6 +963,11 @@ local function RefreshActions(s)
 	frame.never:SetShown(onboarding and true or false)
 	frame.reloadBar:SetShown(needReload)
 	frame.reload:SetShown(needReload)
+	if needReload then
+		frame.reloadBar.pulse.Start()
+	else
+		frame.reloadBar.pulse.Stop()
+	end
 end
 
 function Refresh()
@@ -1022,9 +1011,16 @@ function ns.Open(asOnboarding, setupId, report)
 		Select(setupId)
 		if report then
 			result = { setupId = setupId, report = report, auto = true }
+			Toast("New character: applied " .. Title(ns.Get(setupId)), "ok")
 		end
 	end
 	Refresh()
+	-- The list arrives one row after another.
+	for i, row in ipairs(frame.rows) do
+		if row:IsShown() and i <= 10 then
+			UI.FadeIn(row, 0.03 * i)
+		end
+	end
 end
 
 function ns.Toggle()

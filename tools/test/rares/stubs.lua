@@ -74,20 +74,77 @@ end
 function Widget:HookScript(which, fn)
 	self.hooks[which] = fn
 end
+-- Showing or hiding runs the hooked OnShow / OnHide, like the client (only on a real change).
+local function Became(self, shown)
+	if self.shown ~= shown then
+		self.shown = shown
+		local hook = self.hooks[shown and "OnShow" or "OnHide"]
+		if hook then
+			hook(self)
+		end
+	end
+end
 function Widget:Show()
 	if not Protected(self, "Show") then
-		self.shown = true
+		Became(self, true)
 	end
 end
 function Widget:Hide()
 	if not Protected(self, "Hide") then
-		self.shown = false
+		Became(self, false)
 	end
 end
 function Widget:SetShown(v)
 	if not Protected(self, "SetShown") then
-		self.shown = v and true or false
+		Became(self, v and true or false)
 	end
+end
+function Widget:SetAtlas(a)
+	self.atlas = a
+end
+
+-- Animation groups (the polish in Core/Widgets.lua): created, played, stopped.
+Animations = {}
+local AnimObj = {}
+local AnimMeta = {
+	__index = function(_, k)
+		return AnimObj[k] or function() end
+	end,
+}
+function Widget:CreateAnimationGroup()
+	local g = setmetatable({ owner = self, anims = {}, scripts = {}, playing = false, plays = 0 }, AnimMeta)
+	table.insert(Animations, g)
+	return g
+end
+function AnimObj:CreateAnimation(kind)
+	local a = setmetatable({ kind = kind, scripts = {} }, AnimMeta)
+	table.insert(self.anims, a)
+	return a
+end
+function AnimObj:Play()
+	self.playing, self.plays = true, self.plays + 1
+end
+AnimObj.Restart = AnimObj.Play
+function AnimObj:Stop()
+	self.playing = false
+end
+function AnimObj:IsPlaying()
+	return self.playing
+end
+function AnimObj:SetLooping(how)
+	self.looping = how
+end
+function AnimObj:SetScript(which, fn)
+	self.scripts[which] = fn
+end
+function AnimationsOn(region)
+	local out = {}
+	for _, g in ipairs(Animations) do
+		if g.owner == region then
+			out[#out + 1] = g
+		end
+	end
+	return out
 end
 function Widget:IsShown()
 	return self.shown

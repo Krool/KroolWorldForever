@@ -82,7 +82,7 @@ local function AddLines(tooltip, data)
 				break
 			end
 			tooltip:AddDoubleLine(
-				"  " .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. (SRC_TAG[c.src] or ""),
+				"  " .. root.UI.ItemIcon(c.id, 12) .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. (SRC_TAG[c.src] or ""),
 				Money(c.value),
 				0.7,
 				0.7,
