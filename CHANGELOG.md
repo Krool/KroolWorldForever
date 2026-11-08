@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.2
+
+- **Skill-Up Odds:** the Next Skill Point panel is just its title and the recipe rows, and it is as
+  tall as the rows it lists, so there is no empty space.
+  - The skill heading is gone (the crafting window already shows it). So are the explainer and the
+    price footer: each row's tooltip shows prices, and hovering the side tab shows the explainer
+    and how many ranges are measured.
+  - "Odds ready" notes now appear just under the panel.
+
 ## 0.12.1
 
 - **Skill-Up Odds:**

@@ -326,8 +326,13 @@ check("panel shown with the window", panel.shown, true)
 check("panel title", panel.title, "Next Skill Point")
 check("the cheapest point is highlighted", panel.rows[1].best.shown, true)
 check("only that one", panel.rows[2].best.shown, false)
-check("no empty-state art over a full list", panel.empty.art.shown, false)
-check("panel heading", panel.skill.text, "Tailoring 50 / 75")
+check("no message over a full list", panel.message.shown, false)
+check("no heading, explainer or price footer", panel.skill == nil and panel.sub == nil and panel.note == nil, true)
+local rowsShown = 0
+for _, r in ipairs(panel.rows) do
+	rowsShown = rowsShown + (r.shown and 1 or 0)
+end
+check("panel is as tall as its rows", panel.height, 30 + rowsShown * 42 - 2 + 8)
 check("best row first", panel.rows[1].o.id, VEST)
 check("its gold a point", tostring(panel.rows[1].cost.text):find("a point", 1, true) ~= nil, true)
 check("measuring rows say so", has({ panel.rows[3].cost.text, panel.rows[4].cost.text }, "measuring"), true)
@@ -374,6 +379,7 @@ check("tab shown beside the open panel", tab.shown, true)
 GameTooltip:SetOwner(tab)
 check("tab tooltip handled", tab:GetTooltipTextSetupFunction()(GameTooltip), true)
 check("tab tooltip says what a click does", has(GameTooltip.lines, "Click to hide"), true)
+check("and how many ranges are measured", has(GameTooltip.lines, "ranges ready"), true)
 ProfessionsFrame.rightProfessionTabs[3].shown = true -- a profession learned
 ProfessionsFrame:RefreshRightTabs()
 at = tab.points[#tab.points]
@@ -406,7 +412,8 @@ SkillMax = 50
 ProfessionsFrame:Show()
 FireEvent("TRADE_SKILL_SHOW")
 RunTimers()
-check("at the cap the panel says so", tostring(panel.sub.text):find("At your cap", 1, true) ~= nil, true)
+check("at the cap the panel says so", tostring(panel.message.text):find("At your cap", 1, true) ~= nil and panel.message.shown, true)
+check("in one row's height", panel.height, 30 + 42 - 2 + 8)
 check("and lists nothing", panel.rows[1].shown, false)
 SkillMax = 75
 

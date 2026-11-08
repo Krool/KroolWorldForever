@@ -142,6 +142,15 @@ end
 function Widget:GetWidth()
 	return self.width
 end
+function Widget:SetHeight(h)
+	self.height = h
+end
+function Widget:SetSize(w, h)
+	self.width, self.height = w, h
+end
+function Widget:GetHeight()
+	return self.height
+end
 function Widget:GetStringWidth()
 	return #tostring(self.text or "") * 6
 end

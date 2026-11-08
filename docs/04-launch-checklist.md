@@ -120,7 +120,9 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
       - It grows in with the crafting window, and its rows arrive one after another.
       - The top row has the selected-row highlight. After a counted craft, that recipe's cost
         flashes.
-      - When a range reaches 10 crafts, "Odds ready at ..." rises in above the price note.
+      - When a range reaches 10 crafts, "Odds ready at ..." rises in just under the panel.
+      - 0.12.2: the panel is only the title bar and the rows, and as tall as the rows it lists (no
+        empty space). Hovering the side tab shows how many ranges are measured.
 - [ ] Skill-Up Odds 0.11.0: open a crafting profession. Each recipe with an arrow shows a % (or ?%)
       at the row's right edge, the name never overlaps it, and clicking the % still selects the
       recipe. Hover it: yellow/green/grey skills, crafts behind it, what a craft and a point cost.

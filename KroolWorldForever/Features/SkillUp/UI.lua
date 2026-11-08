@@ -328,9 +328,26 @@ local function PlaceTab()
 	end
 end
 
+-- The panel is as tall as its rows: title bar, the rows (40 high, 42 apart), a small margin.
+local PANEL_TOP, PANEL_BOTTOM, ROW_STEP = 30, 8, 42
+
+local function PanelHeight(rows)
+	return PANEL_TOP + math.max(rows, 1) * ROW_STEP - 2 + PANEL_BOTTOM
+end
+
+local function RangesReady()
+	local st, ready = ns.Stats(), 0
+	for i = 1, ns.BINS do
+		if st.bins[i].n >= ns.MIN_SHOWN then
+			ready = ready + 1
+		end
+	end
+	return ready
+end
+
 local function BuildPanel()
 	local f = CreateFrame("Frame", "KroolWorldForeverSkillUpPanel", ProfessionsFrame, "ButtonFrameTemplate")
-	f:SetSize(300, 470)
+	f:SetSize(300, PanelHeight(1))
 	f:SetClampedToScreen(true)
 	f:EnableMouse(true)
 	if ButtonFrameTemplate_HidePortrait then
@@ -347,36 +364,26 @@ local function BuildPanel()
 			end, ns)
 		)
 	end
+	-- Just the title bar and the list: the inset where Blizzard's ButtonFrameTemplate_HideAttic and
+	-- _HideButtonBar put it (PANEL_INSET_TOP_OFFSET -24, PANEL_INSET_BOTTOM_OFFSET 4). The skill is
+	-- on the crafting window's own bar; the rest is in the tooltips.
 	local inset = f.Inset
 	if type(inset) == "table" and inset.ClearAllPoints then
 		inset:ClearAllPoints()
-		inset:SetPoint("TOPLEFT", 4, -84)
-		inset:SetPoint("BOTTOMRIGHT", -6, 46)
+		inset:SetPoint("TOPLEFT", 4, -PANEL_TOP + 6)
+		inset:SetPoint("BOTTOMRIGHT", -6, 4)
 	end
-	f.skill = UI.Text(f, "GameFontNormalLarge")
-	f.skill:SetPoint("TOPLEFT", 14, -30)
-	f.skill:SetPoint("RIGHT", f, "RIGHT", -14, 0)
-	f.sub = UI.Text(f, "GameFontHighlightSmall")
-	f.sub:SetPoint("TOPLEFT", f.skill, "BOTTOMLEFT", 0, -4)
-	f.sub:SetPoint("RIGHT", f, "RIGHT", -14, 0)
-	f.sub:SetHeight(30)
-	f.sub:SetJustifyV("TOP")
-	local line = UI.Divider(f, 272)
-	line:SetPoint("TOPLEFT", 14, -80)
 	local list = CreateFrame("Frame", nil, f)
-	list:SetPoint("TOPLEFT", 10, -90)
-	list:SetPoint("BOTTOMRIGHT", -12, 50)
+	list:SetPoint("TOPLEFT", 10, -PANEL_TOP)
+	list:SetPoint("BOTTOMRIGHT", -12, PANEL_BOTTOM)
 	f.rows = {}
 	for i = 1, PANEL_ROWS do
 		f.rows[i] = BuildRow(list, i)
 	end
-	f.empty = UI.Empty(list, UI.ATLAS.ok, 250)
-	f.note = UI.Text(f, "GameFontDisableSmall")
-	f.note:SetPoint("BOTTOMLEFT", 14, 14)
-	f.note:SetPoint("RIGHT", f, "RIGHT", -14, 0)
-	f.note:SetHeight(28)
-	f.note:SetJustifyV("BOTTOM")
-	UI.ToastAt(f, 0, 50) -- above the price note
+	f.message = UI.Text(list, "GameFontDisable", "CENTER")
+	f.message:SetPoint("TOPLEFT", 0, -2)
+	f.message:SetPoint("BOTTOMRIGHT", 0, 2)
+	UI.ToastAt(f, 0, -36) -- just under the panel, clear of the rows
 	-- The kit's open animation; no open sound: the crafting window just played its own.
 	f:SetScript("OnShow", function(self)
 		local intro = UI.Intro(self)
@@ -390,7 +397,15 @@ local function BuildPanel()
 	return f
 end
 
-local TAB_TIP = "Ranks your recipes by the gold the next skill point costs."
+local TAB_TIP = "Ranks your recipes by the gold the next skill point costs: a craft's cost over the points it gives."
+
+local function TabLines()
+	return {
+		TAB_TIP,
+		("Odds measured on this account: %d of %d ranges ready."):format(RangesReady(), ns.BINS),
+		Grey(ns.db.panel and "Click to hide the panel." or "Click to show the panel."),
+	}
+end
 
 local function TogglePanel()
 	root.SetOption(ns, "panel", not ns.db.panel)
@@ -412,8 +427,9 @@ local function BuildTab()
 		function t.GetTooltipTextSetupFunction()
 			return function(tooltip)
 				tooltip:SetText("Next Skill Point")
-				tooltip:AddLine(TAB_TIP, 1, 1, 1, true)
-				tooltip:AddLine(ns.db.panel and "Click to hide the panel." or "Click to show the panel.", 0.6, 0.6, 0.6)
+				for _, line in ipairs(TabLines()) do
+					tooltip:AddLine(line, 1, 1, 1, true)
+				end
 				return true
 			end
 		end
@@ -426,26 +442,16 @@ local function BuildTab()
 	end
 	local b = UI.IconButton(ProfessionsFrame, 32, ns.icon, TogglePanel)
 	UI.Tip(b, function()
-		return "Next Skill Point", { TAB_TIP, Grey(ns.db.panel and "Click to hide the panel." or "Click to show the panel.") }
+		return "Next Skill Point", TabLines()
 	end)
 	return b
 end
 
-local function RangesReady()
-	local st, ready = ns.Stats(), 0
-	for i = 1, ns.BINS do
-		if st.bins[i].n >= ns.MIN_SHOWN then
-			ready = ready + 1
-		end
-	end
-	return ready
-end
-
-local function SetEmpty(text)
-	panel.empty:SetText(text or "")
-	if panel.empty.art then
-		panel.empty.art:SetShown(text ~= nil)
-	end
+-- One line in place of the rows (nil: the rows are showing), and the panel fits what it shows.
+local function Fit(rows, message)
+	panel.message:SetText(message or "")
+	panel.message:SetShown(message ~= nil)
+	panel:SetHeight(PanelHeight(rows))
 end
 
 function ns.RefreshPanel()
@@ -462,61 +468,52 @@ function ns.RefreshPanel()
 		row.o = nil
 		row.best:Hide()
 	end
-	SetEmpty(nil)
 	if not prof then
-		panel.skill:SetText("Next Skill Point")
-		panel.sub:SetText(Grey("Open a crafting profession to see its recipes."))
+		Fit(1, "Open a crafting profession.")
 		return
 	end
-	local capped = prof.max and prof.max > 0 and prof.lvl >= prof.max
-	panel.skill:SetText(("%s %d / %d"):format(prof.name or "Skill", prof.lvl, prof.max or 0))
-	if capped then
-		panel.sub:SetText("|cffff9955At your cap: train the next rank to keep going.|r")
-	else
-		panel.sub:SetText(
-			Grey(("Odds measured on this account: %d of %d ranges ready. Gold a point = a craft's cost / the points it gives."):format(RangesReady(), ns.BINS))
-		)
+	if prof.max and prof.max > 0 and prof.lvl >= prof.max then
+		Fit(1, "|cffff9955At your cap: train the next rank.|r")
+		return
 	end
 	local shown = 0
-	if not capped then
-		for i, o in ipairs(list or {}) do
-			if i > PANEL_ROWS then
-				break
-			end
-			local row = panel.rows[i]
-			row.o = o
-			row.rank:SetText(o.perPoint and ("|cffffd100" .. i .. "|r") or Grey(tostring(i)))
-			UI.SetIcon(row.icon, o.icon or ns.icon)
-			row.name:SetText(o.name or "?")
-			row.cost:SetText(PerPointText(o))
-			local bits = {}
-			local odds = ns.OddsText(o)
-			if odds then
-				bits[#bits + 1] = odds
-			end
-			if o.craft and o.craft.net then
-				bits[#bits + 1] = root.Money(o.craft.net) .. Grey(" a craft")
-			end
-			local have = C_TradeSkillUI and Num(Call(C_TradeSkillUI.GetCraftableCount, o.id))
-			if have and have > 0 then
-				bits[#bits + 1] = Grey("[" .. have .. "]")
-			end
-			row.detail:SetText(table.concat(bits, Grey("  ")))
-			row.best:SetShown(i == 1 and o.perPoint ~= nil)
-			row:Show()
-			if fresh then
-				UI.FadeIn(row, (i - 1) * 0.04) -- rows arrive one after another
-			elseif flash and o.id == flash then
-				UI.Flash(row.cost) -- the recipe just crafted: its numbers moved
-			end
-			shown = shown + 1
+	for i, o in ipairs(list or {}) do
+		if i > PANEL_ROWS then
+			break
 		end
-		if shown == 0 then
-			SetEmpty("No learned recipe here can give a point. Train new ones.")
+		local row = panel.rows[i]
+		row.o = o
+		row.rank:SetText(o.perPoint and ("|cffffd100" .. i .. "|r") or Grey(tostring(i)))
+		UI.SetIcon(row.icon, o.icon or ns.icon)
+		row.name:SetText(o.name or "?")
+		row.cost:SetText(PerPointText(o))
+		local bits = {}
+		local odds = ns.OddsText(o)
+		if odds then
+			bits[#bits + 1] = odds
 		end
+		if o.craft and o.craft.net then
+			bits[#bits + 1] = root.Money(o.craft.net) .. Grey(" a craft")
+		end
+		local have = C_TradeSkillUI and Num(Call(C_TradeSkillUI.GetCraftableCount, o.id))
+		if have and have > 0 then
+			bits[#bits + 1] = Grey("[" .. have .. "]")
+		end
+		row.detail:SetText(table.concat(bits, Grey("  ")))
+		row.best:SetShown(i == 1 and o.perPoint ~= nil)
+		row:Show()
+		if fresh then
+			UI.FadeIn(row, (i - 1) * 0.04) -- rows arrive one after another
+		elseif flash and o.id == flash then
+			UI.Flash(row.cost) -- the recipe just crafted: its numbers moved
+		end
+		shown = shown + 1
 	end
-	local sources = root.HasAuctionator() and "Auctionator and vendors you have visited" or "vendors you have visited (Auctionator adds auction prices)"
-	panel.note:SetText(("Prices: %s. %s"):format(sources, ns.db.resale and "The result's sale value comes off." or ""))
+	if shown == 0 then
+		Fit(1, "No learned recipe here can give a point.")
+	else
+		Fit(shown, nil)
+	end
 end
 
 function ns.QueueRefresh()
