@@ -54,9 +54,15 @@ Point panel that ranks learned recipes by the gold a point costs on average.
   (fires after Blizzard's own row init; the source says it is there for addons). A FontString at the
   row's right edge, the name shortened to clear it, a hit frame with `SetPropagateMouseClicks(true)`
   so a click still selects the recipe.
-- Panel: a `ButtonFrameTemplate` parented to `ProfessionsFrame`, docked at its TOPRIGHT. Closing it
-  sets the Panel option off (`root.SetOption`); an icon tab outside the window turns it back on.
-  Row click: `C_TradeSkillUI.OpenRecipe`.
+- Forever's `ProfessionsFrame` has a column of profession tabs down its right edge (Camelot
+  `Blizzard_ProfessionsFrame.xml`: `ProfessionsOverviewTab` at TOPRIGHT y -60, then the shown
+  `rightProfessionTabs`, each a `LargeSideTabButtonTemplate` sized to the `common-sidetab` atlas).
+  0.12.0 docked the panel over that column; seen in game 2026-11-07.
+- Panel: a `ButtonFrameTemplate` parented to `ProfessionsFrame`, docked at its TOPRIGHT plus the
+  overview tab's width, so it sits past the tab column. Closing it sets the Panel option off
+  (`root.SetOption`). Its toggle is our own `LargeSideTabButtonTemplate` tab under the lowest
+  shown profession tab (re-placed after `RefreshRightTabs`), unchecked so it never looks like the
+  open profession. Row click: `C_TradeSkillUI.OpenRecipe`.
 - Recipes are enumerated from the data (the profession's line), not `GetAllRecipeIDs` /
   `GetFilteredRecipeIDs`: those are not in the generated API docs, so the lint rejects them.
 

@@ -125,8 +125,9 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
       at the row's right edge, the name never overlaps it, and clicking the % still selects the
       recipe. Hover it: yellow/green/grey skills, crafts behind it, what a craft and a point cost.
       The Next Skill Point panel docks to the right of the window (no overlap, no green squares),
-      ranks recipes, and a row click selects that recipe; closing it leaves an icon tab that brings
-      it back. Craft a few yellow or green recipes, then `/kwu status`: crafts logged go up, "skill
+      ranks recipes, and a row click selects that recipe. 0.12.1: the panel sits past the
+      profession tab column (0.12.0 covered it); a hammer-and-anvil tab at the bottom of that column
+      hides and shows the panel, plays the tab sound, and never looks selected. Craft a few yellow or green recipes, then `/kwu status`: crafts logged go up, "skill
       read through" names an API, and the mismatch count stays 0 (if not, note your race and
       profession). `/kwu` shows the counts per range. Visit a thread vendor, then hover a recipe
       that uses thread: the thread says (vendor).

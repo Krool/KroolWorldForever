@@ -353,20 +353,51 @@ Clock = Clock + 1
 FireEvent("TRADE_SKILL_LIST_UPDATE")
 RunTimers()
 
-panel.CloseButton:Click()
-check("closing turns the panel option off", db.panel, false)
-check("panel hidden", panel.shown, false)
+-- Forever's window has a column of profession tabs on its right edge: the panel docks past it, and
+-- its own tab joins the bottom of that column.
+local dock = panel.points and panel.points[#panel.points]
+check("panel docks to the window's right edge", dock and dock.rel == ProfessionsFrame and dock.relPoint == "TOPRIGHT", true)
+check("past the profession tabs", dock and dock.x, 60)
 local tab
 for _, f in ipairs(CreatedFrames) do
 	if f.parent == ProfessionsFrame and f ~= panel then
 		tab = f
 	end
 end
-check("reopen tab shown", tab and tab.shown, true)
-tab:Click()
-check("tab turns it back on", db.panel, true)
+check("the toggle is a Blizzard side tab", tab and tab.template, "LargeSideTabButtonTemplate")
+check("with the feature's icon", tab.Icon.texture, ns.icon)
+check("filling the tab like the profession icons", tab.fillToInterior, true)
+check("not drawn as the selected profession", tab.SelectedTexture.shown, false)
+local at = tab.points and tab.points[#tab.points]
+check("below the last profession tab", at and at.rel == ProfessionsFrame.rightProfessionTabs[2] and at.relPoint == "BOTTOMLEFT", true)
+check("tab shown beside the open panel", tab.shown, true)
+GameTooltip:SetOwner(tab)
+check("tab tooltip handled", tab:GetTooltipTextSetupFunction()(GameTooltip), true)
+check("tab tooltip says what a click does", has(GameTooltip.lines, "Click to hide"), true)
+ProfessionsFrame.rightProfessionTabs[3].shown = true -- a profession learned
+ProfessionsFrame:RefreshRightTabs()
+at = tab.points[#tab.points]
+check("the tab follows the column down", at.rel, ProfessionsFrame.rightProfessionTabs[3])
+ProfessionsFrame.rightProfessionTabs[3].shown = false
+ProfessionsFrame:RefreshRightTabs()
+
+tab:MouseUp("LeftButton", false)
+check("a release off the tab does nothing", db.panel, true)
+tab:MouseUp("LeftButton", true)
+check("the tab hides the panel", db.panel, false)
+check("panel hidden by the tab", panel.shown, false)
+check("the tab stays", tab.shown, true)
+tab:MouseUp("LeftButton", true)
+check("and brings it back", db.panel, true)
 check("panel back", panel.shown, true)
-check("tab hidden again", tab.shown, false)
+
+panel.CloseButton:Click()
+check("closing turns the panel option off", db.panel, false)
+check("panel hidden", panel.shown, false)
+check("reopen tab shown", tab.shown, true)
+tab:MouseUp("LeftButton", true)
+check("tab turns it back on", db.panel, true)
+check("panel back again", panel.shown, true)
 
 FireEvent("TRADE_SKILL_CLOSE")
 check("panel goes with the window", panel.shown, false)

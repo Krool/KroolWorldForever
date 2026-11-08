@@ -287,10 +287,50 @@ local function BuildRow(parent, i)
 	return b
 end
 
+-- Forever's crafting window has a column of profession tabs down its right edge (Camelot
+-- Blizzard_ProfessionsFrame.xml: ProfessionsOverviewTab at TOPRIGHT y -60, then the shown
+-- rightProfessionTabs below it, each a LargeSideTabButtonTemplate). The panel docks past that
+-- column, and its own tab joins the bottom of it. Returns the column's first and lowest shown tab.
+local function SideTabs()
+	local pf = ProfessionsFrame
+	local first = pf and pf.ProfessionsOverviewTab
+	if type(first) ~= "table" or type(first.GetWidth) ~= "function" then
+		return nil
+	end
+	local last = first
+	if type(pf.rightProfessionTabs) == "table" then
+		for _, t in ipairs(pf.rightProfessionTabs) do
+			if type(t) == "table" and t ~= tab and type(t.IsShown) == "function" and t:IsShown() then
+				last = t
+			end
+		end
+	end
+	return first, last
+end
+
+local function DockPanel()
+	local first = SideTabs()
+	local column = first and Num(Call(first.GetWidth, first)) or 0
+	panel:ClearAllPoints()
+	panel:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", column + 2, 0)
+end
+
+local function PlaceTab()
+	if not tab then
+		return
+	end
+	local _, last = SideTabs()
+	tab:ClearAllPoints()
+	if last then
+		tab:SetPoint("TOPLEFT", last, "BOTTOMLEFT", 0, -2) -- the same step as Blizzard's tabs
+	else
+		tab:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 4, -60)
+	end
+end
+
 local function BuildPanel()
 	local f = CreateFrame("Frame", "KroolWorldForeverSkillUpPanel", ProfessionsFrame, "ButtonFrameTemplate")
 	f:SetSize(300, 470)
-	f:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 2, 0)
 	f:SetClampedToScreen(true)
 	f:EnableMouse(true)
 	if ButtonFrameTemplate_HidePortrait then
@@ -350,13 +390,43 @@ local function BuildPanel()
 	return f
 end
 
+local TAB_TIP = "Ranks your recipes by the gold the next skill point costs."
+
+local function TogglePanel()
+	root.SetOption(ns, "panel", not ns.db.panel)
+end
+
+-- A side tab like the profession tabs above it (Blizzard's own template and art). It toggles the
+-- panel; the template plays the tab sound. Where the window has no tab column, a plain icon button.
 local function BuildTab()
-	local b = UI.IconButton(ProfessionsFrame, 32, ns.icon, function()
-		root.SetOption(ns, "panel", true)
-	end)
-	b:SetPoint("TOPLEFT", ProfessionsFrame, "TOPRIGHT", 4, -60)
+	local ok, t = pcall(CreateFrame, "Frame", nil, ProfessionsFrame, "LargeSideTabButtonTemplate")
+	if ok and type(t) == "table" and type(t.Icon) == "table" and type(t.SetCustomOnMouseUpHandler) == "function" then
+		t.Icon:SetTexture(ns.icon)
+		if type(t.SetFillToInterior) == "function" then
+			pcall(t.SetFillToInterior, t, true) -- as the profession tabs: the icon fills the tab
+		end
+		if type(t.SetChecked) == "function" then
+			pcall(t.SetChecked, t, false) -- "selected" belongs to the open profession
+		end
+		t.tooltipText = "Next Skill Point"
+		function t.GetTooltipTextSetupFunction()
+			return function(tooltip)
+				tooltip:SetText("Next Skill Point")
+				tooltip:AddLine(TAB_TIP, 1, 1, 1, true)
+				tooltip:AddLine(ns.db.panel and "Click to hide the panel." or "Click to show the panel.", 0.6, 0.6, 0.6)
+				return true
+			end
+		end
+		t:SetCustomOnMouseUpHandler(UI.Safe(function(_, button, upInside)
+			if button == "LeftButton" and upInside ~= false then
+				TogglePanel()
+			end
+		end, ns))
+		return t
+	end
+	local b = UI.IconButton(ProfessionsFrame, 32, ns.icon, TogglePanel)
 	UI.Tip(b, function()
-		return "Next Skill Point", { "Shows which of your recipes gets the next skill point for the least gold." }
+		return "Next Skill Point", { TAB_TIP, Grey(ns.db.panel and "Click to hide the panel." or "Click to show the panel.") }
 	end)
 	return b
 end
@@ -474,12 +544,22 @@ function ns.UpdatePanel()
 	end
 	if not tab and ns.enabled then
 		tab = BuildTab()
+		if type(ProfessionsFrame.RefreshRightTabs) == "function" and hooksecurefunc then
+			-- Learning or dropping a profession changes the column; follow its new bottom.
+			hooksecurefunc(ProfessionsFrame, "RefreshRightTabs", function()
+				pcall(PlaceTab)
+			end)
+		end
 	end
 	if panel then
+		if want then
+			DockPanel()
+		end
 		panel:SetShown(want and true or false)
 	end
 	if tab then
-		tab:SetShown(ns.enabled and not ns.db.panel and true or false)
+		PlaceTab()
+		tab:SetShown(ns.enabled and true or false)
 	end
 	if want then
 		ns.QueueRefresh()

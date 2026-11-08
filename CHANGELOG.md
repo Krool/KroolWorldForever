@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.12.1
+
+- **Skill-Up Odds:**
+  - The Next Skill Point panel no longer covers the profession tabs down the right edge of the
+    crafting window: it docks past them.
+  - The panel's button is now a tab at the bottom of that column, in the same style as the
+    profession tabs. Click it to hide or show the panel. Its old spot was on top of the
+    Professions tab.
+
 ## 0.12.0
 
 - **Polish everywhere.**

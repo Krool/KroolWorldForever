@@ -148,6 +148,14 @@ end
 function Widget:SetTexture(t)
 	self.texture = t
 end
+-- Anchors are recorded, so a test can check what a frame is docked to.
+function Widget:ClearAllPoints()
+	self.points = {}
+end
+function Widget:SetPoint(point, rel, relPoint, x, y)
+	self.points = self.points or {}
+	self.points[#self.points + 1] = { point = point, rel = rel, relPoint = relPoint, x = x, y = y }
+end
 function Widget:SetTitle(t)
 	self.title = t
 end
@@ -193,6 +201,25 @@ function CreateFrame(_, name, parent, template)
 			f:Hide()
 		end)
 		f.Inset = NewWidget()
+	elseif template == "LargeSideTabButtonTemplate" then
+		-- SidePanelTabButtonMixin (Blizzard_SharedXML/Mainline/SharedUIPanelTemplates.lua, forever).
+		f.Icon = NewWidget()
+		f.SelectedTexture = NewWidget() -- shown until SetChecked(false), as in the XML
+		function f:SetFillToInterior(v)
+			self.fillToInterior = v
+		end
+		function f:SetChecked(v)
+			self.SelectedTexture:SetShown(v)
+		end
+		function f:SetCustomOnMouseUpHandler(fn)
+			self.customMouseUpHandler = fn
+		end
+		-- The mixin's OnMouseUp: the tab sound, then the custom handler.
+		function f:MouseUp(button, upInside)
+			if self.customMouseUpHandler then
+				self.customMouseUpHandler(self, button or "LeftButton", upInside ~= false)
+			end
+		end
 	end
 	f.shown = true -- like the client: a new frame is shown
 	table.insert(CreatedFrames, f)
@@ -523,5 +550,26 @@ function MakeProfessionsFrame()
 	ProfessionsFrame = NewWidget("ProfessionsFrame")
 	ProfessionsFrame.shown = false
 	ProfessionsFrame.CraftingPage = { RecipeList = { ScrollBox = box } }
+	-- Forever's right-hand tab column (Camelot Blizzard_ProfessionsFrame.xml): the overview tab,
+	-- then one tab per profession that has a crafting window, the rest hidden.
+	ProfessionsFrame.ProfessionsOverviewTab = NewWidget()
+	ProfessionsFrame.ProfessionsOverviewTab.width = 58
+	ProfessionsFrame.rightProfessionTabs = {}
+	for i = 1, 7 do
+		local t = NewWidget()
+		t.width = 58
+		t.shown = i <= 2
+		ProfessionsFrame.rightProfessionTabs[i] = t
+	end
+	function ProfessionsFrame:RefreshRightTabs() end
 	return ProfessionsFrame
+end
+
+function hooksecurefunc(t, name, fn)
+	local orig = t[name]
+	t[name] = function(...)
+		local r = { orig(...) }
+		fn(...)
+		return table.unpack(r)
+	end
 end
