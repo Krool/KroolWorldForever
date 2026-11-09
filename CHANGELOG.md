@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.13.1
+
+- **Disenchant Value: old auction prices are marked.**
+  - When the item's own auction price is more than 3 days old, the Best line says so: "Best: sell
+    it at auction (price seen 6 days ago)". The old price still counts; you decide.
+  - When a main material's price is more than 3 days old, the value says "(old prices)".
+  - Shift dates old materials, `/kwd` shows when each material was last seen, and the hub card
+    counts the old ones.
+- **Kill Value:**
+  - New prices show as soon as an Auctionator scan finishes. Before, they waited until you closed
+    the auction house.
+  - When a tenth or more of a kill value comes from auction prices more than 3 days old, the total
+    says "old prices", the drop lines show "(AH, seen 5 days ago)", and `/fkv` says how much.
+
 ## 0.13.0
 
 - **Skill-Up Odds: steadier odds.**
