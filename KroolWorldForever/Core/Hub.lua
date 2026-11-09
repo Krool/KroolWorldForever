@@ -149,7 +149,9 @@ local function Card(parent, F, i)
 		UI.Pop(card.accent)
 		UI.Toast(hub, ("%s %s"):format(F.title or F.key, F.db.enabled and "on" or "off"), F.db.enabled and "ok" or "warn")
 	end)
-	card.toggle:SetPoint("RIGHT", card.open or card.action or card.gear, "LEFT", -34, 0)
+	-- One column on every card: clear of the widest right side (gear 20 at -10, an 80-wide action
+	-- button 8 left of it) plus room for the On label, whether or not this card has a button.
+	card.toggle:SetPoint("RIGHT", card, "RIGHT", -(10 + 20 + 8 + 80 + 34), 0)
 	card.toggle.label = UI.Text(card, "GameFontHighlightSmall")
 	card.toggle.label:SetPoint("LEFT", card.toggle, "RIGHT", 0, 1)
 	UI.Tip(card.toggle, function()
