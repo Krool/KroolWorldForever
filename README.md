@@ -16,7 +16,7 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a skull button and a key that target it and mark it. One alert per spawn. The button goes once the rare has your marker or dies; right-click hides it, shift-right-click ignores that rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
 | **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, what that is worth at auction, and whether disenchanting it pays more than auctioning or vendoring it. Hold Shift for each material's chance and price. | Auctionator (for prices) |
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
-| **Skill-Up Odds** | In the crafting window: the real chance each recipe gives a skill point, measured from your own crafts, beside its arrow (hover for the crafts behind it and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average. | Nothing (Auctionator optional) |
+| **Skill-Up Odds** | In the crafting window: the chance each recipe gives a skill point, beside its arrow. It is the common straight line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters (hover for the numbers and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average, and only reorders when a recipe is clearly cheaper. | Nothing (Auctionator optional) |
 
 All seven are on by default.
 
@@ -53,7 +53,8 @@ Optional companions:
   and the other features work normally.
 - **Auctionator**: auction house prices for Kill Value, Disenchant Value and Skill-Up Odds. Without it
   Kill Value uses vendor prices, Disenchant Value names the materials without prices, and Skill-Up
-  Odds prices only the reagents it has seen at a vendor.
+  Odds prices only the reagents it has seen at a vendor. Skill-Up Odds re-prices its panel when an
+  Auctionator scan finishes and flags auction prices more than 3 days old.
 
 ## Slash commands
 
@@ -80,7 +81,7 @@ Optional companions:
 | `/kwr nameplates` | Turn enemy nameplates on (rares are noticed as soon as their nameplate shows) |
 | `/kwd` | Disenchanting material prices from Auctionator (which ones still have none) |
 | `/kwc` | Every camp buff at your level, which ones a class buff of yours covers, and your Camp Benefits time |
-| `/kwu` | The skill-up odds measured on your account, range by range |
+| `/kwu` | How your crafts sit against the line, overall and range by range |
 | `/kwu status` / `panel` | Where the numbers come from (data build, crafts logged); show or hide the Next Skill Point panel |
 
 The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
@@ -228,17 +229,20 @@ objects around a fire. Camp Guide knows each one by the name its tooltip shows w
 the campfire lists the ones you have hovered. It works only while you have Campfire Nearby (the aura
 everyone close to a fire gets), so an inn's chair is left alone.
 
-**Where do Skill-Up Odds' chances come from? Why do recipes show ?%?** From your own crafts. The
-game client knows each recipe's yellow and grey skill (Skill-Up Odds reads them from Forever's own
-recipe data), but the chance of a point is rolled on Blizzard's servers and has never been
-published, so no addon can know it in advance. Skill-Up Odds records every craft on all your
-characters (your skill before it, the points it gave) and pools them by where your skill sat
-between the recipe's yellow and grey, in ten ranges. A range shows its measured rate once ten
-crafts are in, with the likely span in the tooltip; until then its recipes show ?%. Orange always
-gives a point and grey never does: that is the game's rule, and it is measured too. The gold a
-point costs is a craft's cost (each reagent at the cheaper of its auction price and the vendor
+**Where do Skill-Up Odds' chances come from?** The game client knows each recipe's yellow and grey
+skill (Skill-Up Odds reads them from Forever's own recipe data), but the chance of a point is rolled
+on Blizzard's servers and has never been published. The common estimate is a straight line: 100% at
+yellow, falling evenly to 0% at grey. Skill-Up Odds starts from that line and tunes it with every
+yellow or green craft on all your characters: it adds up the chances the line gave your crafts and
+compares that with the points you actually got. If your crafts gave 10% more points than the line
+expected, every chance is 10% higher (never above 100%). The first 10 expected points are weighted
+toward the plain line, so a handful of crafts cannot swing it. On the owner's account, 174 crafts
+gave 67 points where the line expected 63. `/kwu` shows the comparison range by range. Orange
+always gives a point and grey never does: that is the game's rule, and it is measured too. The gold
+a point costs is a craft's cost (each reagent at the cheaper of its auction price and the vendor
 price you have seen, minus what the result sells for) divided by the points a craft gives on
-average.
+average. An auction price more than 3 days old is flagged, and it loses to any vendor price you
+have seen.
 
 **Is this allowed?** Yes. It uses only the standard addon API: tooltips, the loot window, and (for
 Setups) the same bar, binding and macro calls any action bar profile addon uses, out of combat.

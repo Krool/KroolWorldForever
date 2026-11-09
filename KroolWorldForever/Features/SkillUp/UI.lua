@@ -27,7 +27,30 @@ end
 
 -- -------------------------------------------------------------------- text
 
--- The short label beside the arrow: "63%", or "?%" while its range is still being measured.
+local function Round(x)
+	return math.floor(x + 0.5)
+end
+
+-- "7% above the line" for the scale your crafts put on it.
+local function Shift(k)
+	local d = Round((k - 1) * 100)
+	if d > 0 then
+		return d .. "% above the line"
+	elseif d < 0 then
+		return -d .. "% below the line"
+	end
+	return "on the line"
+end
+
+-- One line on how the odds are made, for the side tab and the hub.
+local function ScaleText(S)
+	if S.n == 0 then
+		return "Odds: the line from yellow (100%) to grey (0%). Your yellow and green crafts will tune it."
+	end
+	return ("Odds: the line from yellow (100%%) to grey (0%%), tuned by %d crafts on this account: %s."):format(S.n, Shift(S.k))
+end
+
+-- The short label beside the arrow: "63%", or "?%" when the skill does not match the arrow.
 function ns.OddsText(o)
 	if not o or o.capped or o.band == "grey" then
 		return nil
@@ -46,12 +69,24 @@ local function PerPointText(o)
 		return root.Money(o.perPoint) .. Grey(" a point")
 	end
 	if o.craft and o.craft.net then
-		return Grey("measuring")
+		return Grey("no odds")
 	end
 	return Grey("no price")
 end
 
 local SOURCE = { vendor = "vendor", ah = "auction" }
+
+-- "vendor", "auction", "auction, today", "auction, 5 days old".
+local function SourceText(rg)
+	if rg.source ~= "ah" or rg.age == nil then
+		return SOURCE[rg.source] or "?"
+	elseif rg.age == 0 then
+		return "auction, today"
+	elseif rg.age == 1 then
+		return "auction, 1 day old"
+	end
+	return ("auction, %d days old"):format(rg.age)
+end
 
 -- Tooltip title and lines for one evaluated recipe.
 function ns.TipLines(o)
@@ -63,12 +98,12 @@ function ns.TipLines(o)
 	local title
 	if o.capped then
 		title = "Skill-Up Odds: at your skill cap"
-	elseif o.chance and not o.rule then
+	elseif o.chance and not o.rule and not o.line then
 		title = "Skill-Up Odds: " .. Hex(o.band, Pct(o.chance)) .. " measured"
 	elseif o.chance then
 		title = "Skill-Up Odds: " .. Hex(o.band, Pct(o.chance))
 	else
-		title = "Skill-Up Odds: still measuring"
+		title = "Skill-Up Odds: unknown"
 	end
 	add(
 		("%s at %d, %s at %d, %s at %d. Your skill: %d."):format(
@@ -88,22 +123,45 @@ function ns.TipLines(o)
 		if (o.n or 0) > 0 then
 			add(Grey(("Measured so far: %d of %d crafts gave a point."):format(o.up, o.n)))
 		end
+	elseif o.line then
+		local S = o.scale
+		add(("The line from yellow (100%%) to grey (0%%) gives %s at your skill."):format(Pct(o.line)))
+		if S.n == 0 then
+			add(Grey("No yellow or green crafts on this account yet. Every one, on any character, tunes the line."))
+		else
+			add(
+				("Your %d crafts gave a point %d times where the line expected %d, so these odds run %s."):format(
+					S.n,
+					S.up,
+					Round(S.exp),
+					Shift(S.k)
+				)
+			)
+		end
+		local here = o.here
+		if here and here.n > 0 then
+			add(
+				Grey(
+					("Here (%s of the way from yellow to grey): %d of %d crafts gave a point; the line expected %d."):format(
+						ns.BinRange(o.bin),
+						here.up,
+						here.n,
+						Round(here.exp or 0)
+					)
+				)
+			)
+		end
+		if S.ptsPerUp > 1.005 then
+			add(Grey(("Some gave two points: %.2f points a skill-up on average."):format(S.ptsPerUp)))
+		end
 	elseif o.chance then
-		local where = o.bin and ("at " .. ns.BinRange(o.bin) .. " of the way from yellow to grey") or "on orange recipes"
-		add(("Measured on your account: %d of %d crafts gave a point %s."):format(o.up, o.n, where))
+		add(("Measured on your account: %d of %d crafts gave a point on orange recipes."):format(o.up, o.n))
 		add(Grey(("Likely between %s and %s."):format(Pct(o.lo), Pct(o.hi))))
 		if o.pts and o.pts > o.up then
 			add(Grey(("Some gave two points: %.2f points a craft on average."):format(o.perCraft)))
 		end
 	else
-		add(
-			("Still measuring this part of the range (%s from yellow to grey): %d of %d crafts so far."):format(
-				o.bin and ns.BinRange(o.bin) or "?",
-				o.n or 0,
-				ns.MIN_SHOWN
-			)
-		)
-		add(Grey("Every yellow or green craft on any of your characters counts."))
+		add("Your skill does not match the arrow the game shows for this recipe, so there are no odds.")
 	end
 	local rc = ns.Stats().recipes[o.id]
 	if rc and rc.n > 0 then
@@ -115,9 +173,12 @@ function ns.TipLines(o)
 		if c.cost then
 			local parts = {}
 			for _, rg in ipairs(c.reagents) do
-				parts[#parts + 1] = ("%s%s x%d (%s)"):format(UI.ItemIcon(rg.id, 14), ns.ItemName(rg.id), rg.qty, SOURCE[rg.source] or "?")
+				parts[#parts + 1] = ("%s%s x%d (%s)"):format(UI.ItemIcon(rg.id, 14), ns.ItemName(rg.id), rg.qty, SourceText(rg))
 			end
 			add("A craft costs " .. root.Money(c.cost) .. Grey(": " .. table.concat(parts, ", ")))
+			if c.stale then
+				add(("|cffff9955Auction prices up to %d days old.|r"):format(c.stale) .. Grey(" Scan the auction house for fresh ones."))
+			end
 			if c.resale and c.resale > 0 then
 				add("The result sells for " .. root.Money(c.resale) .. Grey(" (" .. (SOURCE[c.resaleSource] or "vendor") .. ")"))
 			end
@@ -335,16 +396,6 @@ local function PanelHeight(rows)
 	return PANEL_TOP + math.max(rows, 1) * ROW_STEP - 2 + PANEL_BOTTOM
 end
 
-local function RangesReady()
-	local st, ready = ns.Stats(), 0
-	for i = 1, ns.BINS do
-		if st.bins[i].n >= ns.MIN_SHOWN then
-			ready = ready + 1
-		end
-	end
-	return ready
-end
-
 local function BuildPanel()
 	local f = CreateFrame("Frame", "KroolWorldForeverSkillUpPanel", ProfessionsFrame, "ButtonFrameTemplate")
 	f:SetSize(300, PanelHeight(1))
@@ -402,7 +453,7 @@ local TAB_TIP = "Ranks your recipes by the gold the next skill point costs: a cr
 local function TabLines()
 	return {
 		TAB_TIP,
-		("Odds measured on this account: %d of %d ranges ready."):format(RangesReady(), ns.BINS),
+		ScaleText(ns.Scale()),
 		Grey(ns.db.panel and "Click to hide the panel." or "Click to show the panel."),
 	}
 end
@@ -476,6 +527,11 @@ function ns.RefreshPanel()
 		Fit(1, "|cffff9955At your cap: train the next rank.|r")
 		return
 	end
+	-- Keep the order on screen unless a recipe has clearly earned a higher place. A fresh panel or
+	-- another profession starts from the plain ranking.
+	local prev = (not fresh and panel.orderLine == prof.line) and panel.order or nil
+	list, panel.order = ns.Steady(list or {}, prev)
+	panel.orderLine = prof.line
 	local shown = 0
 	for i, o in ipairs(list or {}) do
 		if i > PANEL_ROWS then
@@ -494,6 +550,9 @@ function ns.RefreshPanel()
 		end
 		if o.craft and o.craft.net then
 			bits[#bits + 1] = root.Money(o.craft.net) .. Grey(" a craft")
+		end
+		if o.craft and o.craft.stale then
+			bits[#bits + 1] = "|cffff9955old prices|r"
 		end
 		local have = C_TradeSkillUI and Num(Call(C_TradeSkillUI.GetCraftableCount, o.id))
 		if have and have > 0 then
@@ -587,17 +646,17 @@ end
 -- -------------------------------------------------------------------- definition
 
 ns.title = "Skill-Up Odds"
-ns.description = "In the crafting window: the measured chance each recipe gives a skill point, and a Next Skill Point panel "
-	.. "that ranks your recipes by the gold a point costs. The chance is measured from your own crafts: Blizzard never "
-	.. "published it, so until enough crafts are in, a recipe shows ?%."
+ns.description = "In the crafting window: the chance each recipe gives a skill point, and a Next Skill Point panel that "
+	.. "ranks your recipes by the gold a point costs. Blizzard never published the chance, so it is the common straight "
+	.. "line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters."
 ns.icon = "Interface\\Icons\\Trade_BlackSmithing"
-ns.blurb = "Measured skill-up odds and the cheapest next point"
+ns.blurb = "Skill-up odds tuned by your crafts, and the cheapest next point"
 ns.options = {
 	{
 		key = "list",
 		type = "toggle",
 		label = "Show Odds In The Recipe List",
-		tooltip = "Puts the measured skill-up chance beside each recipe's arrow. Hover it for the crafts behind it and what a point costs.",
+		tooltip = "Puts the skill-up chance beside each recipe's arrow. Hover it for how it is worked out and what a point costs.",
 		default = true,
 	},
 	{
@@ -618,14 +677,14 @@ ns.options = {
 		key = "resaleAH",
 		type = "toggle",
 		label = "Value The Result At Auction",
-		tooltip = "Uses the crafted item's Auctionator price (after the 5% cut) when it beats the vendor price. Only if you will really sell it there.",
+		tooltip = "Uses the crafted item's Auctionator price (after the 5% cut) when it beats the vendor price and is at most 3 days old. Only if you will really sell it there.",
 		default = false,
 	},
 	{
 		key = "learn",
 		type = "toggle",
 		label = "Measure Your Crafts",
-		tooltip = "Records each craft's skill before and after, account-wide. This is where the chances come from.",
+		tooltip = "Records each craft's skill before and after, account-wide. Your yellow and green crafts tune the odds.",
 		default = true,
 	},
 }
@@ -640,15 +699,19 @@ local function CounterText(c)
 end
 
 local function PrintTable()
-	local st = ns.Stats()
-	ns:Print("measured on this account (where your skill was between a recipe's yellow and grey):")
+	local st, S = ns.Stats(), ns.Scale()
+	ns:Print(ScaleText(S))
+	if S.n > 0 then
+		print(("  %d of %d yellow and green crafts gave a point; the line expected %d."):format(S.up, S.n, Round(S.exp)))
+	end
+	print("  Measured, by where your skill was between a recipe's yellow and grey:")
 	print("  " .. Hex("orange", "orange") .. ": " .. CounterText(st.orange))
 	local empty = {}
 	for i = 1, ns.BINS do
 		local c = st.bins[i]
 		if c.n > 0 then
 			local band = (i <= ns.BINS / 2) and "yellow" or "green"
-			print("  " .. Hex(band, ns.BinRange(i)) .. ": " .. CounterText(c) .. (c.n < ns.MIN_SHOWN and Grey(" (measuring)") or ""))
+			print("  " .. Hex(band, ns.BinRange(i)) .. ": " .. CounterText(c) .. Grey(("; the line expected %d"):format(Round(c.exp or 0))))
 		else
 			empty[#empty + 1] = ns.BinRange(i)
 		end
@@ -674,7 +737,7 @@ local function PrintStatus()
 	print(("  skill read through: %s; vendor prices known: %d; Auctionator: %s"):format(
 		tostring(ns.source or "not yet"),
 		vendors,
-		root.HasAuctionator() and "yes" or "no"
+		not root.HasAuctionator() and "no" or ns.auctionHooked and "yes, the panel refreshes after its scans" or "yes"
 	))
 	local prof = ns.OpenProfession()
 	if prof then
@@ -701,29 +764,20 @@ function ns.OnSlash(msg)
 end
 
 function ns.HubStatus()
-	local st = ns.Stats()
-	local total = st.orange.n + st.grey.n
-	for i = 1, ns.BINS do
-		total = total + st.bins[i].n
-	end
+	local st, S = ns.Stats(), ns.Scale()
+	local total = S.n + st.orange.n + st.grey.n
 	if total == 0 then
 		return "|cffff9955No crafts measured yet: craft a yellow or green recipe|r"
 	end
-	return ("%d crafts measured; odds ready in %d of %d ranges"):format(total, RangesReady(), ns.BINS)
+	if S.n == 0 then
+		return ("%d crafts measured; none yellow or green yet"):format(total)
+	end
+	return ("%d crafts measured; the odds run %s"):format(total, Shift(S.k))
 end
 
 -- -------------------------------------------------------------------- lifecycle
 
 function ns.OnRecorded(last)
-	if ns.justReady then
-		local bin = ns.justReady
-		ns.justReady = nil
-		local c = ns.Stats().bins[bin]
-		ns:Print(("measured odds now show at %s of a recipe's range: %d of %d crafts gave a point."):format(ns.BinRange(bin), c.up, c.n))
-		if panel and panel:IsShown() then
-			UI.Toast(panel, ("Odds ready at %s: %s"):format(ns.BinRange(bin), Pct(c.up / c.n)))
-		end
-	end
 	ns.flashRecipe = last and last.id
 	ns.ForgetProfession()
 	ns.QueueRefresh()
@@ -732,6 +786,12 @@ end
 function ns.OnLoad()
 	ns.db.vendor = type(ns.db.vendor) == "table" and ns.db.vendor or {}
 	ns.Stats()
+	-- A scan that lands while the crafting window is open re-prices the panel at once.
+	ns.auctionHooked = root.OnAuctionPrices(function()
+		if ns.enabled then
+			ns.QueueRefresh()
+		end
+	end)
 	ns:RegisterEvent("UNIT_SPELLCAST_START", function(_, unit, guid, spellID)
 		ns.OnCastStart(unit, guid, spellID)
 	end)

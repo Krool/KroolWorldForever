@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.13.0
+
+- **Skill-Up Odds: steadier odds.**
+  - Every yellow and green recipe now has a chance from its first craft. No more ?%.
+  - The chance is the common straight line, 100% at yellow down to 0% at grey, tuned by your own
+    crafts on every character. If your crafts gave 6% more points than the line expected, every
+    chance is 6% higher (never above 100%). Your crafts so far fit the line: 67 points where it
+    expected 63.
+  - It changes a little with each skill point instead of jumping between ten separately measured
+    ranges. Before, one skill point could double a recipe's gold a point.
+  - Hover a chance for the line at your skill, how your crafts move it, and how that part of the
+    range has gone for you. `/kwu` sets each range against the line.
+- **Next Skill Point panel: no more reshuffling.** Two recipes only swap places when one's point is
+  more than 10% cheaper. Opening the panel or switching profession starts from a fresh ranking.
+- **Auctionator:**
+  - The panel re-prices as soon as an Auctionator scan finishes.
+  - Each auction price in the tooltip shows its age ("auction, today"). Prices more than 3 days old
+    are flagged in the tooltip and on the panel ("old prices"). A vendor price you have seen beats
+    an old auction price, and an old price is never used for what the result sells for.
+
 ## 0.12.2
 
 - **Skill-Up Odds:** the Next Skill Point panel is just its title and the recipe rows, and it is as

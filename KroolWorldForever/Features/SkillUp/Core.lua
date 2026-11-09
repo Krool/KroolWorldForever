@@ -1,19 +1,25 @@
--- Skill-Up Odds: the real chance a craft gives a skill point, measured from your own crafts, and
--- which learned recipe gets your next point for the least gold.
+-- Skill-Up Odds: the chance a craft gives a skill point, and which learned recipe gets your next
+-- point for the least gold.
 --
 -- The client knows each recipe's yellow and grey skill (Data.lua, Forever's SkillLineAbility) but
--- not the chance: the server rolls it and Blizzard has never published the rule. So it is
--- measured. Every craft records the skill before it and the points it gave, pooled across the
--- account by where that skill sat between the recipe's yellow and grey (BINS equal ranges). A range
--- shows a rate once it holds MIN_SHOWN crafts. Orange always gives a point and grey never does
--- (the game's rule); both are measured as well, and a measured orange rate replaces the rule.
+-- not the chance: the server rolls it and Blizzard has never published the rule. The odds are the
+-- community's straight line, 100% at yellow down to 0% at grey, scaled by the account's own crafts:
+-- every yellow or green craft adds the line's chance to "expected" and its point (if any) to
+-- "got", and the scale is got over expected, damped by PRIOR. The owner chose this on 2026-11-09
+-- after 174 crafts fit the line (68 points where it expected 63); before that the odds were ten
+-- separately measured ranges, which swung with every craft. The ranges are still counted, as the
+-- check on the line (/kwu). Orange always gives a point and grey never does (the game's rule);
+-- both are measured as well, and a measured orange rate replaces the rule.
 
 local _, root = ...
 local ns = root.Feature("skillup")
 
 local BINS = 10
 ns.BINS = BINS
-ns.MIN_SHOWN = 10 -- crafts in a range before its rate is shown
+ns.MIN_SHOWN = 10 -- orange crafts before their measured rate replaces the rule
+ns.PRIOR = 10 -- expected points the line is trusted for before your crafts move it
+ns.STEADY = 0.10 -- the panel swaps two recipes only when one's point is this much cheaper
+ns.STALE_DAYS = 3 -- an auction price older than this is flagged, and loses to a vendor price
 ns.LOG_MAX = 4000 -- raw crafts kept for later analysis
 local RESOLVE_DELAY = 1.5 -- seconds after a craft before its result is read
 local CUT = 0.05 -- auction house cut on the crafted item
@@ -87,6 +93,15 @@ function ns.Bin(skill, r)
 		return nil
 	end
 	return math.min(BINS, math.floor((skill - r.y) / (r.g - r.y) * BINS) + 1)
+end
+
+-- The straight line's chance at a skill: 1 at yellow, falling to 1 / (grey - yellow) on the last
+-- point before grey. nil outside yellow-to-grey.
+function ns.Line(skill, r)
+	if not skill or r.g <= r.y or skill < r.y or skill >= r.g then
+		return nil
+	end
+	return (r.g - skill) / (r.g - r.y)
 end
 
 -- "40-50%": the part of the yellow-to-grey span a bin covers.
@@ -189,8 +204,37 @@ end
 
 -- -------------------------------------------------------------------- measured data
 
+-- n crafts, up of them gave a point, pts points in all, exp the line's chances added up (the points
+-- it expected).
 local function Counter()
-	return { n = 0, up = 0, pts = 0 }
+	return { n = 0, up = 0, pts = 0, exp = 0 }
+end
+
+local LETTER = { orange = "o", yellow = "y", green = "g", grey = "x" }
+local BAND_OF_LETTER = { o = "orange", y = "yellow", g = "green", x = "grey" }
+
+-- Stats before 0.13.0 had no exp. Rebuild it once from the raw log, which holds every craft so far
+-- (it keeps LOG_MAX); a range with crafts older than the log takes its log average for those, or the
+-- line at its middle when the log has none of it.
+local function BackfillExp(st)
+	local sum, cnt = {}, {}
+	for _, e in ipairs(st.log) do
+		local id, before, mod, _, letter = tostring(e):match("^(%d+):(%d+):(%-?%d+):(%d+):(.)")
+		local r = id and ns.Recipe(tonumber(id))
+		if r then
+			local eff = ns.EffectiveSkill(r, tonumber(before), tonumber(mod), BAND_OF_LETTER[letter])
+			local bin = eff and ns.Bin(eff, r)
+			if bin then
+				sum[bin] = (sum[bin] or 0) + ns.Line(eff, r)
+				cnt[bin] = (cnt[bin] or 0) + 1
+			end
+		end
+	end
+	for i = 1, BINS do
+		local c = st.bins[i]
+		local avg = cnt[i] and sum[i] / cnt[i] or (1 - (i - 0.5) / BINS)
+		c.exp = c.n * avg
+	end
 end
 
 -- The account's measurements (learned data: kept out of ns.options).
@@ -212,18 +256,21 @@ function ns.Stats()
 	st.skipped = st.skipped or 0
 	st.mismatch = st.mismatch or 0
 	st.build = st.build or (ns.Data and ns.Data.build)
+	if st.v ~= 2 then
+		BackfillExp(st)
+		st.v = 2
+	end
 	return st
 end
 
-local function Add(c, gain)
+local function Add(c, gain, expect)
 	c.n = c.n + 1
 	if gain > 0 then
 		c.up = c.up + 1
 	end
 	c.pts = c.pts + gain
+	c.exp = (c.exp or 0) + (expect or 0)
 end
-
-local LETTER = { orange = "o", yellow = "y", green = "g", grey = "x" }
 
 -- Counts one craft: skill before it (and the bonus), the points it gave, the client's band at the
 -- time and the skill cap. Returns the band it was counted under, "capped", "mismatch" or nil.
@@ -249,23 +296,19 @@ function ns.Record(id, before, mod, gain, clientBand, max)
 		return "mismatch"
 	end
 	local band = ns.Band(eff, r)
-	local c
+	local c, line
 	if band == "orange" then
 		c = st.orange
 	elseif band == "grey" then
 		c = st.grey
 	else
-		local bin = ns.Bin(eff, r)
-		c = st.bins[bin]
+		line = ns.Line(eff, r)
+		c = st.bins[ns.Bin(eff, r)]
 		local rc = st.recipes[id] or Counter()
 		st.recipes[id] = rc
-		Add(rc, gain)
-		ns.lastBin = bin
+		Add(rc, gain, line)
 	end
-	Add(c, gain)
-	if band ~= "orange" and band ~= "grey" and c.n == ns.MIN_SHOWN then
-		ns.justReady = ns.lastBin -- a range just got enough crafts to show its rate
-	end
+	Add(c, gain, line)
 	return band
 end
 
@@ -382,9 +425,29 @@ local function Measured(c, band)
 	return { band = band, chance = c.up / c.n, perCraft = c.pts / c.n, n = c.n, up = c.up, pts = c.pts, lo = lo, hi = hi }
 end
 
--- One craft's prospects at a skill: { band, chance, perCraft, n, up, lo, hi, bin, rule }.
--- chance and perCraft stay nil while the range is still being measured. rule: the game's rule
--- (orange 100%, grey 0%), not yet replaced by a measurement.
+-- How the account's yellow and green crafts sit against the line: { k, n, up, exp, ptsPerUp }.
+-- k = (got + PRIOR) / (expected + PRIOR): 1 with no crafts, the measured ratio once there are many.
+function ns.Scale()
+	local st = ns.Stats()
+	local n, up, pts, exp = 0, 0, 0, 0
+	for i = 1, BINS do
+		local c = st.bins[i]
+		n, up, pts, exp = n + c.n, up + c.up, pts + c.pts, exp + (c.exp or 0)
+	end
+	return {
+		k = (up + ns.PRIOR) / (exp + ns.PRIOR),
+		n = n,
+		up = up,
+		exp = exp,
+		ptsPerUp = up > 0 and pts / up or 1,
+	}
+end
+
+-- One craft's prospects at a skill: { band, chance, perCraft, rule, n, up, lo, hi } for orange and
+-- grey; for yellow and green { band, chance, perCraft, line, scale = Scale(), bin, here = that
+-- range's counter }. chance stays nil when the skill is unknown (the arrow matched neither the base
+-- skill nor base plus bonus). rule: the game's rule (orange 100%, grey 0%), not yet replaced by a
+-- measurement.
 function ns.Odds(r, eff, band)
 	local st = ns.Stats()
 	if band == "grey" then
@@ -397,14 +460,90 @@ function ns.Odds(r, eff, band)
 		end
 		return { band = band, chance = 1, perCraft = 1, n = c.n, up = c.up, rule = true }
 	end
-	local bin = ns.Bin(eff, r)
-	local c = bin and st.bins[bin]
-	if not c then
+	local line = ns.Line(eff, r)
+	if not line then
 		return { band = band }
 	end
-	local o = c.n >= ns.MIN_SHOWN and Measured(c, band) or { band = band, n = c.n, up = c.up }
-	o.bin = bin
-	return o
+	local S = ns.Scale()
+	local chance = math.min(1, S.k * line)
+	local bin = ns.Bin(eff, r)
+	return { band = band, chance = chance, perCraft = chance * S.ptsPerUp, line = line, scale = S, bin = bin, here = st.bins[bin] }
+end
+
+-- -------------------------------------------------------------------- a steady ranking
+
+local function Tier(o)
+	if o.perPoint then
+		return 1 -- odds and cost known
+	elseif o.craft and o.craft.net then
+		return 2 -- cost known, no odds
+	end
+	return 3
+end
+
+local function TierCost(o, tier)
+	if tier == 1 then
+		return o.perPoint
+	elseif tier == 2 then
+		return o.craft.net
+	end
+	return nil
+end
+
+-- The strict order for a fresh ranking: tier, then the cheaper point (or craft), then the name.
+function ns.Better(a, b)
+	local ta, tb = Tier(a), Tier(b)
+	if ta ~= tb then
+		return ta < tb
+	end
+	local ca, cb = TierCost(a, ta), TierCost(b, tb)
+	if ca and cb and ca ~= cb then
+		return ca < cb
+	end
+	return (a.name or "") < (b.name or "")
+end
+
+-- a has earned the place above b: a better tier, or a point (or craft) cheaper by more than STEADY.
+function ns.Clearly(a, b)
+	local ta, tb = Tier(a), Tier(b)
+	if ta ~= tb then
+		return ta < tb
+	end
+	local ca, cb = TierCost(a, ta), TierCost(b, tb)
+	if not (ca and cb) then
+		return false
+	end
+	return ca < cb - math.max(math.abs(cb) * ns.STEADY, 1)
+end
+
+-- A fresh ranking (list, best first) put in the previous order (prev: recipe id -> place), new
+-- recipes after the known ones, then each recipe moved up past every one it clearly beats. Small
+-- swings in odds or prices leave the list alone. Returns the list and its id -> place map.
+function ns.Steady(list, prev)
+	local out, fresh = {}, {}
+	for i, o in ipairs(list) do
+		out[i], fresh[o] = o, i
+	end
+	if prev then
+		local function key(o)
+			return prev[o.id] or (100000 + fresh[o])
+		end
+		table.sort(out, function(a, b)
+			return key(a) < key(b)
+		end)
+		for i = 2, #out do
+			local j = i
+			while j > 1 and ns.Clearly(out[j], out[j - 1]) do
+				out[j], out[j - 1] = out[j - 1], out[j]
+				j = j - 1
+			end
+		end
+	end
+	local place = {}
+	for i, o in ipairs(out) do
+		place[o.id] = i
+	end
+	return out, place
 end
 
 -- -------------------------------------------------------------------- prices
@@ -429,28 +568,37 @@ local function SellPrice(id)
 	return nil
 end
 
--- Copper for one of an item and where it came from ("vendor" or "ah"): the cheaper of a vendor
--- price seen at a merchant and Auctionator's price. nil when neither is known.
+-- An auction price older than STALE_DAYS. An unknown age is not called stale: Auctionator without
+-- the age call, or no record of the day.
+function ns.Stale(age)
+	return age ~= nil and age > ns.STALE_DAYS
+end
+
+-- Copper for one of an item, where it came from ("vendor" or "ah") and, for an auction price, its
+-- age in days: the cheaper of a vendor price seen at a merchant and Auctionator's price, except that
+-- a stale auction price never beats a vendor price. nil when neither is known.
 function ns.UnitCost(itemID)
 	local v = ns.db.vendor and ns.db.vendor[itemID]
 	local a = root.AuctionPrice(itemID)
+	local age = a and root.AuctionAge(itemID)
 	if v and a then
-		if v <= a then
+		if v <= a or ns.Stale(age) then
 			return v, "vendor"
 		end
-		return a, "ah"
+		return a, "ah", age
 	end
 	if v then
 		return v, "vendor"
 	end
 	if a then
-		return a, "ah"
+		return a, "ah", age
 	end
 	return nil
 end
 
--- What one craft costs: { cost, missing, reagents = { {id, qty, unit, source} }, out, outQty,
--- resale, resaleSource, net }. cost (and net) are nil when a reagent has no price; missing names it.
+-- What one craft costs: { cost, missing, reagents = { {id, qty, unit, source, age} }, out, outQty,
+-- resale, resaleSource, net, stale }. cost (and net) are nil when a reagent has no price; missing
+-- names it. stale: the oldest stale auction price used, in days.
 function ns.CraftCost(id)
 	local T = C_TradeSkillUI
 	local sch = T and Call(T.GetRecipeSchematic, id, false)
@@ -462,18 +610,21 @@ function ns.CraftCost(id)
 	for _, slot in ipairs(type(sch.reagentSlotSchematics) == "table" and sch.reagentSlotSchematics or {}) do
 		local qty = Num(slot.quantityRequired)
 		if qty and qty > 0 and (basic == nil or slot.reagentType == nil or slot.reagentType == basic) then
-			local bestId, bestUnit, bestSrc
+			local bestId, bestUnit, bestSrc, bestAge
 			for _, rg in ipairs(type(slot.reagents) == "table" and slot.reagents or {}) do
 				local rid = Num(rg.itemID)
 				if rid and rid > 0 then
-					local unit, src = ns.UnitCost(rid)
+					local unit, src, age = ns.UnitCost(rid)
 					if not bestId or (unit and (not bestUnit or unit < bestUnit)) then
-						bestId, bestUnit, bestSrc = rid, unit, src
+						bestId, bestUnit, bestSrc, bestAge = rid, unit, src, age
 					end
 				end
 			end
 			if bestId then
-				res.reagents[#res.reagents + 1] = { id = bestId, qty = qty, unit = bestUnit, source = bestSrc }
+				res.reagents[#res.reagents + 1] = { id = bestId, qty = qty, unit = bestUnit, source = bestSrc, age = bestAge }
+				if ns.Stale(bestAge) and (not res.stale or bestAge > res.stale) then
+					res.stale = bestAge
+				end
 				if bestUnit then
 					res.cost = res.cost + qty * bestUnit
 				elseif not res.missing then
@@ -494,6 +645,9 @@ function ns.CraftCost(id)
 			local each, src = SellPrice(out) or 0, "vendor"
 			if ns.db.resaleAH then
 				local ah = root.AuctionPrice(out)
+				if ah and ns.Stale(root.AuctionAge(out)) then
+					ah = nil -- an old price is no promise the result still sells for it
+				end
 				if ah and ah * (1 - CUT) > each then
 					each, src = ah * (1 - CUT), "ah"
 				end
@@ -629,29 +783,6 @@ function ns.Evaluate(id, info, prof, withCost)
 	return o
 end
 
-local function Tier(o)
-	if o.perPoint then
-		return 1 -- odds and cost known
-	elseif o.craft and o.craft.net then
-		return 2 -- cost known, odds still measuring
-	end
-	return 3
-end
-
-local function Better(a, b)
-	local ta, tb = Tier(a), Tier(b)
-	if ta ~= tb then
-		return ta < tb
-	end
-	if ta == 1 and a.perPoint ~= b.perPoint then
-		return a.perPoint < b.perPoint
-	end
-	if ta == 2 and a.craft.net ~= b.craft.net then
-		return a.craft.net < b.craft.net
-	end
-	return (a.name or "") < (b.name or "")
-end
-
 -- Learned recipes of the open profession that can still give a point, cheapest point first.
 function ns.Rank(prof)
 	prof = prof or ns.OpenProfession()
@@ -671,6 +802,6 @@ function ns.Rank(prof)
 			end
 		end
 	end
-	table.sort(list, Better)
+	table.sort(list, ns.Better)
 	return list, prof
 end

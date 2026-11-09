@@ -89,6 +89,8 @@ check("/kwu registered", SLASH_KROOLWORLDFOREVER_SKILLUP1, "/kwu")
 check("hub icon", ns.icon, "Interface\\Icons\\Trade_BlackSmithing")
 check("hub blurb", type(ns.blurb), "string")
 check("hub status before any craft", ns.HubStatus():find("No crafts measured", 1, true) ~= nil, true)
+check("hooked Auctionator's scans", #AuctionatorCallbacks, 1)
+check("and knows it", ns.auctionHooked, true)
 
 -- ---------------------------------------------------------------- data and bands
 
@@ -122,6 +124,11 @@ check("bin 69", ns.Bin(69, r), 10)
 check("no bin at grey", ns.Bin(70, r), nil)
 check("no bin when orange", ns.Bin(44, r), nil)
 check("bin range text", ns.BinRange(3), "20-30%")
+check("the line: 100% at yellow", ns.Line(45, r), 1)
+check("the line at 50", ns.Line(50, r), 0.8)
+check("the line on the last point before grey", ns.Line(69, r), 1 / 25)
+check("no line at grey", ns.Line(70, r), nil)
+check("no line when orange", ns.Line(44, r), nil)
 check("arrow optimal is orange", ns.BandOf(Enum.TradeskillRelativeDifficulty.Optimal), "orange")
 check("arrow easy is green", ns.BandOf(Enum.TradeskillRelativeDifficulty.Easy), "green")
 check("secret arrow", ns.BandOf(Secret()), nil)
@@ -140,6 +147,7 @@ local st = ns.Stats()
 Craft(VEST, "Cast-1", 1)
 check("a point counted in its range", st.bins[3].n, 1)
 check("as a success", st.bins[3].up, 1)
+check("with the point the line expected", st.bins[3].exp, 0.8)
 check("recipe counter", st.recipes[VEST].n, 1)
 check("raw log kept", st.log[1], "2385:50:0:1:y:" .. Now)
 check("last craft", ns.last.gain, 1)
@@ -213,27 +221,83 @@ root.SetOption(ns, "learn", true)
 
 -- ---------------------------------------------------------------- odds
 
--- A clean slate: ten crafts at 50, six gave a point.
+local function Milli(x)
+	return math.floor(x * 1000 + 0.5)
+end
+
+-- Stats from before 0.13.0 have no expected points: they are rebuilt once from the raw log, and a
+-- range with crafts older than the log takes the line at its middle.
+db.stats = { orange = { n = 0, up = 0, pts = 0 }, grey = { n = 0, up = 0, pts = 0 }, bins = {}, recipes = {}, skipped = 0, mismatch = 0 }
+for i = 1, 10 do
+	db.stats.bins[i] = { n = 0, up = 0, pts = 0 }
+end
+db.stats.bins[3] = { n = 2, up = 1, pts = 1 } -- Brown Linen Vest at 50
+db.stats.bins[7] = { n = 1, up = 0, pts = 0 } -- and at 60
+db.stats.bins[5] = { n = 4, up = 2, pts = 2 } -- older than the log
+db.stats.log = { "2385:50:0:1:y:1", "2385:50:0:0:y:1", "2385:60:0:0:g:1", "2385:44:0:1:o:1" }
+st = ns.Stats()
+check("old stats: rebuilt from the log", Milli(st.bins[3].exp), 1600)
+check("old stats: each craft at its own skill", Milli(st.bins[7].exp), 400)
+check("old stats: crafts before the log at the range's middle", Milli(st.bins[5].exp), Milli(4 * 0.55))
+check("old stats: marked rebuilt", st.v, 2)
+st.bins[3].exp = 99
+check("rebuilt only once", ns.Stats().bins[3].exp, 99)
+
+-- A clean slate: before any craft the odds are the line as it stands.
 db.stats = nil
 st = ns.Stats()
 Skill[197] = 50
 local o = ns.Odds(r, 50, "yellow")
-check("unmeasured range: no chance", o.chance, nil)
-check("unmeasured range has its bin", o.bin, 3)
-local out = capture(function()
+check("no crafts yet: the line", o.chance, 0.8)
+check("the line's own value", o.line, 0.8)
+check("scaled by nothing", o.scale.k, 1)
+check("its range", o.bin, 3)
+-- Ten crafts at 50, six gave a point: the line expected 8, so the odds come down by (6 + 10) / (8 + 10).
+capture(function()
 	for i = 1, 10 do
 		Craft(VEST, "Odds-" .. i, i <= 6 and 1 or 0)
 		Skill[197] = 50
 	end
 end)
-check("a ready range is announced", has(out, "measured odds now show at 20-30%"), true)
 o = ns.Odds(r, 50, "yellow")
-check("measured chance", o.chance, 0.6)
-check("points a craft", o.perCraft, 0.6)
-check("crafts behind it", o.n, 10)
+check("tuned by the crafts", Milli(o.chance), Milli(0.8 * 16 / 18))
+check("points a craft", Milli(o.perCraft), Milli(0.8 * 16 / 18))
+check("crafts behind the scale", o.scale.n, 10)
+check("got against expected", o.scale.up .. "/" .. Milli(o.scale.exp), "6/8000")
+check("this range's own count", o.here.n .. "/" .. o.here.up, "10/6")
+check("the scale reaches every recipe", Milli(ns.Odds(ns.Recipe(CLOAK), 50, "green").chance), Milli(0.4 * 16 / 18))
 check("orange by the game's rule", ns.Odds(ns.Recipe(BOOTS), 50, "orange").chance, 1)
 check("orange marked as the rule", ns.Odds(ns.Recipe(BOOTS), 50, "orange").rule, true)
 check("grey never", ns.Odds(r, 70, "grey").chance, 0)
+check("unknown skill: no odds", ns.Odds(r, nil, "yellow").chance, nil)
+local saved = db.stats
+db.stats = nil
+st = ns.Stats()
+st.bins[1] = { n = 20, up = 20, pts = 20, exp = 18 }
+check("crafts above the line lift it", ns.Scale().k > 1, true)
+check("but never past 100%", ns.Odds(r, 45, "yellow").chance, 1)
+st.bins[1].pts = 30
+check("double points count in points a craft", Milli(ns.Odds(r, 50, "yellow").perCraft), Milli(math.min(1, 0.8 * 30 / 28) * 1.5))
+db.stats = saved
+st = ns.Stats()
+
+-- ---------------------------------------------------------------- a steady ranking
+
+local function P(id, perPoint)
+	return { id = id, perPoint = perPoint, name = "r" .. id }
+end
+local fresh = { P(2, 95), P(1, 100), P(3, 300) }
+local steady, place = ns.Steady(fresh, { [1] = 1, [2] = 2, [3] = 3 })
+check("a small edge keeps the order", steady[1].id, 1)
+check("the order's places", place[1] .. place[2] .. place[3], "123")
+check("a clear edge swaps", ns.Steady({ P(2, 80), P(1, 100), P(3, 300) }, { [1] = 1, [2] = 2, [3] = 3 })[1].id, 2)
+check("a new recipe that is clearly best goes to the top", ns.Steady({ P(4, 50), P(1, 100), P(3, 300) }, { [1] = 1, [3] = 2 })[1].id, 4)
+check("a new recipe that is not clearly better waits below", ns.Steady({ P(1, 100), P(5, 290), P(3, 300) }, { [1] = 1, [3] = 2 })[3].id, 5)
+check("no previous order: the fresh ranking", ns.Steady(fresh)[1].id, 2)
+check("a gone recipe leaves no gap", #ns.Steady({ P(1, 100) }, { [1] = 1, [9] = 2 }), 1)
+check("odds and cost beat cost alone", ns.Clearly(P(1, 900), { id = 2, craft = { net = 1 } }), true)
+check("a bigger profit is cheaper", ns.Clearly(P(1, -50), P(2, -10)), true)
+check("never clearly better than itself", ns.Clearly(P(1, 100), P(1, 100)), false)
 
 -- ---------------------------------------------------------------- prices
 
@@ -244,10 +308,22 @@ FireEvent("MERCHANT_SHOW")
 check("vendor price learned", db.vendor[THREAD], 10)
 check("not for armor", db.vendor[999], nil)
 check("not for extended cost", db.vendor[4470], nil)
-local unit, src = ns.UnitCost(THREAD)
+local unit, src, age = ns.UnitCost(THREAD)
 check("vendor cheaper than auction", unit, 10)
 check("from the vendor", src, "vendor")
+check("a vendor price has no age", age, nil)
 check("auction price otherwise", (ns.UnitCost(BOLT)), 1000)
+Ages[BOLT] = 2
+check("with its age", select(3, ns.UnitCost(BOLT)), 2)
+db.vendor[BOLT] = 1200
+check("a fresh auction price beats a dearer vendor", (ns.UnitCost(BOLT)), 1000)
+Ages[BOLT] = 5
+check("a stale one does not", (ns.UnitCost(BOLT)), 1200)
+db.vendor[BOLT] = nil
+check("a stale price is still a price", (ns.UnitCost(BOLT)), 1000)
+check("and the craft says how old", ns.CraftCost(VEST).stale, 5)
+Ages[BOLT] = 0
+check("a fresh craft is not stale", ns.CraftCost(VEST).stale, nil)
 local c = ns.CraftCost(VEST)
 check("craft cost: basic reagents only", c.cost, 1010)
 check("resale at vendor", c.resale, 300)
@@ -255,6 +331,9 @@ check("net", c.net, 710)
 root.SetOption(ns, "resaleAH", true)
 Prices[VEST_ITEM] = 1000
 check("resale at auction after the cut", ns.CraftCost(VEST).resale, 950)
+Ages[VEST_ITEM] = 10
+check("not at a stale auction price", ns.CraftCost(VEST).resale, 300)
+Ages[VEST_ITEM] = nil
 root.SetOption(ns, "resaleAH", false)
 root.SetOption(ns, "resale", false)
 check("resale off", ns.CraftCost(VEST).net, 1010)
@@ -267,8 +346,8 @@ Prices[BOLT] = 1000
 
 local e = ns.Evaluate(VEST, nil, nil, true)
 check("evaluate: band from the arrow", e.band, "yellow")
-check("evaluate: measured chance", e.chance, 0.6)
-check("gold a point = net / points a craft", math.floor(e.perPoint + 0.5), math.floor(710 / 0.6 + 0.5))
+check("evaluate: the tuned line", Milli(e.chance), Milli(0.8 * 16 / 18))
+check("gold a point = net / points a craft", math.floor(e.perPoint + 0.5), math.floor(710 / (0.8 * 16 / 18) + 0.5))
 
 -- ---------------------------------------------------------------- ranking
 
@@ -281,12 +360,13 @@ for i, x in ipairs(list) do
 end
 check("unlearned recipe left out", ids[SHIRT], nil)
 check("other profession left out", ids[BANDAGE], nil)
--- Boots: orange, 2 bolts + thread = 2010 - 100 resale = 1910 a point. Vest: 710 / 0.6 = 1183.
+-- Vest: 710 / 0.711 = 998 a point. Boots: orange, 2 bolts + thread = 2010 - 100 resale = 1910.
+-- Robe: 2 bolts / 0.889 = 2250 (no crafts of its own: the tuned line). Cloak: 1 bolt / 0.356 = 2813.
 check("cheapest point first", list[1].id, VEST)
 check("orange next", list[2].id, BOOTS)
-check("measuring ranges after the known ones", ids[ROBE] > 2 and ids[CLOAK] > 2, true)
-check("measuring recipe still has a cost", list[ids[ROBE]].craft.net ~= nil, true)
-check("but no gold a point", list[ids[ROBE]].perPoint, nil)
+check("a recipe never crafted is ranked too", list[3].id, ROBE)
+check("by its gold a point", Milli(list[3].perPoint), Milli(2000 / (16 / 18)))
+check("dearest last", list[4].id, CLOAK)
 
 -- ---------------------------------------------------------------- the crafting window
 
@@ -299,9 +379,9 @@ ProfessionsFrame:Show()
 FireEvent("TRADE_SKILL_SHOW")
 check("hooked the recipe list", #ProfessionsFrame.CraftingPage.RecipeList.ScrollBox.callbacks, 1)
 check("rows on screen decorated", vestRow.kwfOdds ~= nil, true)
-check("measured chance beside the arrow", tostring(vestRow.kwfOdds.text):find("60%", 1, true) ~= nil, true)
+check("the chance beside the arrow", tostring(vestRow.kwfOdds.text):find("71%", 1, true) ~= nil, true)
 check("shown", vestRow.kwfOdds.shown, true)
-check("unmeasured shows ?%", tostring(robeRow.kwfOdds.text):find("?%", 1, true) ~= nil, true)
+check("a recipe never crafted has odds too", tostring(robeRow.kwfOdds.text):find("89%", 1, true) ~= nil, true)
 check("unlearned shows nothing", shirtRow.kwfOdds.shown, false)
 local box = ProfessionsFrame.CraftingPage.RecipeList.ScrollBox
 local lateRow, lateNode = NewRecipeRow(CLOAK)
@@ -312,12 +392,22 @@ box:InitRow(vestRow, vestNode)
 check("a long name is kept clear of the odds", vestRow.Label.width < 250, true)
 
 vestRow.kwfHit.scripts.OnEnter(vestRow.kwfHit)
-check("hover: tooltip title", tostring(GameTooltip.title):find("60%", 1, true) ~= nil, true)
-check("hover: the crafts behind it", has(GameTooltip.lines, "6 of 10 crafts gave a point"), true)
+check("hover: tooltip title", tostring(GameTooltip.title):find("71%", 1, true) ~= nil, true)
+check("hover: the line at your skill", has(GameTooltip.lines, "gives 80% at your skill"), true)
+check("hover: how your crafts move it", has(GameTooltip.lines, "11% below the line"), true)
+check("hover: got against expected", has(GameTooltip.lines, "gave a point 6 times where the line expected 8"), true)
+check("hover: this part of the range", has(GameTooltip.lines, "6 of 10 crafts gave a point; the line expected 8"), true)
 check("hover: the cost", has(GameTooltip.lines, "A craft costs"), true)
+check("hover: where each price is from", has(GameTooltip.lines, "auction, today"), true)
 check("hover: gold a point", has(GameTooltip.lines, "A point costs"), true)
+check("hover: fresh prices raise no flag", has(GameTooltip.lines, "days old."), false)
+Ages[BOLT] = 4
+vestRow.kwfHit.scripts.OnEnter(vestRow.kwfHit)
+check("hover: an old auction price is flagged", has(GameTooltip.lines, "Auction prices up to 4 days old"), true)
+Ages[BOLT] = 0
 robeRow.kwfHit.scripts.OnEnter(robeRow.kwfHit)
-check("hover unmeasured: says so", has(GameTooltip.lines, "Still measuring"), true)
+check("hover, never crafted: the line", has(GameTooltip.lines, "The line from yellow"), true)
+check("hover, never crafted: no range count", has(GameTooltip.lines, "Here ("), false)
 
 RunTimers()
 local panel = ns.Panel()
@@ -335,28 +425,41 @@ end
 check("panel is as tall as its rows", panel.height, 30 + rowsShown * 42 - 2 + 8)
 check("best row first", panel.rows[1].o.id, VEST)
 check("its gold a point", tostring(panel.rows[1].cost.text):find("a point", 1, true) ~= nil, true)
-check("measuring rows say so", has({ panel.rows[3].cost.text, panel.rows[4].cost.text }, "measuring"), true)
+check("every row has its gold a point", has({ panel.rows[3].cost.text }, "a point") and has({ panel.rows[4].cost.text }, "a point"), true)
+check("the panel's order", panel.rows[2].o.id .. "," .. panel.rows[3].o.id .. "," .. panel.rows[4].o.id, BOOTS .. "," .. ROBE .. "," .. CLOAK)
+check("no old-price flag on fresh prices", has({ panel.rows[1].detail.text }, "old prices"), false)
 panel.rows[1]:Click()
 check("click selects the recipe", Opened[#Opened], VEST)
 panel.rows[1].scripts.OnEnter(panel.rows[1])
 check("row hover tooltip", has(GameTooltip.lines, "A point costs"), true)
 
--- A range filling up while the panel is open: a toast says so, and the crafted row is flashed.
-for _ = 1, 9 do
-	Skill[197] = 66 -- Brown Linen Vest bin 9 (80-90%)
-	Craft(VEST, "Fill-" .. _, 0)
-end
-Skill[197] = 66
-capture(function()
-	Craft(VEST, "Fill-10", 1)
-end)
-local toast = root.UI.ToastOf(panel)
-check("a ready range gets a toast on the panel", toast ~= nil and tostring(toast.text.text):find("80-90%", 1, true) ~= nil, true)
-check("the toast is shown", toast and toast.shown, true)
+-- Prices move while the panel is open. Thread at auction only: Boots 2300 a point, Robe 2250, so
+-- Robe is a little cheaper and the list stays put.
+db.vendor[THREAD], Prices[THREAD] = nil, 400
+Clock = Clock + 1
+FireEvent("BAG_UPDATE_DELAYED")
+RunTimers()
+check("a small edge does not reorder the panel", panel.rows[2].o.id .. "," .. panel.rows[3].o.id, BOOTS .. "," .. ROBE)
+-- An Auctionator scan lands: Boots 2700 a point, Robe still 2250, clearly cheaper now.
+Prices[THREAD] = 800
+AuctionatorScan()
+RunTimers()
+check("a scan re-prices the panel, and a clear edge moves up", panel.rows[2].o.id .. "," .. panel.rows[3].o.id, ROBE .. "," .. BOOTS)
+Ages[BOLT] = 5
+AuctionatorScan()
+RunTimers()
+check("rows priced from old auctions say so", has({ panel.rows[1].detail.text }, "old prices"), true)
+Ages[BOLT], db.vendor[THREAD], Prices[THREAD] = 0, 10, 50
 Skill[197] = 50
 Clock = Clock + 1
 FireEvent("TRADE_SKILL_LIST_UPDATE")
 RunTimers()
+check("prices back: Boots earns its place again", panel.rows[2].o.id, BOOTS)
+local beforeCraft = panel.rows[1].o
+Craft(VEST, "Steady-1", 0)
+Skill[197] = 50
+check("a craft re-ranks without reshuffling", panel.rows[1].o.id, VEST)
+check("with fresh numbers", panel.rows[1].o ~= beforeCraft, true)
 
 -- Forever's window has a column of profession tabs on its right edge: the panel docks past it, and
 -- its own tab joins the bottom of that column.
@@ -379,7 +482,7 @@ check("tab shown beside the open panel", tab.shown, true)
 GameTooltip:SetOwner(tab)
 check("tab tooltip handled", tab:GetTooltipTextSetupFunction()(GameTooltip), true)
 check("tab tooltip says what a click does", has(GameTooltip.lines, "Click to hide"), true)
-check("and how many ranges are measured", has(GameTooltip.lines, "ranges ready"), true)
+check("and how the odds are made", has(GameTooltip.lines, "tuned by 11 crafts on this account"), true)
 ProfessionsFrame.rightProfessionTabs[3].shown = true -- a profession learned
 ProfessionsFrame:RefreshRightTabs()
 at = tab.points[#tab.points]
@@ -422,15 +525,18 @@ SkillMax = 75
 out = capture(function()
 	SlashCmdList.KROOLWORLDFOREVER_SKILLUP("")
 end)
+check("/kwu says how the odds are made", has(out, "tuned by 11 crafts"), true)
 check("/kwu lists the ranges", has(out, "20-30%"), true)
-check("/kwu shows the counts", has(out, "6 of 10 gave a point"), true)
+check("/kwu shows the counts", has(out, "6 of 11 gave a point"), true)
+check("/kwu sets each range against the line", has(out, "the line expected 9"), true)
 out = capture(function()
 	SlashCmdList.KROOLWORLDFOREVER_SKILLUP("status")
 end)
 check("/kwu status names the data build", has(out, "1.60.1.70862"), true)
 check("/kwu status names the skill source", has(out, "recipe"), true)
-check("hub status counts crafts", ns.HubStatus():find("crafts measured", 1, true) ~= nil, true)
-check("hub status counts ready ranges", ns.HubStatus():find("2 of 10", 1, true) ~= nil, true)
+check("/kwu status: refreshed by Auctionator's scans", has(out, "refreshes after its scans"), true)
+check("hub status counts crafts", ns.HubStatus():find("11 crafts measured", 1, true) ~= nil, true)
+check("hub status says how the crafts sit against the line", ns.HubStatus():find("% below the line", 1, true) ~= nil, true)
 
 -- ---------------------------------------------------------------- off means off
 

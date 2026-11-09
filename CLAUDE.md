@@ -115,7 +115,8 @@ before writing addon code.
   Disenchant Value tables); `tools/skillup-data/gen-skillup.js` Skill-Up Odds recipe thresholds from
   wago.tools `SkillLineAbility` (regenerate when a build changes recipes); `tools/settings-doc.js`
   README settings tables.
-- Skill-up chances are server-side and unpublished: Skill-Up Odds shows only measured rates (orange
-  100% / grey 0% are the game's rule). Do not add a formula estimate; see docs/features/skillup.md.
+- Skill-up chances are server-side and unpublished. Skill-Up Odds uses the straight line (yellow 100%
+  to grey 0%) scaled by the account's measured crafts (owner's call 2026-11-09: 174 crafts fit it);
+  the per-range counts stay as the check. Change the model only on new data; see docs/features/skillup.md.
 - `scripts/` link-addon (dev junction), build, release, publish. `template/HelloForever` minimal skeleton.
 - Lint/format config: `.luacheckrc`, `stylua.toml` (tabs, Lua51).

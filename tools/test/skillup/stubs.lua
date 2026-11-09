@@ -349,6 +349,8 @@ C_Item = {
 }
 
 Prices = {}
+Ages = {} -- id -> days since Auctionator last saw it (nil: no record)
+AuctionatorCallbacks = {}
 function AuctionatorOn(on)
 	if on == false then
 		Auctionator = nil
@@ -363,11 +365,23 @@ function AuctionatorOn(on)
 				GetAuctionPriceByItemLink = function(_, link)
 					return Prices[tonumber(tostring(link):match("item:(%d+)"))]
 				end,
+				GetAuctionAgeByItemID = function(_, id)
+					return Ages[id]
+				end,
+				-- Auctionator 341: the callback runs after a full or incremental scan's prices land.
+				RegisterForDBUpdate = function(_, fn)
+					table.insert(AuctionatorCallbacks, fn)
+				end,
 			},
 		},
 	}
 end
 AuctionatorOn(true)
+function AuctionatorScan()
+	for _, fn in ipairs(AuctionatorCallbacks) do
+		fn()
+	end
+end
 
 -- The open merchant: { {id=, price=, stack=, extended=} }
 Merchant = {}
