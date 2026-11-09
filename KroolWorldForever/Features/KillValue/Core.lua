@@ -31,7 +31,8 @@ ns.FKV = FKV
 local PSEUDO_KILLS = 10 -- weight of the baseline, in corpses
 local MIN_OBSERVED = 3 -- corpses needed to trust observed-only data
 local CACHE_MAX = 64 -- per-NPC breakdowns held
-local CACHE_TTL = 600 -- seconds a breakdown or price stays valid
+local CACHE_TTL = 600 -- seconds a breakdown or price stays valid (an Auctionator scan clears it)
+local OLD_SHARE = 0.1 -- a kill value is marked "old prices" when this much of it comes from old auction prices
 local REPORT_TOP, REPORT_RARE = 10, 5 -- contributor rows kept per breakdown
 local MAX_NPCS = 2500 -- learned creatures kept
 local MAX_ITEMS = 100 -- learned item rows kept per creature
@@ -568,34 +569,35 @@ local function ItemFacts(itemId)
 	return nil, nil, sell, false
 end
 
--- Unit price in copper and its source ("ah", "vendor", "quest"), or nil when unknown.
+-- Unit price in copper and its source ("ah", "vendor", "quest"), or nil when unknown. For an
+-- auction price, also the days since Auctionator last saw the item (nil when it cannot say).
 local function PriceUncached(itemId)
 	local quality, bind, vendor, isQuest = ItemFacts(itemId)
 	if bind == 4 or isQuest then
 		return 0, "quest"
 	end
-	local best, src
+	local best, src, age
 	if cfg.ah and bind ~= 1 and quality ~= 0 then
 		local ah = FKV.AuctionPrice(itemId)
 		if ah then
-			best, src = ah * (1 - (cfg.cut or 0) / 100), "ah"
+			best, src, age = ah * (1 - (cfg.cut or 0) / 100), "ah", root.AuctionAge(itemId)
 		end
 	end
 	if cfg.vendor and vendor and vendor > 0 and (not best or vendor > best) then
-		best, src = vendor, "vendor"
+		best, src, age = vendor, "vendor", nil
 	end
-	return best, src
+	return best, src, age
 end
 
 function FKV.Price(itemId)
 	local sig, now = Sig(), Now()
 	local hit = priceCache[itemId]
 	if hit and hit.sig == sig and now - hit.t < CACHE_TTL then
-		return hit.price, hit.src
+		return hit.price, hit.src, hit.age
 	end
-	local price, src = PriceUncached(itemId)
-	priceCache[itemId] = { t = now, sig = sig, price = price, src = src }
-	return price, src
+	local price, src, age = PriceUncached(itemId)
+	priceCache[itemId] = { t = now, sig = sig, price = price, src = src, age = age }
+	return price, src, age
 end
 
 -- -------------------------------------------------------------------- compute
@@ -649,7 +651,9 @@ end
 
 -- Returns nil (nothing known) or a breakdown:
 --   { total, gold, loot, rare, skin, gather, need, canGather, skinCounted, known, unknown,
---     kills, source, top = { {id, qty, value, src}... }, raretop = { same, below the rare threshold } }
+--     kills, source, top = { {id, qty, value, src, age}... }, raretop = { same, below the rare threshold },
+--     stale, staleValue }
+-- stale: days old of the oldest old auction price, set when old prices make up a tenth of the total.
 -- source: "baseline" | "blended" | "learned" | "learning" (then total is nil).
 -- total = gold + loot, plus skin when skinCounted (the player can gather it and the option is on).
 -- need/canGather are set when the player knows the profession; rare drops stay outside the total.
@@ -717,9 +721,9 @@ function FKV.Compute(npcId)
 			end
 		end
 		for _, c in ipairs(acc.all) do
-			local price, src = FKV.Price(c.id)
+			local price, src, age = FKV.Price(c.id)
 			if price then
-				c.value, c.src = c.qty * price, src
+				c.value, c.src, c.age = c.qty * price, src, age
 				acc.known = acc.known + 1
 				if c.qty < cfg.rare then
 					acc.rare = acc.rare + c.value
@@ -732,11 +736,15 @@ function FKV.Compute(npcId)
 				acc.unknown = acc.unknown + 1
 			end
 		end
+		local skinOld, skinAge = 0, nil -- skinning value priced from old auction data
 		if base then
 			for _, d in ipairs(base.skin) do
-				local price = FKV.Price(d[1])
+				local price, _, age = FKV.Price(d[1])
 				if price then
 					acc.skin = acc.skin + d[2] * price
+					if root.AuctionStale(age) then
+						skinOld, skinAge = skinOld + d[2] * price, math.max(skinAge or 0, age)
+					end
 				end
 			end
 		end
@@ -751,6 +759,19 @@ function FKV.Compute(npcId)
 					acc.total = acc.total + acc.skin
 				end
 			end
+		end
+		-- Old prices: the part of the total priced from auction data over root.STALE_DAYS old.
+		local old, oldest = 0, nil
+		for _, c in ipairs(acc.top) do
+			if root.AuctionStale(c.age) then
+				old, oldest = old + c.value, math.max(oldest or 0, c.age)
+			end
+		end
+		if acc.skinCounted and skinAge then
+			old, oldest = old + skinOld, math.max(oldest or 0, skinAge)
+		end
+		if oldest and acc.total > 0 and old >= OLD_SHARE * acc.total then
+			acc.stale, acc.staleValue = oldest, old
 		end
 		table.sort(acc.top, ByValue)
 		table.sort(acc.raretop, ByValue)

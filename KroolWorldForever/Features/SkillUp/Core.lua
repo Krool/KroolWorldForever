@@ -19,7 +19,6 @@ ns.BINS = BINS
 ns.MIN_SHOWN = 10 -- orange crafts before their measured rate replaces the rule
 ns.PRIOR = 10 -- expected points the line is trusted for before your crafts move it
 ns.STEADY = 0.10 -- the panel swaps two recipes only when one's point is this much cheaper
-ns.STALE_DAYS = 3 -- an auction price older than this is flagged, and loses to a vendor price
 ns.LOG_MAX = 4000 -- raw crafts kept for later analysis
 local RESOLVE_DELAY = 1.5 -- seconds after a craft before its result is read
 local CUT = 0.05 -- auction house cut on the crafted item
@@ -568,10 +567,9 @@ local function SellPrice(id)
 	return nil
 end
 
--- An auction price older than STALE_DAYS. An unknown age is not called stale: Auctionator without
--- the age call, or no record of the day.
+-- An auction price older than root.STALE_DAYS (3) is flagged and loses to a vendor price.
 function ns.Stale(age)
-	return age ~= nil and age > ns.STALE_DAYS
+	return root.AuctionStale(age)
 end
 
 -- Copper for one of an item, where it came from ("vendor" or "ah") and, for an auction price, its

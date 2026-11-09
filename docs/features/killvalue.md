@@ -77,7 +77,15 @@ Each item takes the best of:
   house cut (default 5%). Never for bind-on-pickup or grey items.
 
 Quest items are worth 0. Results are cached per creature (64 creatures, 10 minutes) and
-refreshed when settings change or when new loot is learned for that creature.
+refreshed when settings change, when new loot is learned for that creature, when the auction house
+closes, and (0.13.1) when an Auctionator scan finishes (`root.OnAuctionPrices`).
+
+**Old prices (0.13.1).** Each auction-priced drop carries its age (`root.AuctionAge`, days since
+Auctionator last saw it). When drops priced from auction data over 3 days old (`root.STALE_DAYS`)
+make up at least a tenth of the total (counted skinning included), the tooltip total says "old
+prices" and `/fkv` prints how much. Drop lines date an old price: "(AH, seen 5 days ago)". The old
+price still counts: the value already takes the higher of vendor and auction, and dropping it would
+undervalue items that still sell.
 
 ## Commands
 

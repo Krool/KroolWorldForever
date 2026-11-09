@@ -54,29 +54,35 @@ function ns.TableFor(itemId, quality, classID, itemLevel)
 	return runs[#runs][2]
 end
 
--- { entry, rows = { {id, p, min, max, price}, ... }, value, missing, hasAH }. value is the
--- expected auction worth of one disenchant in copper; nil without Auctionator or when a main
--- material (missing names it) has no price. Rare materials without a price count as 0.
+-- { entry, rows = { {id, p, min, max, price, age}, ... }, value, missing, hasAH, stale }. value is
+-- the expected auction worth of one disenchant in copper; nil without Auctionator or when a main
+-- material (missing names it) has no price. Rare materials without a price count as 0. age is the
+-- days since Auctionator last saw the material; stale is the oldest age of a main material priced
+-- from data over root.STALE_DAYS old.
 function ns.Evaluate(itemId, quality, classID, itemLevel)
 	local entry = ns.TableFor(itemId, quality, classID, itemLevel)
 	if not entry then
 		return nil
 	end
 	local hasAH = root.HasAuctionator()
-	local rows, value, missing = {}, 0, nil
+	local rows, value, missing, stale = {}, 0, nil, nil
 	for _, r in ipairs(ns.Data.tables[entry]) do
 		local price = hasAH and root.AuctionPrice(r[1]) or nil
-		rows[#rows + 1] = { id = r[1], p = r[2], min = r[3], max = r[4], price = price }
+		local age = price and root.AuctionAge(r[1]) or nil
+		rows[#rows + 1] = { id = r[1], p = r[2], min = r[3], max = r[4], price = price, age = age }
 		if price then
 			value = value + r[2] * (r[3] + r[4]) / 2 * price
+			if r[2] >= MAIN_SHARE and root.AuctionStale(age) then
+				stale = math.max(stale or 0, age)
+			end
 		elseif r[2] >= MAIN_SHARE and not missing then
 			missing = MatName(r[1])
 		end
 	end
 	if not hasAH or missing then
-		value = nil
+		value, stale = nil, nil
 	end
-	return { entry = entry, rows = rows, value = value, missing = missing, hasAH = hasAH }
+	return { entry = entry, rows = rows, value = value, missing = missing, hasAH = hasAH, stale = stale }
 end
 
 -- What pays most: "vendor", "auction" or "disenchant" (ties go to the less work). Auction and
@@ -102,14 +108,19 @@ local BEST_TEXT = {
 	vendor = "|cffaaaaaaBest: sell it to a vendor|r",
 }
 
-local function BestLine(best, disenchant, auction, vendor, bound)
+local OLD = "|cffff9955"
+
+-- auctionAge: days since Auctionator last saw the item itself. An old price still competes; the
+-- line says how old it is.
+local function BestLine(best, disenchant, auction, vendor, bound, auctionAge)
+	local old = auction and root.AuctionStale(auctionAge) and root.SeenText(auctionAge) or nil
 	local others = {}
 	if best ~= "disenchant" then
 		others[#others + 1] = "disenchant " .. root.Money(disenchant)
 	end
 	if best ~= "auction" then
 		if auction then
-			others[#others + 1] = "auction " .. root.Money(auction)
+			others[#others + 1] = "auction " .. root.Money(auction) .. (old and (" " .. OLD .. old .. "|cffaaaaaa") or "")
 		elseif not bound then
 			others[#others + 1] = "no auction price"
 		end
@@ -117,8 +128,12 @@ local function BestLine(best, disenchant, auction, vendor, bound)
 	if best ~= "vendor" and vendor then
 		others[#others + 1] = "vendor " .. root.Money(vendor)
 	end
+	local head = BEST_TEXT[best]
+	if best == "auction" and old then
+		head = head .. " " .. OLD .. "(price " .. old .. ")|r"
+	end
 	local tail = #others > 0 and (" |cffaaaaaa(" .. table.concat(others, ", ") .. ")|r") or ""
-	return BEST_TEXT[best] .. tail
+	return head .. tail
 end
 
 local function CountText(r)
@@ -186,7 +201,7 @@ local function Annotate(tooltip, data)
 
 	local label = root.UI.InlineIcon(ns.icon, 14) .. " |cffb48cffDisenchant|r"
 	if e.value then
-		tooltip:AddDoubleLine(label, root.Money(e.value))
+		tooltip:AddDoubleLine(label, root.Money(e.value) .. (e.stale and (" " .. OLD .. "(old prices)|r") or ""))
 	elseif not e.hasAH then
 		tooltip:AddDoubleLine(label, "|cffaaaaaaneeds Auctionator prices|r")
 	else
@@ -197,10 +212,11 @@ local function Annotate(tooltip, data)
 		local bound = bindType == 1 or SaysBound(data)
 		if not bound or CanDisenchant() then
 			local auction = not bound and root.AuctionPrice(link or itemId) or nil
+			local auctionAge = auction and root.AuctionAge(link or itemId) or nil
 			local vendor = type(sellPrice) == "number" and sellPrice > 0 and sellPrice or nil
 			local best = ns.Best(e.value, auction, vendor)
 			if best then
-				tooltip:AddLine(BestLine(best, e.value, auction, vendor, bound))
+				tooltip:AddLine(BestLine(best, e.value, auction, vendor, bound, auctionAge))
 			end
 		end
 	end
@@ -210,7 +226,8 @@ local function Annotate(tooltip, data)
 			local count = CountText(r)
 			tooltip:AddDoubleLine(
 				"  " .. root.UI.ItemIcon(r.id, 12) .. "|cffaaaaaa" .. MatName(r.id) .. (count ~= "" and (" " .. count) or "") .. ", " .. PctText(r.p) .. "|r",
-				r.price and (root.Money(r.price) .. " |cffaaaaaaeach|r") or "|cffaaaaaano price|r"
+				r.price and (root.Money(r.price) .. " |cffaaaaaaeach|r" .. (root.AuctionStale(r.age) and (", " .. OLD .. root.SeenText(r.age) .. "|r") or ""))
+					or "|cffaaaaaano price|r"
 			)
 		end
 	end
@@ -274,15 +291,19 @@ local function MatOrder()
 	return ids
 end
 
+-- Materials with a price, materials in all, and priced ones last seen over root.STALE_DAYS ago.
 local function PricedCount()
-	local n, total = 0, 0
+	local n, total, old = 0, 0, 0
 	for id in pairs(ns.Data.mats) do
 		total = total + 1
 		if root.AuctionPrice(id) then
 			n = n + 1
+			if root.AuctionStale(root.AuctionAge(id)) then
+				old = old + 1
+			end
 		end
 	end
-	return n, total
+	return n, total, old
 end
 
 local function PrintPrices()
@@ -293,7 +314,13 @@ local function PrintPrices()
 	ns:Print("material prices from Auctionator:")
 	for _, id in ipairs(MatOrder()) do
 		local price = root.AuctionPrice(id)
-		print("  " .. root.UI.ItemIcon(id) .. MatName(id) .. ": " .. (price and root.Money(price) or "|cffaaaaaano price|r"))
+		local text = "|cffaaaaaano price|r"
+		if price then
+			local age = root.AuctionAge(id)
+			local seen = root.SeenText(age)
+			text = root.Money(price) .. (seen and (", " .. (root.AuctionStale(age) and OLD or "|cffaaaaaa") .. seen .. "|r") or "")
+		end
+		print("  " .. root.UI.ItemIcon(id) .. MatName(id) .. ": " .. text)
 	end
 end
 
@@ -312,11 +339,15 @@ function ns.HubStatus()
 	if not root.HasAuctionator() then
 		return "|cffff9955Needs Auctionator for prices|r"
 	end
-	local n, total = PricedCount()
+	local n, total, old = PricedCount()
 	if n == 0 then
 		return "|cffff9955No material prices yet: scan the auction house|r"
 	end
-	return ("Prices for %d of %d materials"):format(n, total)
+	local text = ("Prices for %d of %d materials"):format(n, total)
+	if old > 0 then
+		text = text .. (", " .. OLD .. "%d over %d days old|r"):format(old, root.STALE_DAYS)
+	end
+	return text
 end
 
 -- Tooltip hooks cannot be removed, so the hook is added once and checks ns.enabled each time.

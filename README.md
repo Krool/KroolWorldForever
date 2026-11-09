@@ -53,8 +53,9 @@ Optional companions:
   and the other features work normally.
 - **Auctionator**: auction house prices for Kill Value, Disenchant Value and Skill-Up Odds. Without it
   Kill Value uses vendor prices, Disenchant Value names the materials without prices, and Skill-Up
-  Odds prices only the reagents it has seen at a vendor. Skill-Up Odds re-prices its panel when an
-  Auctionator scan finishes and flags auction prices more than 3 days old.
+  Odds prices only the reagents it has seen at a vendor. All three mark auction prices more than 3
+  days old, and Kill Value and Skill-Up Odds pick up new prices as soon as an Auctionator scan
+  finishes.
 
 ## Slash commands
 

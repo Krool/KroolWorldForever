@@ -14,6 +14,15 @@ local function Secret(v)
 end
 
 local SRC_TAG = { vendor = " (vendor)", quest = " (quest)", ah = " (AH)" }
+local OLD = "|cffff9955"
+
+-- " (AH)", or " (AH, seen 5 days ago)" when the auction price is old.
+local function SrcTag(c)
+	if c.src == "ah" and root.AuctionStale(c.age) then
+		return " (AH, " .. OLD .. root.SeenText(c.age) .. "|r)"
+	end
+	return SRC_TAG[c.src] or ""
+end
 local GATHER = { S = "skinning", H = "herbalism", M = "mining" }
 local GATHER_TITLE = { S = "Skinning", H = "Herbalism", M = "Mining" }
 local RANK_TAG = { [1] = " elite", [2] = " rare-elite", [3] = " BOSS", [4] = " rare" }
@@ -70,6 +79,8 @@ local function AddLines(tooltip, data)
 	end
 	if acc.known == 0 and acc.unknown > 0 and acc.gold <= 0 then
 		tag = "|cff888888(no prices)|r"
+	elseif acc.stale then
+		tag = "|cff888888(" .. FKV.SourceTag(acc) .. ", " .. OLD .. "old prices|cff888888)|r"
 	end
 	tooltip:AddDoubleLine(LINE_LABEL, Money(acc.total) .. " " .. tag, 0.2, 1, 0.6, 1, 1, 1)
 	if cfg.detail > 0 then
@@ -82,7 +93,7 @@ local function AddLines(tooltip, data)
 				break
 			end
 			tooltip:AddDoubleLine(
-				"  " .. root.UI.ItemIcon(c.id, 12) .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. (SRC_TAG[c.src] or ""),
+				"  " .. root.UI.ItemIcon(c.id, 12) .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. SrcTag(c),
 				Money(c.value),
 				0.7,
 				0.7,
@@ -177,7 +188,7 @@ local function Report(npcId, label)
 		if n >= 10 or c.value < 1 then
 			break
 		end
-		Print("  " .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. (SRC_TAG[c.src] or "") .. ": " .. Money(c.value))
+		Print("  " .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. SrcTag(c) .. ": " .. Money(c.value))
 		n = n + 1
 	end
 	if acc.rare > 0 then
@@ -187,7 +198,7 @@ local function Report(npcId, label)
 			if n >= 5 or c.value < 1 then
 				break
 			end
-			Print("    " .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. (SRC_TAG[c.src] or "") .. ": " .. Money(c.value))
+			Print("    " .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. SrcTag(c) .. ": " .. Money(c.value))
 			n = n + 1
 		end
 	end
@@ -199,6 +210,16 @@ local function Report(npcId, label)
 	end
 	if acc.unknown > 0 then
 		Print("  " .. acc.unknown .. " drop(s) have no known price")
+	end
+	if acc.stale then
+		Print(
+			("  %sold prices|r: %s of this is priced from auctions last seen over %d days ago (up to %d). Scan the auction house."):format(
+				OLD,
+				Money(acc.staleValue),
+				root.STALE_DAYS,
+				acc.stale
+			)
+		)
 	end
 end
 
@@ -218,7 +239,7 @@ local function Status()
 		)
 	)
 	Print(("learned: %d creatures, %d corpses looted (learning %s)"):format(npcs, corpses, FKV.cfg.learn and "on" or "off"))
-	Print("Auctionator prices: " .. (hasAH and "available" or "not installed (vendor prices only)"))
+	Print("Auctionator prices: " .. (hasAH and (ns.auctionHooked and "available, refreshed after its scans" or "available") or "not installed (vendor prices only)"))
 	FKV.RefreshSkills()
 	local known = {}
 	for _, kind in ipairs({ "S", "H", "M" }) do
@@ -408,6 +429,10 @@ ns.slash = { "/fkv", "/killvalue" }
 
 function ns.OnLoad()
 	FKV.AttachDB(ns.db)
+	-- New prices from a scan reach the next tooltip at once, not only when the auction house closes.
+	ns.auctionHooked = root.OnAuctionPrices(function()
+		FKV.ClearPriceCache()
+	end)
 end
 
 -- The tooltip hook cannot be removed, so it is registered once and checks ns.enabled itself.

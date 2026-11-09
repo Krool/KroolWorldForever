@@ -51,6 +51,25 @@ function root.AuctionAge(item)
 	return nil
 end
 
+-- An auction price older than this many days is called old: features mark it, and Skill-Up Odds
+-- lets a vendor price beat it. An unknown age is never old (an Auctionator without the age call).
+root.STALE_DAYS = 3
+function root.AuctionStale(age)
+	return age ~= nil and age > root.STALE_DAYS
+end
+
+-- "seen today", "seen yesterday", "seen 5 days ago"; nil for an unknown age.
+function root.SeenText(age)
+	if age == nil then
+		return nil
+	elseif age == 0 then
+		return "seen today"
+	elseif age == 1 then
+		return "seen yesterday"
+	end
+	return ("seen %d days ago"):format(age)
+end
+
 -- fn runs after every Auctionator scan that updated its prices. Auctionator is an OptionalDep, so
 -- it has loaded by our OnLoad; the first successful call registers with it once and fans out.
 -- Returns whether Auctionator will call back.

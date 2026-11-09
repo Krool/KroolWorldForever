@@ -66,7 +66,8 @@ panel that ranks learned recipes by the gold a point costs on average.
 
 - `root.AuctionPrice` is Auctionator's last-seen minimum buyout. `root.AuctionAge`
   (`API.v1.GetAuctionAgeByItemID`) is the days since the item was last seen at auction.
-- Stale = older than `ns.STALE_DAYS` (3). A stale reagent price still prices the craft (better than
+- Stale = older than `root.STALE_DAYS` (3, `Core/Prices.lua`, shared with Kill Value and
+  Disenchant Value since 0.13.1). A stale reagent price still prices the craft (better than
   no cost) but loses to any known vendor price, and the tooltip ("Auction prices up to N days old")
   and the panel row ("old prices") say so. A stale price never values the result (resale option).
   Each reagent's source in the tooltip carries its age ("auction, today").

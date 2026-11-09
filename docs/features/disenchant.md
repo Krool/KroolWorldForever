@@ -36,6 +36,15 @@ Best: disenchant it (auction 20s, vendor 5s)
 - **Bound items** (bind on pickup, or a tooltip that says Soulbound or Account Bound) skip the
   auction price, and get the Best line only when you can disenchant yourself
   (`C_SpellBook.ContainsAnyDisenchantSpell`).
+- **Old prices (0.13.1):** `root.AuctionAge` gives the days since Auctionator last saw an item.
+  Over 3 days (`root.STALE_DAYS`) is old. Materials are listed all the time, so they go old only
+  without a scan; the item's own price is the weak spot (a given green may be listed once a week,
+  and Auctionator keeps its last price).
+  - A main material (10% or more) with an old price marks the value "(old prices)".
+  - An old price for the item itself still competes for Best, and the line dates it: "Best: sell it
+    at auction (price seen 6 days ago)" or "(disenchant 27s 75c, auction 20s seen 6 days ago)".
+  - Shift dates old materials; `/kwd` dates every one; the hub counts the old ones.
+  - No refresh hook: the tooltip is built fresh on every hover.
 
 ## Auctionator's own disenchant line
 

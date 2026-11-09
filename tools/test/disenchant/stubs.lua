@@ -255,6 +255,8 @@ C_SpellBook = {
 -- Auctionator's public API. AuctionatorOn(false) uninstalls it.
 Prices = {} -- item id -> copper
 LinkPrices = {} -- item link -> copper (the link API tells apart suffixes and levels)
+Ages = {} -- item id -> days since Auctionator last saw it (missing: it cannot say)
+LinkAges = {} -- item link -> days
 function AuctionatorOn(on)
 	if on == false then
 		Auctionator = nil
@@ -268,6 +270,12 @@ function AuctionatorOn(on)
 				end,
 				GetAuctionPriceByItemLink = function(_, link)
 					return LinkPrices[link] or Prices[IdOf(link)]
+				end,
+				GetAuctionAgeByItemID = function(_, id)
+					return Ages[id]
+				end,
+				GetAuctionAgeByItemLink = function(_, link)
+					return LinkAges[link] or Ages[IdOf(link)]
 				end,
 			},
 		},

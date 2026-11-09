@@ -280,6 +280,66 @@ AuctionatorOn(true)
 SetPrices()
 LinkPrices["item:" .. CHEST] = 2000
 
+-- ---------------------------------------------------------------- price age
+
+check("shared: 3 days is not old", root.AuctionStale(3), false)
+check("shared: 4 days is old", root.AuctionStale(4), true)
+check("shared: unknown age is not old", root.AuctionStale(nil), false)
+check("seen today", root.SeenText(0), "seen today")
+check("seen yesterday", root.SeenText(1), "seen yesterday")
+check("seen days ago", root.SeenText(6), "seen 6 days ago")
+check("unknown age: no text", root.SeenText(nil), nil)
+
+SetPrices()
+LinkPrices["item:" .. CHEST] = 2000
+Ages[SOUL], Ages[ASTRAL], Ages[GLIMMER] = 0, 1, 0
+e = ns.Evaluate(CHEST, 2, 4, 28)
+check("age: fresh materials are not old", e.stale, nil)
+check("age: each row carries its age", e.rows[2].age, 1)
+tt = ShowItem(CHEST)
+check("age: fresh value line unmarked", tostring(RightOf(tt, "Disenchant")):find("old prices", 1, true), nil)
+Ages[GLIMMER] = 9
+check("age: an old rare shard does not mark the value", ns.Evaluate(CHEST, 2, 4, 28).stale, nil)
+Ages[ASTRAL] = 5
+e = ns.Evaluate(CHEST, 2, 4, 28)
+check("age: an old main material marks the value", e.stale, 5)
+check("age: the value is still counted", math.floor(e.value + 0.5), EXPECTED)
+tt = ShowItem(CHEST)
+check("age: value line says old prices", tostring(RightOf(tt, "Disenchant")):find("(old prices)", 1, true) ~= nil, true)
+ShiftDown = true
+tt = ShowItem(CHEST)
+ShiftDown = false
+check("age: Shift list dates the old material", has(tt.right, "seen 5 days ago"), true)
+check("age: and only old ones", has(tt.right, "seen today"), false)
+Ages[SOUL], Ages[ASTRAL], Ages[GLIMMER] = 0, 0, 0
+
+-- the item's own auction price
+LinkAges["item:" .. CHEST] = 6
+best = BestLine(ShowItem(CHEST))
+check("old item price: disenchant still best", best and best:find("disenchant it", 1, true) ~= nil, true)
+check("old item price: the auction price is dated", best and best:find("seen 6 days ago", 1, true) ~= nil, true)
+LinkPrices["item:" .. CHEST] = 9000
+best = BestLine(ShowItem(CHEST))
+check("old item price still wins when higher", best and best:find("sell it at auction", 1, true) ~= nil, true)
+check("and the call says how old", best and best:find("(price seen 6 days ago)", 1, true) ~= nil, true)
+LinkAges["item:" .. CHEST] = 2
+best = BestLine(ShowItem(CHEST))
+check("a recent item price is not dated", best and best:find("seen", 1, true), nil)
+LinkAges["item:" .. CHEST] = nil
+LinkPrices["item:" .. CHEST] = 2000
+
+-- /kwd and the hub
+Ages[ASTRAL] = 5
+local outAge = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_DISENCHANT("")
+end)
+check("/kwd dates every priced material", has(outAge, "Soul Dust: ") and has(outAge, "seen today"), true)
+check("/kwd shows the old one", has(outAge, "seen 5 days ago"), true)
+check("hub: counts old prices", ns.HubStatus():find("1 over 3 days old", 1, true) ~= nil, true)
+Ages[ASTRAL] = 0
+check("hub: nothing old, nothing said", ns.HubStatus(), "Prices for 3 of 24 materials")
+wipe(Ages)
+
 -- ---------------------------------------------------------------- on/off
 
 capture(function()

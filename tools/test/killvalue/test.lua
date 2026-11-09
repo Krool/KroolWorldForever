@@ -90,7 +90,15 @@ end
 do
 	FireEvent("ADDON_LOADED", "SomeOtherAddon")
 	check("other addon's ADDON_LOADED ignored", KroolWorldForeverDB, nil)
+	-- Auctionator is an OptionalDep, so it has loaded by our OnLoad: the scan hook registers then.
+	AuctionatorScans = {}
+	Auctionator = { API = { v1 = { RegisterForDBUpdate = function(_, fn)
+		AuctionatorScans[#AuctionatorScans + 1] = fn
+	end } } }
 	FireEvent("ADDON_LOADED", "KroolWorldForever")
+	Auctionator = nil
+	check("Auctionator scan hook registered", ns.auctionHooked, true)
+	check("registered with Auctionator once", #AuctionatorScans, 1)
 	check("SavedVariables table created", type(KroolWorldForeverDB), "table")
 	local slice = KroolWorldForeverDB.features.killvalue
 	check("feature slice created", type(slice), "table")
@@ -350,6 +358,76 @@ do
 	local a5 = FKV.Compute(9000004)
 	check("unpriced drop counted as unknown", a5.unknown, 1)
 	near("unpriced drop adds nothing", a5.total, 50)
+end
+
+-- ---------------------------------------------------------------- old auction prices
+
+do
+	fresh()
+	setItems()
+	local prices, ages = { [9100002] = 2000 }, {}
+	Auctionator = { API = { v1 = {
+		GetAuctionPriceByItemID = function(_, id)
+			return prices[id]
+		end,
+		GetAuctionAgeByItemID = function(_, id)
+			return ages[id]
+		end,
+	} } }
+	-- coin 150, item1 x1 @50 (vendor), item2 x0.5 at auction 2000 less 5% = 950
+	ns.Data.mob[9000010] = "100:200|9100001:1,9100002:0.5|||12:0:900"
+	local acc = FKV.Compute(9000010)
+	near("auction drop in the total", acc.total, 150 + 50 + 950)
+	check("unknown age: not old", acc.stale, nil)
+	check("the drop's age is unknown", acc.top[1].age, nil)
+	ages[9100002] = 3
+	FKV.ClearPriceCache()
+	check("3 days: not old yet", FKV.Compute(9000010).stale, nil)
+
+	ages[9100002] = 5
+	prices[9100002] = 4000
+	check("the breakdown is cached until a scan", FKV.Compute(9000010).stale, nil)
+	AuctionatorScans[1]()
+	acc = FKV.Compute(9000010)
+	near("a scan clears the cache: the new price at once", acc.total, 150 + 50 + 1900)
+	check("an old price marks the kill value", acc.stale, 5)
+	near("how much of it is old", acc.staleValue, 1900)
+	check("the drop carries its age", acc.top[1].age, 5)
+	check("a vendor-priced drop has no age", acc.top[2].age, nil)
+
+	local left, right = Hover(G(9000010))
+	check("tooltip: old prices on the total", has(right, "old prices"), true)
+	check("tooltip: the drop line dates it", has(left, "(AH, |cffff9955seen 5 days ago"), true)
+	local out = capture(function()
+		ns.Slash("id 9000010")
+	end)
+	check("/fkv id dates the drop", has(out, "seen 5 days ago"), true)
+	check("/fkv id says how much is old", has(out, "is priced from auctions last seen over 3 days ago (up to 5)"), true)
+	out = capture(function()
+		ns.Slash("status")
+	end)
+	check("/fkv status: refreshed after scans", has(out, "refreshed after its scans"), true)
+
+	-- old prices under a tenth of the total are not called out
+	ns.Data.mob[9000011] = "100000:100000|9100001:1,9100002:0.5|||12:0:900"
+	acc = FKV.Compute(9000011)
+	check("a small old share is not marked", acc.stale, nil)
+	left, right = Hover(G(9000011))
+	check("tooltip: no old prices then", has(right, "old prices"), false)
+	check("the drop line still dates it", has(left, "seen 5 days ago"), true)
+
+	-- old skinning prices count when the skinning is in the total
+	ages[9100002], prices[9100002] = nil, 2000
+	prices[9100003], ages[9100003] = 10000, 6
+	ns.Data.mob[9000012] = "0:0|9100001:1||9100003:0.5|5:0:100"
+	FKV.ClearPriceCache()
+	check("skinning you cannot do: not marked", FKV.Compute(9000012).stale, nil)
+	SkillLines[393] = { rank = 100 }
+	FKV.RefreshSkills()
+	acc = FKV.Compute(9000012)
+	check("skinning in the total: old price marks it", acc.stale, 6)
+	SkillLines = {}
+	FKV.RefreshSkills()
 end
 
 -- ---------------------------------------------------------------- gathering: skill and need

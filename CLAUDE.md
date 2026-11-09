@@ -40,7 +40,9 @@ before writing addon code.
   the top of `Core/Registry.lua`. Add the files to the TOC before `Core\Hub.lua` and `Core\Init.lua`.
   The `/kw` hub (`Core/Hub.lua`) shows a card per feature from `ns.icon`, `ns.blurb` and
   `ns.HubStatus()`; give a new feature all three. Feature windows use `root.UI` (`Core/Widgets.lua`);
-  Auctionator prices and money text come from `root.AuctionPrice` / `root.Money` (`Core/Prices.lua`).
+  Auctionator prices and money text come from `root.AuctionPrice` / `root.Money` (`Core/Prices.lua`);
+  a price's age from `root.AuctionAge` (mark it old with `root.AuctionStale`, over 3 days), and a
+  refresh after each scan from `root.OnAuctionPrices`.
 - **Polish comes from the kit** (0.12.0): `UI.Window`/`UI.Polish` (open animation and sounds),
   `UI.Toast` for "done", `UI.Hover`/`UI.Selected`/`UI.Divider`/`UI.Empty`, `UI.FadeIn`/`Flash`/
   `Pop`/`Pulse`, `UI.Sound`, inline `UI.ItemIcon`/`InlineAtlas`. Animations are AnimationGroups
