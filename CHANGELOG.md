@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.1
+
+- **Sayge's Fortune:** no more "error in UNIT_AURA" lines inside dungeons. The game hides buff details
+  from addons in instances, and the feature tested one of those hidden values on every buff change.
+  It now leaves buffs alone while they are hidden, and catches up when you leave: a fortune lost in
+  there is reported then.
+- **Camp Guide:** the same care. It no longer tries to read your buffs while the game hides them.
+
 ## 0.14.0
 
 - **New feature: Sayge's Fortune.** When Sayge at the Darkmoon Faire can give you your next
