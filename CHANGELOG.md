@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.14.0
+
+- **New feature: Sayge's Fortune.** When Sayge at the Darkmoon Faire can give you your next
+  fortune.
+  - Sayge makes you wait 4 hours from your last fortune, and dying does not end the wait, though
+    the fortune itself is lost. The game hides that wait from you and from addons, so this notes
+    when you got each fortune, on every character, and counts from there.
+  - The time shows on the hub card, on Sayge's tooltip and on the fortune buff's tooltip.
+  - Die with the buff and a chat line says when you can get the next one. Another says when the
+    wait is over, if you are logged in.
+  - `/sayge` lists this character and your others for this faire.
+  - It records what Sayge says each time you talk to him, to check the 4 hours against real visits.
+    The 4 hours come from the game's data and are not yet confirmed on Forever.
+
 ## 0.13.2
 
 - **Hub:** the On/Off checkboxes line up in one column on every card, whether or not the card has

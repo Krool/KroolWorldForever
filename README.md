@@ -17,8 +17,9 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, what that is worth at auction, and whether disenchanting it pays more than auctioning or vendoring it. Hold Shift for each material's chance and price. | Auctionator (for prices) |
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
 | **Skill-Up Odds** | In the crafting window: the chance each recipe gives a skill point, beside its arrow. It is the common straight line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters (hover for the numbers and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average, and only reorders when a recipe is clearly cheaper. | Nothing (Auctionator optional) |
+| **Sayge's Fortune** | When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune and dying does not end it, but the game hides it: this notes when you got each fortune, on every character, and shows the time on the hub, on Sayge's tooltip and on the fortune buff. If you die with the buff, a chat line says when you can get the next one. | Nothing |
 
-All seven are on by default.
+All eight are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -26,7 +27,7 @@ All seven are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide and Skill-Up Odds never delete, sell,
+- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds and Sayge's Fortune never delete, sell,
   loot, craft or click anything for you. Rare Alert's marker comes from your own click or key press: the game does not let an
   addon place one by itself. Setups is the one feature that changes your UI: only out of combat,
   only when you click Apply (or for a brand-new level 1 character, if you marked a setup for that),
@@ -64,7 +65,7 @@ Optional companions:
 | `/kw` | Open the hub (again to close it) |
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
 | `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
@@ -84,10 +85,12 @@ Optional companions:
 | `/kwc` | Every camp buff at your level, which ones a class buff of yours covers, and your Camp Benefits time |
 | `/kwu` | How your crafts sit against the line, overall and range by range |
 | `/kwu status` / `panel` | Where the numbers come from (data build, crafts logged); show or hide the Next Skill Point panel |
+| `/sayge` | When Sayge gives your next fortune, on this character and your others this faire |
 
 The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
-`/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide` and
-`/skillup` are long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd`, `/kwc` and `/kwu`.
+`/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide`,
+`/skillup` and `/kwsayge` are long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd`, `/kwc`, `/kwu`
+and `/sayge`.
 
 ## Settings
 
@@ -190,6 +193,18 @@ On by default: yes. Toggle: `/kwf skillup on|off`. Commands: `/kwu, /skillup`.
 | Subtract What The Result Sells For | On | Takes the crafted item's vendor price off the cost of a craft. |
 | Value The Result At Auction | Off | Uses the crafted item's Auctionator price (after the 5% cut) when it beats the vendor price and is at most 3 days old. Only if you will really sell it there. |
 | Measure Your Crafts | On | Records each craft's skill before and after, account-wide. Your yellow and green crafts tune the odds. |
+
+### Sayge's Fortune
+
+When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune and dying does not end it, though the fortune itself is lost. The game hides that wait, so this notes when you got each fortune, on every character.
+
+On by default: yes. Toggle: `/kwf fortune on|off`. Commands: `/sayge, /kwsayge`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Show On Sayge And Your Fortune | On | Adds when you can get your next fortune to Sayge's tooltip and to the fortune buff's tooltip. |
+| Tell Me If I Lose It | On | When your fortune goes early (you died), says in chat when Sayge gives the next one. |
+| Tell Me When The Wait Is Over | On | Says in chat when Sayge's 4-hour wait ends, if you are logged in. |
 <!-- settings:end -->
 
 ## FAQ
