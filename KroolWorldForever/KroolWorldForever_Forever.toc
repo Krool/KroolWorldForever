@@ -2,7 +2,7 @@
 ## Title: Krool World Forever
 ## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters), Rare Alert (alert and a one-key marker for rare enemies), Disenchant Value (what a green is worth disenchanted), Camp Guide (what a campfire's objects give you), Skill-Up Odds (skill-up chances tuned by your crafts, and the cheapest next point). /kw
 ## Author: Krool
-## Version: 0.12.2
+## Version: 0.13.0
 ## Category: Interface Enhancements
 ## IconTexture: Interface\Icons\INV_Misc_Bag_10
 ## AddonCompartmentFunc: KroolWorldForever_OnCompartmentClick
