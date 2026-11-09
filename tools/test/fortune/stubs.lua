@@ -283,10 +283,20 @@ AuctionatorOn(true)
 PlayerAuras = {}
 Buffs = {}
 AuraErrors = false
+AuraReads = 0 -- every GetPlayerAuraBySpellID call
+-- AurasHidden: what C_Secrets.ShouldAurasBeSecret says (inside instances on Forever). Reading an
+-- aura then errors, as the client does for tainted code.
+AurasHidden = false
+C_Secrets = {
+	ShouldAurasBeSecret = function()
+		return AurasHidden
+	end,
+}
 C_UnitAuras = {
 	GetPlayerAuraBySpellID = function(id)
-		if AuraErrors then
-			error("aura lookup failed")
+		AuraReads = AuraReads + 1
+		if AuraErrors or AurasHidden then
+			error("Auras cannot be accessed when secret while tainted")
 		end
 		return PlayerAuras[id]
 	end,

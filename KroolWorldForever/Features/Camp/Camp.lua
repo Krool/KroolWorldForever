@@ -29,7 +29,7 @@ end
 
 local function PlayerAura(spellId)
 	local fn = C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID
-	if not fn then
+	if not fn or root.AurasSecret() then
 		return nil
 	end
 	local ok, aura = pcall(fn, spellId)
@@ -39,7 +39,7 @@ end
 -- A class buff on you, by its aura name (every rank shares it).
 local function HasBuff(name)
 	local fn = C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName
-	if not fn then
+	if not fn or root.AurasSecret() then
 		return false
 	end
 	local ok, aura = pcall(fn, "player", name, "HELPFUL")

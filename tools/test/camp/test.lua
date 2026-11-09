@@ -377,6 +377,15 @@ check("hub: Camp Benefits time", ns.HubStatus():find("Camp Benefits: 43 min left
 PlayerAuras[BENEFITS] = { expirationTime = 0 }
 check("hub: Camp Benefits without a time", ns.HubStatus():find("Camp Benefits: on", 1, true) ~= nil, true)
 
+-- inside an instance auras are hidden: nothing is read (reading would error), nothing claimed
+AurasHidden = true
+AuraReads = 0
+local hiddenStatus = ns.HubStatus()
+check("hidden auras: not one read", AuraReads, 0)
+check("hidden auras: no camp buffs claimed", hiddenStatus:find("No camp buffs", 1, true) ~= nil, true)
+check("hidden auras: object tooltips stay quiet", Count(ShowObject("Lodestone")), 0)
+AurasHidden = false
+
 Reset()
 AtCamp(true)
 capture(function()

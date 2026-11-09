@@ -282,15 +282,26 @@ AuctionatorOn(true)
 PlayerAuras = {}
 Buffs = {}
 AuraErrors = false
+AuraReads = 0 -- every aura lookup
+-- AurasHidden: what C_Secrets.ShouldAurasBeSecret says (inside instances on Forever). Reading an
+-- aura then errors, as the client does for tainted code.
+AurasHidden = false
+C_Secrets = {
+	ShouldAurasBeSecret = function()
+		return AurasHidden
+	end,
+}
 C_UnitAuras = {
 	GetPlayerAuraBySpellID = function(id)
-		if AuraErrors then
+		AuraReads = AuraReads + 1
+		if AuraErrors or AurasHidden then
 			error("aura lookup failed")
 		end
 		return PlayerAuras[id]
 	end,
 	GetAuraDataBySpellName = function(unit, name, filter)
-		if AuraErrors then
+		AuraReads = AuraReads + 1
+		if AuraErrors or AurasHidden then
 			error("aura lookup failed")
 		end
 		if unit == "player" and filter == "HELPFUL" then

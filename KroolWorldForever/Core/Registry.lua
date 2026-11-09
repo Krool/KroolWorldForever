@@ -55,6 +55,21 @@ function root.Print(msg)
 	print(PREFIX .. ": " .. msg)
 end
 
+-- True while the game hides aura data from addons (instances, Midnight's rules). Reading auras then
+-- errors ("Auras cannot be accessed when secret while tainted") and the fields come back secret,
+-- so features skip aura reads entirely. Unknown counts as hidden.
+function root.AurasSecret()
+	local S = C_Secrets
+	if not (S and S.ShouldAurasBeSecret) then
+		return false -- a client without the predicate has no secret auras
+	end
+	local ok, secret = pcall(S.ShouldAurasBeSecret)
+	if not ok or (issecretvalue and issecretvalue(secret)) then
+		return true
+	end
+	return secret == true
+end
+
 -- Events: one frame for the whole bundle, dispatched to enabled features.
 local watched = {}
 function root.WatchEvent(event)

@@ -11,7 +11,10 @@ before writing addon code.
   retail docs and the `forever` branch of Gethe/wow-ui-source.
 - Midnight addon restrictions apply: **secret values** (combo points, threat, combat log, some chat,
   all unit tooltip data inside instances). Never compare or do math on a value that may be secret;
-  check `issecretvalue` first.
+  check `issecretvalue` first. That includes boolean tests (`if x`, `x and y or z`): **UNIT_AURA's
+  `updateInfo.isFullUpdate` is secret inside instances** (seen in the Deadmines, 2026-11-09). Aura
+  reads there error ("Auras cannot be accessed when secret while tainted"): gate every aura read on
+  `root.AurasSecret()` (`C_Secrets.ShouldAurasBeSecret`).
 - `## Interface: 16001`, TOC `KroolWorldForever_Forever.toc`, detect with
   `WOW_PROJECT_ID == WOW_PROJECT_CAMELOT` (18).
 - Creature GUIDs: the NPC id is the 6th field and reads fine in-game (stress test 2026-10-21:

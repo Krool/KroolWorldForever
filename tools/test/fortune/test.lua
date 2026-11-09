@@ -380,8 +380,59 @@ check("aura lookup error stays inside", has(out, "error"), false)
 check("hub survives it", type(ns.HubStatus()), "string")
 AuraErrors = false
 
+-- ---------------------------------------------------------------- secrets (the Deadmines, 2026-11-09)
+
+-- UNIT_AURA's own fields can be secret: a boolean test on isFullUpdate raised every aura change.
+-- A stub secret cannot make a boolean test fail (plain Lua has no hook for it), so this checks the
+-- handling, not the error itself; the fix is the Secret() check before each test in OnAura.
+wipe(PlayerAuras)
+db.chars = {}
+Gain(DAMAGE)
+out = capture(function()
+	FireEvent("UNIT_AURA", "player", { isFullUpdate = Secret(), addedAuras = Secret(), removedAuraInstanceIDs = Secret() })
+	FireEvent("UNIT_AURA", "player", { isFullUpdate = false, addedAuras = { { spellId = Secret() } } })
+	FireEvent("UNIT_AURA", Secret(), {})
+end)
+check("secret event fields: no error", has(out, "error"), false)
+check("secret event fields: the record stands", Mine() and Mine().kind, "Damage")
+
+-- while auras are hidden nothing is read, and a hidden fortune is not a lost one
+AurasHidden = true
+AuraReads = 0
+out = capture(function()
+	FireEvent("UNIT_AURA", "player", { isFullUpdate = true })
+	FireEvent("UNIT_AURA", "player", { removedAuraInstanceIDs = { 999 } })
+	FireEvent("PLAYER_DEAD")
+	ShowUnit(SAYGE)
+	ShowAura(DAMAGE)
+	SlashCmdList.KROOLWORLDFOREVER_FORTUNE("")
+end)
+check("hidden auras: not one read", AuraReads, 0)
+check("hidden auras: no error", has(out, "error"), false)
+check("hidden auras: no false loss", has(out, "You lost"), false)
+check("hidden auras: the clock still answers", Status():find("Fortune of Damage", 1, true) ~= nil, true)
+check("hidden auras: the record stands", Mine().lost, nil)
+-- died in there: the loss shows once the auras can be read again
+PlayerAuras[DAMAGE] = nil
+Advance(600)
+AurasHidden = false
+out = capture(function()
+	FireEvent("PLAYER_ENTERING_WORLD")
+end)
+check("out again: the loss is noticed", has(out, "You lost your fortune"), true)
+check("the shared check reads the predicate", root.AurasSecret(), false)
+C_Secrets.ShouldAurasBeSecret = function()
+	error("no")
+end
+check("an erroring predicate counts as hidden", root.AurasSecret(), true)
+C_Secrets.ShouldAurasBeSecret = function()
+	return AurasHidden
+end
+
 -- ---------------------------------------------------------------- on/off
 
+wipe(PlayerAuras)
+db.chars = {}
 out = capture(function()
 	SlashCmdList.KROOLWORLDFOREVER("fortune off")
 end)

@@ -133,10 +133,10 @@ end
 
 -- -------------------------------------------------------------------- the fortune on you
 
--- The fortune on you now: its spell id and aura, or nil.
+-- The fortune on you now: its spell id and aura, or nil (also while auras are hidden).
 function ns.Current()
 	local fn = C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID
-	if not fn then
+	if not fn or root.AurasSecret() then
 		return nil
 	end
 	for id in pairs(ns.FORTUNES) do
@@ -198,8 +198,20 @@ local function Lost()
 	Refresh()
 end
 
--- Notes the fortune on you (a new one replaces the record), or notices it is gone.
+-- Whether the fortune is on you: true, false, or nil while auras are hidden (go by the clock).
+local function Have()
+	if root.AurasSecret() then
+		return nil
+	end
+	return ns.Current() ~= nil
+end
+
+-- Notes the fortune on you (a new one replaces the record), or notices it is gone. Does nothing
+-- while auras are hidden (instances): a hidden fortune is not a lost one.
 function ns.Scan()
+	if root.AurasSecret() then
+		return
+	end
 	local id, aura = ns.Current()
 	if not id then
 		if seenInstance and not InInstance() then
@@ -223,17 +235,24 @@ function ns.Scan()
 	Refresh()
 end
 
+-- UNIT_AURA's fields can be secret (inside instances on Forever): every one is checked before it
+-- is tested or compared, and nothing is read at all while auras are hidden.
 local function OnAura(_, unit, info)
-	if unit ~= "player" then
+	if Secret(unit) or unit ~= "player" or root.AurasSecret() then
 		return
 	end
-	if type(info) ~= "table" or info.isFullUpdate then
+	if type(info) ~= "table" then
+		ns.Scan()
+		return
+	end
+	local full = info.isFullUpdate
+	if Secret(full) or full == true then
 		ns.Scan()
 		return
 	end
 	local added = Plain(info.addedAuras, "table")
 	for _, a in ipairs(added or {}) do
-		local sid = type(a) == "table" and a.spellId
+		local sid = type(a) == "table" and a.spellId -- no "or": that would test a secret
 		if Secret(sid) or (type(sid) == "number" and ns.FORTUNES[sid]) then
 			ns.Scan()
 			break
@@ -292,7 +311,7 @@ end
 
 local function MyStatus()
 	local rec, now = ns.Mine(), Now()
-	return ns.StatusText(rec, now, ns.Current() ~= nil), rec, now
+	return ns.StatusText(rec, now, Have()), rec, now
 end
 
 -- -------------------------------------------------------------------- Sayge's answers
@@ -329,7 +348,7 @@ local function OnGossip()
 	visits[#visits + 1] = {
 		t = now,
 		got = rec and rec.got,
-		have = ns.Current() ~= nil,
+		have = Have(),
 		n = #options,
 		verdict = verdict,
 		text = text and text:sub(1, 160),
@@ -354,7 +373,7 @@ local function AddSaygeLines(tooltip, data)
 	end
 	local text, rec, now = MyStatus()
 	tooltip:AddLine(LABEL .. text)
-	local state, nextAt = ns.State(rec, now, ns.Current() ~= nil)
+	local state, nextAt = ns.State(rec, now, Have())
 	if state == "active" then
 		tooltip:AddLine(GREY .. "The next one " .. ns.When(nextAt, now) .. ", even if you die.|r", nil, nil, nil, true)
 	elseif state == "waiting" then
@@ -428,7 +447,7 @@ local function PrintStatus()
 	local text, rec, now = MyStatus()
 	ns:Print(text)
 	if rec and now then
-		local state, nextAt = ns.State(rec, now, ns.Current() ~= nil)
+		local state, nextAt = ns.State(rec, now, Have())
 		if state == "active" then
 			print("  " .. GREY .. "The next one " .. ns.When(nextAt, now) .. ", even if you die.|r")
 		end
