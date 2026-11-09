@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.2
+
+- **Hub:** the On/Off checkboxes line up in one column on every card, whether or not the card has
+  an Open button.
+
 ## 0.13.1
 
 - **Disenchant Value: old auction prices are marked.**
