@@ -48,8 +48,10 @@ Blizzard's server code is not public, so this is the best reading of the evidenc
 ## What an addon can see
 
 - **Not the marker, most likely.** Since patch 9.2.5, `GetPlayerAuraBySpellID` "no longer returns
-  information about hidden auras" (warcraft.wiki.gg); `C_UnitAuras` came after. One line in game
-  settles it while the wait is running: `/dump C_UnitAuras.GetPlayerAuraBySpellID(23770)`.
+  information about hidden auras" (warcraft.wiki.gg); `C_UnitAuras` came after. The owner ran
+  `C_UnitAuras.GetPlayerAuraBySpellID(23770)` the same day and got nothing. The time of that
+  fortune is unknown, so the wait may already have ended, but it fits. Sayge's Fortune (0.14.0)
+  dates the visible fortune instead (`docs/features/fortune.md`).
 - **The fortune itself, yes**: `UNIT_AURA`, then `C_UnitAuras.GetPlayerAuraBySpellID(id)` for the
   eight ids. Its `expirationTime` minus 2 hours is when it was given; plus 4 hours is when Sayge
   should answer again. Kept per character against the real clock (`time()`), it survives death and
