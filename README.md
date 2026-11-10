@@ -65,6 +65,7 @@ Optional companions:
 | `/kw` | Open the hub (again to close it) |
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
+| `/kw errors` | List the errors the addon caught (`/kw errors clear` empties the list) |
 | `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
@@ -286,7 +287,8 @@ cd tools\test; npm install; npm test                                       # all
 - `tools/forever-api/` holds the API allowlist lint. It checks every `C_*` call, event and `Enum`
   against Forever's API docs.
 - `tools/killvalue-data/` holds the Kill Value loot data generator (cmangos classic-db).
-- `tools/bugs.js` prints the Lua errors !BugGrabber saved in your Forever install.
+- `tools/bugs.js` prints the Lua errors !BugGrabber saved in your Forever install, and the ones the
+  addon caught itself (`/kw errors`).
 - `template/HelloForever` is a minimal addon skeleton.
 
 ### Research notes

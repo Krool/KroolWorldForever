@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.15.0
+
+- **Errors are logged, and printed once.** The addon catches its own errors so they never reach the
+  game, which also kept them out of BugSack. Each one is now saved with its stack and a count.
+  `/kw errors` lists them (`/kw errors clear` empties the list), and the chat line shows once per
+  session instead of on every repeat, as it did in the Deadmines.
+- Tooltip lines, hub card lines, Kill Value's loot learning, the Skill-Up panel and Rare Alert's
+  button used to drop an error without a word. They log it now: tooltips and the hub quietly,
+  the others with one chat line.
+
 ## 0.14.1
 
 - **Sayge's Fortune:** no more "error in UNIT_AURA" lines inside dungeons. The game hides buff details
