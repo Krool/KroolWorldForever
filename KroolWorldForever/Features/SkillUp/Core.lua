@@ -342,7 +342,7 @@ function ns.Resolve()
 	local band = ns.Record(p.id, p.lvl, p.mod, gain, p.band, p.max)
 	ns.last = { id = p.id, before = p.lvl, gain = gain, band = band }
 	if ns.OnRecorded then
-		pcall(ns.OnRecorded, ns.last)
+		root.Try(ns, "craft", ns.OnRecorded, ns.last)
 	end
 	return band
 end
@@ -388,7 +388,7 @@ function ns.OnCastSucceeded(unit, guid, spellID)
 	end
 	C_Timer.After(RESOLVE_DELAY, function()
 		if pending == s then
-			pcall(ns.Resolve)
+			root.Try(ns, "craft", ns.Resolve)
 		end
 	end)
 end

@@ -94,6 +94,10 @@ before writing addon code.
 - **In-game errors:** the dev install (`_forever_\Interface\AddOns`) has !BugGrabber and BugSack.
   After the owner `/reload`s, `node tools\bugs.js [filter]` prints the latest session's errors with
   stacks (`--all` for every session, `--locals` for locals). Read it before guessing at a bug report.
+  BugSack never sees the bundle's own errors (every handler is caught), so bugs.js also prints the
+  bundle's log (`KroolWorldForeverDB.errors`, `/kw errors` in game). Wrap feature code in
+  `root.Try(F, where, fn, ...)` (prints once per session) or `root.TryQuiet` (tooltips: log only),
+  not a bare `pcall` that drops the error; bare `pcall` is for probing an API.
 
 ## Releases (same rules as KroolWorldUI)
 

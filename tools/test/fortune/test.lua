@@ -447,6 +447,84 @@ end)
 check("/kw fortune on", ns.enabled, true)
 check("on: the fortune is picked up", Mine() and Mine().kind, "Damage")
 
+-- ---------------------------------------------------------------- caught errors (core)
+-- The bundle catches every error, so BugSack never sees them: they are logged instead.
+
+local sv = KroolWorldForeverDB
+sv.errors = nil
+check("a session number is kept", type(root.session) == "number" and root.session == sv.session, true)
+ns.events.KW_TEST = function()
+	error("boom")
+end
+out = capture(function()
+	root.Dispatch("KW_TEST")
+	Advance(30)
+	root.Dispatch("KW_TEST")
+end)
+check("an event error is printed once", count_of(out, "boom"), 1)
+check("the line names the event", has(out, "error|r in KW_TEST"), true)
+local e = sv.errors and sv.errors[1]
+check("and logged once", sv.errors and #sv.errors, 1)
+check("with a count", e and e.count, 2)
+check("its feature", e and e.feature, "fortune")
+check("its event", e and e.where, "KW_TEST")
+check("its session", e and e.session, root.session)
+check("its stack", type(e and e.stack) == "string" and e.stack:find("test.lua", 1, true) ~= nil, true)
+check("first and last time", e and e.last - e.first, 30)
+ns.events.KW_TEST = nil
+
+out = capture(function()
+	root.TryQuiet(ns, "tooltip", function()
+		error("quiet one")
+	end)
+end)
+check("a quiet error prints nothing", #out, 0)
+check("but is logged, newest last", sv.errors[#sv.errors].where, "tooltip")
+
+local ok, a, b = root.Try(ns, "x", function(x)
+	return x, 2
+end, 1)
+check("Try passes results through", ok and a == 1 and b == 2, true)
+local okF, errF
+capture(function()
+	okF, errF = root.Try(ns, "x", function()
+		error("bad", 0)
+	end)
+end)
+check("Try returns false and the error", okF == false and errF == "bad", true)
+
+for i = 1, root.ERRORS_MAX + 5 do
+	root.TryQuiet(ns, "many", error, "error " .. i, 0)
+end
+check("the log is capped", #sv.errors, root.ERRORS_MAX)
+check("the newest stays", sv.errors[#sv.errors].message, "error " .. (root.ERRORS_MAX + 5))
+
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("errors")
+end)
+check("/kw errors lists them", has(out, "error(s) caught"), true)
+check("/kw errors names the feature", has(out, "Sayge's Fortune"), true)
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("errors clear")
+	SlashCmdList.KROOLWORLDFOREVER("errors")
+end)
+check("/kw errors clear empties the log", #sv.errors, 0)
+check("and says so", has(out, "no errors caught"), true)
+ns.events.KW_TEST = function()
+	error("boom")
+end
+out = capture(function()
+	root.Dispatch("KW_TEST")
+end)
+ns.events.KW_TEST = nil
+check("after clearing, an error prints again", count_of(out, "boom"), 1)
+sv.errors = nil
+out = capture(function()
+	root.Report(nil, "core thing", "core boom")
+end)
+check("a core error prints as the bundle", has(out, "core boom"), true)
+check("and is logged as core", sv.errors and sv.errors[1].feature, "core")
+
 realPrint(("%d checks, %d failed"):format(count, failures))
 if failures > 0 then
 	error(failures .. " check(s) failed")

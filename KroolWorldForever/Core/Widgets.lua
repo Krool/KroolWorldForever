@@ -33,19 +33,11 @@ UI.ATLAS = {
 
 -- -------------------------------------------------------------------- basics
 
--- Wraps a script handler so an error prints a line instead of reaching the client.
--- F: the feature to print as (optional).
+-- Wraps a script handler so an error prints a line (once) and is logged instead of reaching the
+-- client. F: the feature it belongs to (optional).
 function UI.Safe(fn, F)
 	return function(...)
-		local ok, err = pcall(fn, ...)
-		if not ok then
-			local msg = "|cffff5555error|r: " .. tostring(err)
-			if F then
-				F:Print(msg)
-			else
-				root.Print(msg)
-			end
-		end
+		root.Try(F, "window", fn, ...)
 	end
 end
 

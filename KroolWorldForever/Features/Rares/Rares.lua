@@ -318,10 +318,10 @@ local function Build()
 		end
 		if IsShiftKeyDown() then
 			if current.npcId > 0 then -- 0: the /kwr test entry
-				pcall(ns.Ignore, current.npcId, current.name)
+				root.Try(ns, "button", ns.Ignore, current.npcId, current.name)
 			end
 		else
-			pcall(ns.Dismiss)
+			root.Try(ns, "button", ns.Dismiss)
 		end
 	end)
 	b:SetScript("OnEnter", function(self)

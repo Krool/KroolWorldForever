@@ -336,7 +336,7 @@ local function OnObjectTooltip(tooltip, data)
 	if tooltip ~= GameTooltip or not (ns.enabled and ns.db and ns.db.tooltip) or type(data) ~= "table" then
 		return
 	end
-	pcall(AnnotateObject, tooltip, data)
+	root.TryQuiet(ns, "tooltip", AnnotateObject, tooltip, data)
 end
 ns.OnObjectTooltip = OnObjectTooltip -- test seam
 
@@ -344,7 +344,7 @@ local function OnAuraTooltip(tooltip, data)
 	if tooltip ~= GameTooltip or not (ns.enabled and ns.db and ns.db.benefits) or type(data) ~= "table" then
 		return
 	end
-	pcall(AnnotateBenefits, tooltip, data)
+	root.TryQuiet(ns, "buff tooltip", AnnotateBenefits, tooltip, data)
 end
 ns.OnAuraTooltip = OnAuraTooltip -- test seam
 

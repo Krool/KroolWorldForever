@@ -19,16 +19,15 @@ local function Load()
 	KroolWorldForeverDB = KroolWorldForeverDB or {}
 	local sv = KroolWorldForeverDB
 	sv.features = sv.features or {}
+	sv.session = (tonumber(sv.session) or 0) + 1 -- one per load, to tell this session's errors apart
+	root.session = sv.session
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
 		sv.features[key] = sv.features[key] or {}
 		F.db = sv.features[key]
 		ApplyDefaults(F)
 		if F.OnLoad then
-			local ok, err = pcall(F.OnLoad)
-			if not ok then
-				F:Print("|cffff5555load failed|r: " .. tostring(err))
-			end
+			root.Try(F, "load", F.OnLoad)
 		end
 	end
 	root.BuildSettings()
@@ -56,8 +55,10 @@ local function MainSlash(msg)
 		root.OpenHub()
 	elseif key == "settings" or key == "options" then
 		root.OpenSettings()
+	elseif key == "errors" then
+		root.PrintErrors(arg)
 	elseif key == "list" or key == "help" then
-		root.Print("/kw opens the hub; /kw settings; /kw <feature> [on|off]:")
+		root.Print("/kw opens the hub; /kw settings; /kw errors; /kw <feature> [on|off]:")
 		for _, k in ipairs(root.featureOrder) do
 			local f = root.features[k]
 			print(("  %s - %s %s"):format(k, f.title or k, FeatureState(f)))
@@ -91,10 +92,7 @@ local function RegisterSlash()
 					F:Print("is off. Turn it on with /kw " .. key .. " on")
 					return
 				end
-				local ok, err = pcall(F.OnSlash, msg)
-				if not ok then
-					F:Print("|cffff5555failed|r: " .. tostring(err))
-				end
+				root.Try(F, "slash command", F.OnSlash, msg)
 			end
 		end
 	end

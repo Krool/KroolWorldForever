@@ -245,7 +245,7 @@ local function OnItemTooltip(tooltip, data)
 	if itemId == nil or Secret(itemId) then
 		return
 	end
-	pcall(Annotate, tooltip, data)
+	root.TryQuiet(ns, "tooltip", Annotate, tooltip, data)
 end
 ns.OnItemTooltip = OnItemTooltip -- test seam
 

@@ -147,16 +147,15 @@ local function OnUnitTooltip(tooltip, data)
 		return
 	end
 	lastData = data
-	pcall(AddLines, tooltip, data)
+	root.TryQuiet(ns, "tooltip", AddLines, tooltip, data)
 end
 ns.OnUnitTooltip = OnUnitTooltip -- test seam
 
 -- -------------------------------------------------------------------- reports
 
 local function Report(npcId, label)
-	local ok, acc = pcall(FKV.Compute, npcId)
+	local ok, acc = root.Try(ns, "/fkv report", FKV.Compute, npcId)
 	if not ok then
-		Print("|cffff5555failed|r: " .. tostring(acc))
 		return
 	end
 	if not acc then
@@ -459,13 +458,13 @@ function ns.OnDisable()
 end
 
 ns:RegisterEvent("LOOT_READY", function()
-	pcall(FKV.CaptureLoot)
+	root.Try(ns, "loot", FKV.CaptureLoot)
 end)
 ns:RegisterEvent("LOOT_OPENED", function()
-	pcall(FKV.CaptureLoot)
+	root.Try(ns, "loot", FKV.CaptureLoot)
 end)
 ns:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(_, itemId)
-	if itemId and not Secret(itemId) then
+	if not Secret(itemId) and itemId then -- the secret check first: testing a secret errors
 		FKV.ItemLoaded(itemId)
 	end
 end)

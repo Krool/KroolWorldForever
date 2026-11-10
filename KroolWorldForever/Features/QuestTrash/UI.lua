@@ -123,7 +123,7 @@ local function OnItemTooltip(tooltip, data)
 	if not itemID or (issecretvalue and issecretvalue(itemID)) then
 		return
 	end
-	pcall(Annotate, tooltip, itemID)
+	root.TryQuiet(ns, "tooltip", Annotate, tooltip, itemID)
 end
 ns.OnItemTooltip = OnItemTooltip -- test seam
 

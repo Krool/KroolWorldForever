@@ -362,6 +362,11 @@ function Advance(seconds)
 	Clock = Clock + seconds
 end
 
+-- The client's stack text, for the bundle's error log.
+function debugstack(start)
+	return debug.traceback("", start)
+end
+
 -- date: the two clock formats the feature uses, in UTC so the tests do not depend on the zone.
 function date(fmt, t)
 	t = t or Now

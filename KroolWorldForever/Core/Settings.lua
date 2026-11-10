@@ -63,7 +63,7 @@ function root.BuildSettings()
 	end
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
-		local ok, err = pcall(function()
+		root.Try(F, "settings", function()
 			local category = Settings.RegisterVerticalLayoutSubcategory(parent, F.title or key)
 			F.category = category
 			local enabled = Settings.RegisterAddOnSetting(
@@ -105,9 +105,6 @@ function root.BuildSettings()
 				end
 			end
 		end)
-		if not ok then
-			root.Print("|cffff5555settings for " .. key .. " failed|r: " .. tostring(err))
-		end
 	end
 	Settings.RegisterAddOnCategory(parent)
 end

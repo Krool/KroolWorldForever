@@ -289,7 +289,7 @@ function ns.RedecorateRows()
 	local box = RecipeBox()
 	if box and box.ForEachFrame then
 		box:ForEachFrame(function(frame, node)
-			pcall(DecorateRow, nil, frame, node)
+			root.TryQuiet(ns, "recipe list", DecorateRow, nil, frame, node)
 		end)
 	end
 end
@@ -329,7 +329,7 @@ local function BuildRow(parent, i)
 	b.detail:SetPoint("RIGHT", b.cost, "LEFT", -6, 0)
 	b.detail:SetWordWrap(false)
 	b:SetScript("OnEnter", function(self)
-		pcall(ShowTip, self, self.o)
+		root.TryQuiet(ns, "tooltip", ShowTip, self, self.o)
 	end)
 	b:SetScript("OnLeave", function()
 		if GameTooltip then
@@ -580,13 +580,13 @@ function ns.QueueRefresh()
 		return -- one refresh at a time, and only for a panel on screen
 	end
 	if not (C_Timer and C_Timer.After) then
-		pcall(ns.RefreshPanel)
+		root.Try(ns, "panel", ns.RefreshPanel)
 		return
 	end
 	refreshQueued = true
 	C_Timer.After(0.2, function()
 		refreshQueued = false
-		pcall(ns.RefreshPanel)
+		root.Try(ns, "panel", ns.RefreshPanel)
 	end)
 end
 

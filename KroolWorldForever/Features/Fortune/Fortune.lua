@@ -398,7 +398,7 @@ local function OnUnitTooltip(tooltip, data)
 	if tooltip ~= GameTooltip or not (ns.enabled and ns.db and ns.db.tooltip) or type(data) ~= "table" then
 		return
 	end
-	pcall(AddSaygeLines, tooltip, data)
+	root.TryQuiet(ns, "Sayge tooltip", AddSaygeLines, tooltip, data)
 end
 ns.OnUnitTooltip = OnUnitTooltip -- test seam
 
@@ -406,7 +406,7 @@ local function OnAuraTooltip(tooltip, data)
 	if tooltip ~= GameTooltip or not (ns.enabled and ns.db and ns.db.tooltip) or type(data) ~= "table" then
 		return
 	end
-	pcall(AddFortuneLines, tooltip, data)
+	root.TryQuiet(ns, "buff tooltip", AddFortuneLines, tooltip, data)
 end
 ns.OnAuraTooltip = OnAuraTooltip -- test seam
 

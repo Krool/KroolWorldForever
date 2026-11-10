@@ -3,26 +3,20 @@
 -- settings page). Features describe themselves for it with ns.icon, ns.blurb and ns.HubStatus().
 -- Built on first open, never at file scope.
 
-local addonName, root = ...
+local _, root = ...
 local UI = root.UI
 
 local W, CARD_H, GAP, TOP = 470, 62, 6, -32
 local hub -- built on first open
 
-local function Version()
-	if not (C_AddOns and C_AddOns.GetAddOnMetadata) then
-		return nil
-	end
-	local ok, v = pcall(C_AddOns.GetAddOnMetadata, addonName, "Version")
-	return ok and v or nil
-end
+local Version = root.Version
 
 local function StatusText(F)
 	if not F.db.enabled then
 		return "|cff888888Off|r"
 	end
 	if F.HubStatus then
-		local ok, text = pcall(F.HubStatus)
+		local ok, text = root.TryQuiet(F, "hub status", F.HubStatus)
 		if ok and text then
 			return text
 		end
@@ -215,7 +209,7 @@ function Refresh()
 			card.open:SetEnabled(F.enabled and true or false)
 		end
 		if card.action then
-			local ok, a = pcall(F.HubAction)
+			local ok, a = root.TryQuiet(F, "hub button", F.HubAction)
 			a = ok and F.enabled and a or nil
 			card.action:SetShown(a ~= nil)
 			card.action:SetText(a and a.label or "")
