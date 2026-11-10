@@ -1,6 +1,6 @@
 ## Interface: 16001
 ## Title: Krool World Forever
-## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters), Rare Alert (alert and a one-key marker for rare enemies), Disenchant Value (what a green is worth disenchanted), Camp Guide (what a campfire's objects give you), Skill-Up Odds (skill-up chances tuned by your crafts, and the cheapest next point), Sayge's Fortune (when Sayge at the Darkmoon Faire gives your next fortune). /kw
+## Notes: Small quality-of-life features for WoW Forever, each with its own on/off switch: Quest Trash (which quest items you can delete), Kill Value (gold per kill on creature tooltips), Setups (copy bars, keybinds, macros and layouts between characters), Rare Alert (alert and a one-key marker for rare enemies), Disenchant Value (what a green is worth disenchanted), Camp Guide (what a campfire's objects give you), Skill-Up Odds (skill-up chances tuned by your crafts, and the cheapest next point), Sayge's Fortune (when Sayge at the Darkmoon Faire gives your next fortune), Least Valuable (marks the bag slot worth the least). /kw
 ## Author: Krool
 ## Version: 0.15.0
 ## Category: Interface Enhancements
@@ -39,6 +39,8 @@ Features\SkillUp\Core.lua
 Features\SkillUp\UI.lua
 
 Features\Fortune\Fortune.lua
+
+Features\LeastValuable\LeastValuable.lua
 
 # Bindings.xml (Rare Alert's key) loads by itself; it is not listed here.
 # Hub, then Init last: every feature has declared itself before ADDON_LOADED.

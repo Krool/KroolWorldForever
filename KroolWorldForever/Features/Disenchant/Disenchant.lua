@@ -85,8 +85,9 @@ function ns.Evaluate(itemId, quality, classID, itemLevel)
 	return { entry = entry, rows = rows, value = value, missing = missing, hasAH = hasAH, stale = stale }
 end
 
--- What pays most: "vendor", "auction" or "disenchant" (ties go to the less work). Auction and
--- disenchant values are auction prices, so the cut comes off them before the vendor compare.
+-- What pays most: "vendor", "auction" or "disenchant" (ties go to the less work), and what that
+-- pays in copper. Auction and disenchant values are auction prices, so the cut comes off them
+-- before the vendor compare (and off the amount returned).
 function ns.Best(disenchant, auction, vendor)
 	local best, bestNet
 	local function Try(kind, gross, net)
@@ -97,7 +98,7 @@ function ns.Best(disenchant, auction, vendor)
 	Try("vendor", vendor, vendor)
 	Try("auction", auction, auction and auction * (1 - CUT))
 	Try("disenchant", disenchant, disenchant and disenchant * (1 - CUT))
-	return best
+	return best, bestNet
 end
 
 -- -------------------------------------------------------------------- tooltip
@@ -158,6 +159,7 @@ local function CanDisenchant()
 	local ok, yes = pcall(fn)
 	return ok and yes == true
 end
+ns.CanDisenchant = CanDisenchant -- Least Valuable counts a bound item's disenchant only for you
 
 -- A bag item that was equipped (or is account bound) says so on its tooltip; the item info only
 -- knows the bind type.
