@@ -18,8 +18,9 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
 | **Skill-Up Odds** | In the crafting window: the chance each recipe gives a skill point, beside its arrow. It is the common straight line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters (hover for the numbers and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average, and only reorders when a recipe is clearly cheaper. | Nothing (Auctionator optional) |
 | **Sayge's Fortune** | When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune and dying does not end it, but the game hides it: this notes when you got each fortune, on every character, and shows the time on the hub, on Sayge's tooltip and on the fortune buff. If you die with the buff, a chat line says when you can get the next one. | Nothing |
+| **Least Valuable** | A soft gold glow on the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear, worthless items like the Hearthstone, or an unscanned green. `/kwl ignore` skips anything else you keep. | Nothing (Auctionator optional) |
 
-All eight are on by default.
+All nine are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -27,7 +28,7 @@ All eight are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds and Sayge's Fortune never delete, sell,
+- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune and Least Valuable never delete, sell,
   loot, craft or click anything for you. Rare Alert's marker comes from your own click or key press: the game does not let an
   addon place one by itself. Setups is the one feature that changes your UI: only out of combat,
   only when you click Apply (or for a brand-new level 1 character, if you marked a setup for that),
@@ -52,10 +53,11 @@ Optional companions:
 
 - **QuestieDB** (comes with Questie): required for Quest Trash. Without it Quest Trash says so at login
   and the other features work normally.
-- **Auctionator**: auction house prices for Kill Value, Disenchant Value and Skill-Up Odds. Without it
-  Kill Value uses vendor prices, Disenchant Value names the materials without prices, and Skill-Up
-  Odds prices only the reagents it has seen at a vendor. All three mark auction prices more than 3
-  days old, and Kill Value and Skill-Up Odds pick up new prices as soon as an Auctionator scan
+- **Auctionator**: auction house prices for Kill Value, Disenchant Value, Skill-Up Odds and Least
+  Valuable. Without it Kill Value uses vendor prices, Disenchant Value names the materials without
+  prices, Skill-Up Odds prices only the reagents it has seen at a vendor, and Least Valuable goes by
+  vendor prices and leaves greens unmarked. All four mark auction prices more than 3 days old, and
+  Kill Value, Skill-Up Odds and Least Valuable pick up new prices as soon as an Auctionator scan
   finishes.
 
 ## Slash commands
@@ -66,7 +68,7 @@ Optional companions:
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
 | `/kw errors` | List the errors the addon caught (`/kw errors clear` empties the list) |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`, `leastvaluable`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
 | `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
@@ -87,11 +89,14 @@ Optional companions:
 | `/kwu` | How your crafts sit against the line, overall and range by range |
 | `/kwu status` / `panel` | Where the numbers come from (data build, crafts logged); show or hide the Next Skill Point panel |
 | `/sayge` | When Sayge gives your next fortune, on this character and your others this faire |
+| `/kwl` | The five least valuable bag slots, and what was not counted (quest items, tools...) |
+| `/kwl ignore` / `ignore <item>` | Never mark the marked item, or any item (shift-click it into the chat line) |
+| `/kwl unignore <item>` / `ignored` | Mark it again (item, id or name); show the ignore list |
 
 The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
 `/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide`,
-`/skillup` and `/kwsayge` are long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd`, `/kwc`, `/kwu`
-and `/sayge`.
+`/skillup`, `/kwsayge` and `/leastvaluable` are long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd`,
+`/kwc`, `/kwu`, `/sayge` and `/kwl`.
 
 ## Settings
 
@@ -206,6 +211,17 @@ On by default: yes. Toggle: `/kwf fortune on|off`. Commands: `/sayge, /kwsayge`.
 | Show On Sayge And Your Fortune | On | Adds when you can get your next fortune to Sayge's tooltip and to the fortune buff's tooltip. |
 | Tell Me If I Lose It | On | When your fortune goes early (you died), says in chat when Sayge gives the next one. |
 | Tell Me When The Wait Is Over | On | Says in chat when Sayge's 4-hour wait ends, if you are logged in. |
+
+### Least Valuable
+
+Marks the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened containers, equipment-set gear, items worth nothing (the Hearthstone), or anything you /kwl ignore.
+
+On by default: yes. Toggle: `/kwf leastvaluable on|off`. Commands: `/kwl, /leastvaluable`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Mark It In Your Bags | On | A soft gold glow on the slot worth the least, in the default bags. Its value counts the whole stack. /kwl ignore <item> stops an item from being marked. |
+| Say It On The Tooltip | On | Adds what the marked slot is worth, and at which price, to its tooltip. |
 <!-- settings:end -->
 
 ## FAQ

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.16.0
+
+- **New feature: Least Valuable.** A soft gold glow on the bag slot worth the least, so you know
+  what to sell or drop first.
+  - A slot is worth its whole stack at the best of its vendor price, auction price and disenchant
+    value (the last two after the 5% cut). A bound item's disenchant counts only if you can
+    disenchant it yourself.
+  - It never marks quest items, keys, ammunition, class reagents, profession tools (pick, knife,
+    hammer, enchanting rods, fishing poles), unopened clams and lockboxes, equipment-set gear,
+    items worth nothing like the Hearthstone, or a green with no auction price yet.
+    `/kwl ignore` skips anything else you keep.
+  - Its tooltip says what it is worth and at which price. `/kwl` lists the five cheapest slots and
+    what was not counted. The hub card names the item.
+  - Works in combined and separate bags. It only marks: nothing is sold or moved.
+
 ## 0.15.0
 
 - **Errors are logged, and printed once.** The addon catches its own errors so they never reach the
