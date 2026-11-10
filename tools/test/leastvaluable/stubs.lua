@@ -94,6 +94,16 @@ end
 function Widget:SetAtlas(atlas)
 	self.atlas = atlas
 end
+function Widget:SetPoint(point)
+	self.point = point
+end
+function Widget:SetSize(w, h)
+	self.width, self.height = w, h
+end
+function Widget:CreateAnimationGroup()
+	self.animated = true
+	return NewWidget()
+end
 function Widget:SetFrameLevel(n)
 	self.level = n
 end

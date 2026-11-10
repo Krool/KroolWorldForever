@@ -1,10 +1,10 @@
 # Least Valuable
 
-A soft gold glow on the bag slot worth the least, so you know what to sell or drop first when your
+A copper coin on the corner of the bag slot worth the least, so you know what to sell or drop first when your
 bags fill up. Advice only: it marks a slot and never sells, moves or deletes anything.
 
 ```
-[slot glowing in the bags]
+[copper coin in the slot's top-right corner]
 Least valuable in your bags                       30c
 10 x 3c at a vendor
 ```
@@ -50,29 +50,31 @@ auction price". Without Auctionator everything is vendor priced, so greens are n
 hub says "vendor prices only".
 
 Items whose info has not loaded yet are left out and counted once `GET_ITEM_INFO_RECEIVED` brings
-them. A locked slot (on the cursor, in a trade) still counts, so the glow does not jump while you
+them. A locked slot (on the cursor, in a trade) still counts, so the coin does not jump while you
 move an item.
 
-## The glow
+## The coin
 
-- Art: `bags-glow-white`, the square glow Blizzard puts on new items (Mainline `ContainerFrame.lua`,
-  `NewItemTexture`, forever branch; in the forever atlas list). Tinted gold, additive, breathing
-  0.15 to 0.6 alpha over 1.4 seconds (`UI.Pulse`, an AnimationGroup). Blizzard's new-item glow is
-  quality-colored and blinks twice a second, so the two read differently.
+- Art: `coin-copper`, the copper coin beside your money under the backpack (Mainline
+  `MoneyFrame.xml`, forever branch; in the forever atlas list), 15 pixels, still, in the slot's
+  top-right corner. Blizzard uses the other corners: top-left for the junk coin and the upgrade
+  arrow, bottom-right for the stack count.
+- 0.16.0 had a gold glow breathing over the whole slot (`bags-glow-white`); the owner could not
+  see it and asked for a still icon in a corner (0.16.1).
 - One frame of ours, parented to the marked slot's button and laid over it, above the cooldown
   swipe. It takes no mouse, so the button works as before. Nothing is written onto Blizzard's
   frames.
 - Forever loads Mainline's bag code (`[Family]\ContainerFrame.lua`; the camelot override only has
   two small functions). Every default bag frame, combined or separate, redraws its buttons in
-  `UpdateItems`; a `hooksecurefunc` on each frame moves the glow onto whatever button shows the
+  `UpdateItems`; a `hooksecurefunc` on each frame moves the coin onto whatever button shows the
   slot after a redraw (buttons come from a pool, so a slot can change button).
   `ContainerFrameUtil_GetItemButtonAndContainer(bag, slot)` finds the button.
-  `ContainerFrame.CloseBag` / `CloseAllBags` (EventRegistry) take the glow away. Item buttons are
+  `ContainerFrame.CloseBag` / `CloseAllBags` (EventRegistry) take the coin away. Item buttons are
   not protected, so this works in combat.
 - Rescans: `BAG_UPDATE_DELAYED` and `EQUIPMENT_SETS_CHANGED` while the bags are open (else on the
   next look), after each Auctionator scan, and on `SPELLS_CHANGED` at the next look (learning
   Enchanting reprices bound gear).
-- Bag addons that replace the default frames get the tooltip line and the hub card, but no glow.
+- Bag addons that replace the default frames get the tooltip line and the hub card, but no coin. `/kwl` says when the bags are open but the coin found no button for the slot.
 
 ## Settings and commands
 
@@ -82,10 +84,10 @@ not counted, by reason. `/kwl ignore` ignores the marked item, `/kwl ignore <ite
 
 ## To check in game
 
-- Open the bags: one slot glows, softly, and its tooltip says "Least valuable in your bags".
-- Sell it at a vendor: the glow moves to the next one.
-- Switch combined and separate bags (bag menu): the glow follows the slot.
-- The Hearthstone, a Mining Pick, an enchanting rod, arrows and quest items never glow.
-- An unscanned BoE green does not glow; after an auction scan it counts at its price.
+- Open the bags: one slot has a copper coin in its top-right corner, and its tooltip says "Least valuable in your bags".
+- Sell it at a vendor: the coin moves to the next one.
+- Switch combined and separate bags (bag menu): the coin follows the slot.
+- The Hearthstone, a Mining Pick, an enchanting rod, arrows and quest items never get the coin.
+- An unscanned BoE green gets no coin; after an auction scan it counts at its price.
 - A still-locked lockbox: unverified whether the game reports `hasLoot` before it is picked. If it
   does not, the box counts at its vendor or auction price (`/kwl ignore` it if you pick locks).

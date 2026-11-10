@@ -1,4 +1,4 @@
--- Least Valuable: a soft glow on the bag slot worth the least, so you know what to sell or drop
+-- Least Valuable: a copper coin on the bag slot worth the least, so you know what to sell or drop
 -- first. A slot is worth its whole stack at the best of three prices: the vendor's, the auction
 -- house's and the disenchant value (both after the 5% auction cut, compared the way Disenchant
 -- Value does). A bound item has no auction price, and its disenchant counts only when you can
@@ -17,9 +17,9 @@
 -- Classes and ids are from the 1.12 item data (tools/killvalue-data, checked 2026-11-10).
 --
 -- Each slot counts on its own, so of two part stacks of one item the smaller is the cheaper.
--- Equal values go to the first slot in bag order. The glow is one frame of ours, moved onto the
+-- Equal values go to the first slot in bag order. The coin is one frame of ours, moved onto the
 -- marked slot's button after every redraw of a default bag frame (combined or separate bags).
--- Bag addons that replace those frames get the tooltip line and the hub card, but no glow.
+-- Bag addons that replace those frames get the tooltip line and the hub card, but no coin.
 
 local _, root = ...
 local ns = root.Feature("leastvaluable")
@@ -56,10 +56,12 @@ local SKIPPED = {
 	{ "pending", "item still loading", "items still loading" },
 }
 
--- Blizzard's square bag-slot glow (Mainline ContainerFrame.lua, NewItemTexture, forever branch;
--- in the forever atlas list), tinted gold and breathing slowly so it never reads as a new item.
-local GLOW_ATLAS = "bags-glow-white"
-local GLOW_COLOR = { 1, 0.8, 0.35 }
+-- The mark: a still copper coin in the slot's top-right corner. Blizzard's own coin art (the
+-- "coin-copper" atlas beside the money under your backpack: Mainline MoneyFrame.xml, forever
+-- branch; in the forever atlas list). Top-left is Blizzard's (junk coin, upgrade arrow) and
+-- bottom-right the stack count; top-right is free.
+local MARK_ATLAS = "coin-copper"
+local MARK_SIZE = 15
 local GREY, OLD = "|cffaaaaaa", "|cffff9955"
 local HOW = { vendor = "at a vendor", auction = "at auction after the 5% cut", disenchant = "disenchanted, after the 5% cut" }
 
@@ -248,7 +250,7 @@ function ns.Detail(m)
 	return text
 end
 
--- -------------------------------------------------------------------- bag frames and the glow
+-- -------------------------------------------------------------------- bag frames and the coin
 
 -- The default bag frames: the combined one and every separate one.
 local function BagFrames()
@@ -281,60 +283,56 @@ local function FindButton(bag, slot)
 	return ok and type(button) == "table" and button or nil
 end
 
-local glow, pulse -- glow: our frame, false when it could not be made
-local function Glow()
-	if glow == nil then
-		glow = false
+local coin -- our frame, false when it could not be made
+local function Coin()
+	if coin == nil then
+		coin = false
 		local f = CreateFrame("Frame")
 		f:Hide()
 		local tex = f:CreateTexture(nil, "OVERLAY")
-		tex:SetAtlas(GLOW_ATLAS, true)
-		tex:SetPoint("CENTER")
-		tex:SetBlendMode("ADD")
-		tex:SetVertexColor(GLOW_COLOR[1], GLOW_COLOR[2], GLOW_COLOR[3])
-		pulse = root.UI.Pulse(tex, 0.15, 0.6, 1.4)
-		glow = f
+		tex:SetAtlas(MARK_ATLAS)
+		tex:SetSize(MARK_SIZE, MARK_SIZE)
+		tex:SetPoint("TOPRIGHT", -1, -1)
+		coin = f
 	end
-	return glow or nil
+	return coin or nil
 end
 
--- Puts the glow on the marked slot's button, or takes it away. Our frame takes no mouse, so the
+-- Puts the coin on the marked slot's button, or takes it away. Our frame takes no mouse, so the
 -- button underneath works as before.
 function ns.Place()
-	local m = ns.enabled and ns.db.glow and ns.mark or nil
+	local m = ns.enabled and ns.db.glow and ns.mark or nil -- "glow": the option's first name, kept for saved settings
 	local button = m and FindButton(m.bag, m.slot) or nil
 	if not button then
-		if glow then
-			pulse.Stop()
-			glow:Hide()
+		if coin then
+			coin:Hide()
 		end
-		ns.glowButton = nil
+		ns.markButton = nil
 		return
 	end
-	local g = Glow()
-	if not g then
+	local c = Coin()
+	if not c then
 		return
 	end
-	if ns.glowButton ~= button then
-		g:SetParent(button)
-		g:ClearAllPoints()
-		g:SetAllPoints(button)
-		ns.glowButton = button
+	if ns.markButton ~= button then
+		c:SetParent(button)
+		c:ClearAllPoints()
+		c:SetAllPoints(button)
+		ns.markButton = button
 	end
 	local ok, level = Call(button.GetFrameLevel, button)
 	if ok and type(level) == "number" then
-		g:SetFrameLevel(level + 2) -- above the cooldown swipe
+		c:SetFrameLevel(level + 2) -- above the cooldown swipe
 	end
-	g:Show()
-	pulse.Start()
+	c:Show()
 end
-ns.Glow = function()
-	return glow or nil
+ns.Coin = function()
+	return coin or nil
 end -- test seam
 
 local dirty, pending = true, false
 
--- Scans the bags, marks the cheapest slot and moves the glow. Returns the scan.
+-- Scans the bags, marks the cheapest slot and moves the coin. Returns the scan.
 local function Refresh()
 	dirty = false
 	local list, cheapest, skipped = ns.Scan()
@@ -368,7 +366,7 @@ local function RefreshSoon()
 	end)
 end
 
--- After a default bag frame redraws its buttons (opening, sorting, a bag swapped): the glow
+-- After a default bag frame redraws its buttons (opening, sorting, a bag swapped): the coin
 -- follows the slot onto whatever button shows it now.
 local function OnBagsDrawn()
 	if not ns.enabled then
@@ -487,7 +485,7 @@ ns.options = {
 		key = "glow",
 		type = "toggle",
 		label = "Mark It In Your Bags",
-		tooltip = "A soft gold glow on the slot worth the least, in the default bags. "
+		tooltip = "A copper coin in the top-right corner of the slot worth the least, in the default bags. "
 			.. "Its value counts the whole stack. /kwl ignore <item> stops an item from being marked.",
 		default = true,
 	},
@@ -533,6 +531,9 @@ local function PrintList()
 			local e = list[i]
 			print(("  %d. %s%s%s: %s %s"):format(i, root.UI.ItemIcon(e.id), e.link or e.name, e.count > 1 and (" x" .. e.count) or "", root.Money(e.value), ns.Detail(e)))
 		end
+	end
+	if ns.mark and ns.db.glow and BagsShown() and not ns.markButton then
+		print(OLD .. "  the coin found no button for that slot in your open bags|r")
 	end
 	local left = SkippedText(skipped)
 	if left then
@@ -624,7 +625,7 @@ function ns.OnEnable()
 end
 
 function ns.OnDisable()
-	ns.Place() -- off: the glow goes
+	ns.Place() -- off: the coin goes
 end
 
 function ns.OnOptionChanged()
