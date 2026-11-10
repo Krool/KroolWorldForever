@@ -162,9 +162,9 @@ Gain(DAMAGE)
 Advance(1800) -- died 30 minutes in
 local out = Remove(DAMAGE)
 check("lost: says so", has(out, "You lost your fortune"), true)
-check("lost: with when the next one comes", has(out, "the next one at 1:10 PM (in 3h 30m)"), true)
+check("lost: with when the next one comes", has(out, "the next one after 3h 30m more online (1:10 PM if you stay on)"), true)
 check("lost: noted", Mine().lost, Now)
-check("status: waiting", Status():find("Next fortune at 1:10 PM (in 3h 30m)", 1, true) ~= nil, true)
+check("status: waiting", Status():find("Next fortune after 3h 30m more online (1:10 PM if you stay on)", 1, true) ~= nil, true)
 out = capture(function()
 	FireEvent("PLAYER_DEAD")
 end)
@@ -248,7 +248,7 @@ check("Sayge: when the next one comes", has(tt.lines, "even if you die"), true)
 check("another creature: nothing from us", has(ShowUnit(OTHER).lines, "Sayge:"), false)
 check("a secret GUID: nothing", has(ShowUnit(Secret()).lines, "Sayge:"), false)
 tt = ShowAura(DAMAGE)
-check("fortune buff: next fortune", has(tt.lines, "your next fortune at " .. ns.Clock(base + 4 * 3600)), true)
+check("fortune buff: next fortune", has(tt.lines, "your next fortune after 4h 0m more online (" .. ns.Clock(base + 4 * 3600) .. " if you stay on)"), true)
 check("other buffs: nothing", has(ShowAura(12345).lines, "Sayge:"), false)
 Advance(1800)
 Remove(DAMAGE)
@@ -319,6 +319,140 @@ capture(function()
 	FireEvent("GOSSIP_SHOW")
 end)
 check("offered early: ready", Status():find("Ready for a new fortune", 1, true) ~= nil, true)
+UnitGUIDs.npc = nil
+
+-- ---------------------------------------------------------------- logged out (2026-11-10)
+-- Both timers stop while you are logged out: the owner's fortune outlasted a night logged out,
+-- and Sayge refused 12 hours after it, about 3h 20m of play in.
+
+local function Logout()
+	capture(function()
+		FireEvent("PLAYER_LOGOUT")
+	end)
+	wipe(Timers) -- a session's timers end with it
+end
+-- Logged out: the real clock runs on, the game's own timers stand still.
+local function Away(seconds)
+	Now = Now + seconds
+	Clock = Clock + seconds
+	for _, a in pairs(PlayerAuras) do
+		a.expirationTime = a.expirationTime + seconds
+	end
+end
+local function Login()
+	ns.Resume()
+	return capture(function()
+		FireEvent("PLAYER_ENTERING_WORLD")
+	end)
+end
+
+wipe(PlayerAuras)
+wipe(Timers)
+db.chars = {}
+local given = Now
+Gain(DAMAGE)
+Advance(70 * 60)
+Logout()
+check("logout: the count kept", Mine().left, 4 * 3600 - 70 * 60)
+Away(8 * 3600)
+Login()
+check("a fortune that waited out the night is the same fortune", Mine().got, given)
+check("the count goes on from the logout", ns.Left(Mine(), Now, true), 4 * 3600 - 70 * 60)
+check("status: the fortune with its time left", Status():find("Fortune of Damage, 50m left", 1, true) ~= nil, true)
+check("a reminder for the rest of the wait", #Timers > 0 and Timers[#Timers].delay, 4 * 3600 - 70 * 60 + 1)
+Advance(50 * 60)
+out = Remove(DAMAGE)
+check("ran out online: not lost", Mine().lost == nil and not has(out, "You lost"), true)
+Advance(30 * 60)
+Logout()
+Away(10 * 3600)
+Login()
+check("10 hours logged out: the same 1h 30m left", Status():find("Next fortune after 1h 30m more online", 1, true) ~= nil, true)
+UnitGUIDs.npc = SAYGE
+Gossip.options, Gossip.text = {}, "Alas... I am sorry to say I cannot currently give you your fortune"
+capture(function()
+	FireEvent("GOSSIP_SHOW")
+end)
+check("refused while the count runs: still waiting", Status():find("Next fortune after 1h 30m more online", 1, true) ~= nil, true)
+check("the visit keeps the count", db.visits[#db.visits].left, 90 * 60)
+check("not turned away", Mine().turnedAway, nil)
+Advance(90 * 60)
+check("1h 30m more online: ready", Status():find("Ready for a new fortune", 1, true) ~= nil, true)
+
+-- other characters' waits stand still while you play this one
+db.chars = {}
+wipe(PlayerAuras)
+Gain(DAMAGE)
+Advance(3600)
+Logout()
+local kroolsAura = PlayerAuras[DAMAGE]
+PlayerAuras[DAMAGE] = nil
+PlayerName = "Mick"
+Login()
+Advance(5 * 3600)
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_FORTUNE("")
+end)
+check("another character: its wait is frozen", has(out, "Krool-Stormrage: |cff33ff99Fortune of Damage, 1h 0m left"), true)
+Logout()
+kroolsAura.expirationTime = kroolsAura.expirationTime + 5 * 3600 -- it stood still while Krool was away
+PlayerAuras[DAMAGE] = kroolsAura
+PlayerName = "Krool"
+Login()
+check("back on it: the same hour of fortune left", Status():find("Fortune of Damage, 1h 0m left", 1, true) ~= nil, true)
+
+-- a reminder that comes due early (the count moved) sets another
+wipe(Timers)
+db.chars = {}
+wipe(PlayerAuras)
+Gain(DAMAGE)
+Advance(4 * 3600 - 600)
+Remove(DAMAGE)
+wipe(Timers)
+ns.remindFor = nil
+ns.Schedule()
+check("reminder for the last 10 minutes", #Timers == 1 and Timers[1].delay, 601)
+Mine().left = Mine().left + 1200
+Advance(601)
+out = capture(function()
+	RunTimersOver(600)
+end)
+check("early: quiet", has(out, "Sayge's wait is over"), false)
+check("early: set again", #Timers == 1 and Timers[1].delay, 1200)
+Advance(1200)
+out = capture(function()
+	RunTimersOver(1000)
+end)
+check("then it speaks", has(out, "Sayge's wait is over"), true)
+
+-- his "here is your fortune" page has no options, but it is not a refusal
+db.chars = {}
+wipe(PlayerAuras)
+Gain(DAMAGE)
+UnitGUIDs.npc = SAYGE
+Gossip.options, Gossip.text = {}, "Here is your fortune, Stone.  May it serve you well."
+capture(function()
+	FireEvent("GOSSIP_SHOW")
+end)
+check("no options with the fortune on: not a refusal", db.visits[#db.visits].verdict, "unknown")
+check("no refusal noted", Mine().refused, nil)
+UnitGUIDs.npc = nil
+
+-- records from 0.16.0 and before kept only when the fortune was given
+wipe(PlayerAuras)
+db.chars = {
+	["Krool-Stormrage"] = { got = Now - 5 * 3600, spell = DAMAGE, kind = "Damage", refused = Now - 1800 },
+	["Mick-Stormrage"] = { got = Now - 3600, spell = DAMAGE, kind = "Damage" },
+}
+ns.Migrate()
+check("old record: the clock's guess becomes the count", db.chars["Mick-Stormrage"].left, 3 * 3600)
+check("old record refused after it: turned away", Status():find("Sayge turned you away", 1, true) ~= nil, true)
+UnitGUIDs.npc = SAYGE
+Gossip.options = { { name = "I am ready to discover where my fortune lies!" } }
+capture(function()
+	FireEvent("GOSSIP_SHOW")
+end)
+check("offered: no longer turned away", Status():find("Ready for a new fortune", 1, true) ~= nil, true)
 UnitGUIDs.npc = nil
 
 -- ---------------------------------------------------------------- /sayge and other characters
