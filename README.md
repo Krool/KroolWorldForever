@@ -17,8 +17,8 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, what that is worth at auction, and whether disenchanting it pays more than auctioning or vendoring it. Hold Shift for each material's chance and price. | Auctionator (for prices) |
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
 | **Skill-Up Odds** | In the crafting window: the chance each recipe gives a skill point, beside its arrow. It is the common straight line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters (hover for the numbers and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average, and only reorders when a recipe is clearly cheaper. | Nothing (Auctionator optional) |
-| **Sayge's Fortune** | When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune and dying does not end it, but the game hides it: this notes when you got each fortune, on every character, and shows the time on the hub, on Sayge's tooltip and on the fortune buff. If you die with the buff, a chat line says when you can get the next one. | Nothing |
-| **Least Valuable** | A soft gold glow on the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear, worthless items like the Hearthstone, or an unscanned green. `/kwl ignore` skips anything else you keep. | Nothing (Auctionator optional) |
+| **Sayge's Fortune** | When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune, counted only while that character is logged in, and dying does not end it, but the game hides it: this counts it on every character and shows what is left on the hub, on Sayge's tooltip and on the fortune buff. If you die with the buff, a chat line says when you can get the next one. | Nothing |
+| **Least Valuable** | A copper coin on the corner of the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear, worthless items like the Hearthstone, or an unscanned green. `/kwl ignore` skips anything else you keep. | Nothing (Auctionator optional) |
 
 All nine are on by default.
 
@@ -202,7 +202,7 @@ On by default: yes. Toggle: `/kwf skillup on|off`. Commands: `/kwu, /skillup`.
 
 ### Sayge's Fortune
 
-When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune and dying does not end it, though the fortune itself is lost. The game hides that wait, so this notes when you got each fortune, on every character.
+When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune, counted only while that character is logged in, and dying does not end it, though the fortune itself is lost. The game hides that wait, so this counts it, on every character.
 
 On by default: yes. Toggle: `/kwf fortune on|off`. Commands: `/sayge, /kwsayge`.
 
@@ -210,7 +210,7 @@ On by default: yes. Toggle: `/kwf fortune on|off`. Commands: `/sayge, /kwsayge`.
 |---|---|---|
 | Show On Sayge And Your Fortune | On | Adds when you can get your next fortune to Sayge's tooltip and to the fortune buff's tooltip. |
 | Tell Me If I Lose It | On | When your fortune goes early (you died), says in chat when Sayge gives the next one. |
-| Tell Me When The Wait Is Over | On | Says in chat when Sayge's 4-hour wait ends, if you are logged in. |
+| Tell Me When The Wait Is Over | On | Says in chat when Sayge's 4-hour wait ends while you are logged in. |
 
 ### Least Valuable
 
@@ -220,7 +220,7 @@ On by default: yes. Toggle: `/kwf leastvaluable on|off`. Commands: `/kwl, /least
 
 | Setting | Default | What it does |
 |---|---|---|
-| Mark It In Your Bags | On | A soft gold glow on the slot worth the least, in the default bags. Its value counts the whole stack. /kwl ignore <item> stops an item from being marked. |
+| Mark It In Your Bags | On | A copper coin in the top-right corner of the slot worth the least, in the default bags. Its value counts the whole stack. /kwl ignore <item> stops an item from being marked. |
 | Say It On The Tooltip | On | Adds what the marked slot is worth, and at which price, to its tooltip. |
 <!-- settings:end -->
 

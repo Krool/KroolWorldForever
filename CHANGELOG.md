@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.16.1
+
+- **Least Valuable: a copper coin instead of the glow.** The slot worth the least now has a small
+  copper coin in its top-right corner, still, in Blizzard's own coin art. The breathing glow was
+  hard to see. The top-right corner is free: Blizzard puts the junk coin and the upgrade arrow
+  top-left and the stack count bottom-right. `/kwl` says so if your bags are open but the coin
+  found no button for the slot.
+- **Sayge's Fortune counts his wait only while you are logged in.** On Forever both the fortune and
+  Sayge's hidden 4-hour wait stop while you are logged out. Your visits showed it: a fortune taken
+  at 1:35 AM outlasted a night logged out, and Sayge still refused 12 hours later, about 3h 20m of
+  play in.
+  - The wait now counts time online on each character, saved at logout. Other characters' waits
+    stand still. While the fortune is on you, its own time left sets the wait exactly.
+  - It reads "Next fortune after 1h 30m more online (2:40 PM if you stay on)".
+  - A fortune still on you after a night away is no longer taken for a new one.
+  - His "Here is your fortune" page is no longer counted as a refusal.
+  - Each talk with Sayge now records the count, to check it.
+
 ## 0.16.0
 
 - **New feature: Least Valuable.** A soft gold glow on the bag slot worth the least, so you know
