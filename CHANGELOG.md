@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.16.4
+
+Fixes from a review of the whole project.
+
+- **Sayge's Fortune no longer counts time logged out when it was switched off.** A session spent
+  with the feature off from login to logout counted the whole time away as played, so the next
+  fortune could show as ready hours early.
+- **Setups leaves equipment set and flyout buttons alone.** Undo cannot put those back, so Apply
+  no longer replaces or clears a bar slot that holds one. The report counts the slots it left.
+- **Setups: a refused Undo says so.** With something on the cursor, or in combat, the message was
+  "Undo finished". It now says "Nothing undone".
+- **Setups no longer gets stuck on "still loading".** Switching it off in the first seconds after
+  login and on again later left Apply refusing until a reload.
+- **Skill-Up Odds shows a craft that pays as a gain.** When the result sells for more than its
+  reagents, the row said something like "99s 70c a craft". It now says "+30c a craft" in green.
+- **Rare Alert takes its button down after a fight.** Switching Rare Alert off in combat could
+  leave the faded button on screen, still pointed at the old rare.
+- **`/kwr test` says "a minute"**, which is how long the test button stays, and in combat it only
+  asks you to leave combat instead of showing the button afterwards.
+- **A feature window that fails to open no longer raises a Lua error** from `/kw <feature>` or the
+  settings page's Open button. It is reported and logged like every other error.
+- **Item tooltips check for hidden values first** in Least Valuable, Disenchant Value and Quest
+  Trash, before any other test of the item id.
+- **The `/kw` hub scrolls when it has more features than the screen fits**, instead of growing
+  past the screen. Nothing changes at today's nine features on a default-size screen.
+
 ## 0.16.3
 
 - **Disenchant Value uses Forever's changes to classic items.** Forever kept the item ids but
