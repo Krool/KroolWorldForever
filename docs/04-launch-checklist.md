@@ -1,4 +1,7 @@
-# Launch checklist (once the game is installed)
+# In-game verification checklist
+
+Forever launched 2026-11-04 and the game is installed. An unticked box is a check nobody has
+recorded yet, not a prediction: tick it with the date and what was seen.
 
 Things the research could not confirm. Each is 30 seconds to check in-game. Update
 [02-addon-platform.md](02-addon-platform.md) with the answers.

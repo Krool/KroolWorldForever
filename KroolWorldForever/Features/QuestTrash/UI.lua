@@ -119,8 +119,12 @@ local function OnItemTooltip(tooltip, data)
 	if not (ns.enabled and ns.ready and ns.db.tooltip) then
 		return
 	end
-	local itemID = data and data.id
-	if not itemID or (issecretvalue and issecretvalue(itemID)) then
+	-- Secret first: even a truth test on a secret value errors, and this runs outside TryQuiet.
+	local itemID
+	if type(data) == "table" then
+		itemID = data.id
+	end
+	if (issecretvalue and issecretvalue(itemID)) or not itemID then
 		return
 	end
 	root.TryQuiet(ns, "tooltip", Annotate, tooltip, itemID)

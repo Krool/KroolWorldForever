@@ -6,7 +6,8 @@
 --   ns.title, ns.description          shown in the settings panel
 --   ns.defaultEnabled                 default on/off (true when nil)
 --   ns.options = { {key=, type="toggle"|"range", label=, tooltip=, default=, min=, max=, step=}, ... }
---   ns.slash = { "/fqt", "/questtrash" }; ns.OnSlash(msg)
+--   ns.slash = { "/fqt", "/questtrash" }; ns.OnSlash(msg)   (while the feature is off its commands
+--                                     only answer "is off" and how to turn it on)
 --   ns.OnLoad()                       saved variables ready (ns.db is the feature's slice)
 --   ns.OnEnable() / ns.OnDisable()    after login, whenever the feature turns on/off
 --   ns.OnOptionChanged(key, value)

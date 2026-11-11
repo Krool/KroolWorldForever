@@ -91,9 +91,12 @@ function root.OnAuctionPrices(fn)
 	return hooked
 end
 
--- "1g 20s 5c" in coin colors.
+-- "1g 20s 5c" in coin colors. A negative amount gets a minus sign in front.
 function root.Money(copper)
 	copper = math.floor((copper or 0) + 0.5)
+	if copper < 0 then
+		return "-" .. root.Money(-copper)
+	end
 	local g = math.floor(copper / 10000)
 	local s = math.floor((copper % 10000) / 100)
 	local c = copper % 100

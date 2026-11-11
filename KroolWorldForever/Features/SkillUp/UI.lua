@@ -549,7 +549,9 @@ function ns.RefreshPanel()
 			bits[#bits + 1] = odds
 		end
 		if o.craft and o.craft.net then
-			bits[#bits + 1] = root.Money(o.craft.net) .. Grey(" a craft")
+			-- Below zero: the result sells for more than its reagents cost, so the craft pays.
+			local net = o.craft.net
+			bits[#bits + 1] = (net < 0 and ("|cff33ff99+" .. root.Money(-net) .. "|r") or root.Money(net)) .. Grey(" a craft")
 		end
 		if o.craft and o.craft.stale then
 			bits[#bits + 1] = "|cffff9955old prices|r"

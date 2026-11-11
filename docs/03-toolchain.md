@@ -69,8 +69,9 @@ See [template/HelloForever](../template/HelloForever) for a working skeleton of 
   - No flavor switch is needed: it targets Mainline, which is what Forever is. Forever-only APIs
     (`C_GameRules`, `C_SkillInfo`, ...) may be missing until the extension updates, so check
     `/api` in-game or the `forever` branch of wow-ui-source.
-- **luacheck** (`lunarmodules/luacheck`) for CI. Config in [../.luacheckrc](../.luacheckrc).
-  Install: needs Lua plus luarocks, or grab a prebuilt Windows `luacheck.exe` from its releases.
+- **luacheck** (`lunarmodules/luacheck`) is not used here. The static checks are the Lua 5.1 syntax
+  pass in `tools/test/run.js` and `tools/forever-api/api-lint.js`; both run in `npm test` and in CI
+  (`.github/workflows/test.yml`).
 - **StyLua** formatter, `syntax = "Lua51"`. Config in [../stylua.toml](../stylua.toml).
 
 ## 3. In-game dev tools

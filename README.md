@@ -315,9 +315,12 @@ cd tools\test; npm install; npm test                                       # all
 | [docs/01-game-overview.md](docs/01-game-overview.md) | What the game is, features, timeline, business model |
 | [docs/02-addon-platform.md](docs/02-addon-platform.md) | Forever's technical facts: TOC, project ID, API base, restrictions, ecosystem |
 | [docs/03-toolchain.md](docs/03-toolchain.md) | Addon anatomy, editor setup, in-game tools, libraries, packaging, addon policy |
-| [docs/04-launch-checklist.md](docs/04-launch-checklist.md) | What to verify once the game is installed |
+| [docs/04-launch-checklist.md](docs/04-launch-checklist.md) | In-game checks, done and still open |
 | [docs/05-opportunities.md](docs/05-opportunities.md) | Gaps and addon ideas |
 | [docs/07-fog-control.md](docs/07-fog-control.md) | Fog/weather control: what Blizzard locked, what is left |
+| [docs/08-darkmoon-faire.md](docs/08-darkmoon-faire.md) | Darkmoon Faire and Sayge's fortunes on Forever |
+| [docs/09-hidden-timers.md](docs/09-hidden-timers.md) | Hidden timers in the client data |
+| [docs/research/data-sources.md](docs/research/data-sources.md) | Data sources ranked by what the bundle can build on (2026-11-10), with the detail notes beside it |
 | [docs/features/](docs/features) | Per-feature design notes and honest limits |
 | [docs/sources.md](docs/sources.md) | Sources with confidence tags |
 

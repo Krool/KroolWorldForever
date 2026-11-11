@@ -55,6 +55,11 @@ Slash: `/kws save [name]`, `/kws list`, `/kws undo`.
 Apply never runs in combat or while the cursor holds something. Undo restores bars, bindings,
 settings, addons and switches Edit Mode back; macros it created stay (it never edits existing ones).
 
+Undo can put back spells, items, macros and mounts. A bar slot holding anything else (an equipment
+set, a flyout) is therefore left alone by Apply, whether the setup wants another action there or
+wants it empty, and the report counts those slots (0.16.4). `Unrestorable` in `Core.lua` is the
+list; a type moves out of it only when `Pickup` learns to restore it.
+
 ## Characters are told apart by GUID
 
 A character is keyed by name and realm, plus its GUID. When a name comes back as a different

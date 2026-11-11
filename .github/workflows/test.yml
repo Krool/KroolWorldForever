@@ -1,0 +1,18 @@
+# The same gate release.ps1 runs: the fengari suites, then the Forever API lint.
+name: test
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+        working-directory: tools/test
+      - run: npm test
+        working-directory: tools/test

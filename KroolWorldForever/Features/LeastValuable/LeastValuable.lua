@@ -448,8 +448,12 @@ local function OnItemTooltip(tooltip, data)
 	if tooltip ~= GameTooltip or not (ns.enabled and ns.db and ns.db.tooltip) then
 		return
 	end
-	local id = type(data) == "table" and data.id or nil
-	if id == nil or Secret(id) then
+	-- Secret first: even a truth test on a secret value errors, and this runs outside TryQuiet.
+	local id
+	if type(data) == "table" then
+		id = data.id
+	end
+	if Secret(id) or id == nil then
 		return
 	end
 	root.TryQuiet(ns, "tooltip", Annotate, tooltip, data)

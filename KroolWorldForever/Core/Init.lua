@@ -67,7 +67,7 @@ local function MainSlash(msg)
 		root.SetEnabled(F, arg == "on")
 		F:Print(FeatureState(F))
 	elseif F and F.OnOpen and F.enabled then
-		F.OnOpen() -- features with their own window open it
+		root.Try(F, "opening", F.OnOpen) -- features with their own window open it
 	elseif F then
 		root.OpenSettings(F)
 	else

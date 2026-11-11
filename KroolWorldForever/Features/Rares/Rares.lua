@@ -410,6 +410,12 @@ function Expire()
 		return
 	end
 	UpdateButton()
+	if pending and not ns.enabled then
+		-- Switched off mid-fight: no combat-end event reaches a feature that is off, so look again
+		-- until the button can be taken down.
+		expiry = true
+		C_Timer.After(5, Expire)
+	end
 end
 
 -- -------------------------------------------------------------------- done with it
@@ -660,9 +666,13 @@ function ns.OnSlash(msg)
 		table.sort(names)
 		ns:Print(#names == 0 and "ignoring no rares" or ("ignoring: " .. table.concat(names, ", ")))
 	elseif cmd == "test" then
+		if InCombat() then
+			ns:Print("leave combat first")
+			return
+		end
 		current = { npcId = 0, guid = "", name = "Rare Alert Test", level = nil, elite = false, at = Now() }
 		UpdateButton()
-		ns:Print(InCombat() and "leave combat first" or "test button shown for two minutes (it targets nothing real)")
+		ns:Print("test button shown for a minute (it targets nothing real)")
 	elseif cmd == "nameplates" or cmd == "plates" then
 		ns.EnableNameplates()
 	elseif cmd == "options" or cmd == "config" then
@@ -693,12 +703,19 @@ function ns.OnEnable()
 		ns:Print("enemy nameplates are off, so only rares you mouse over or target are noticed. "
 			.. "/kwr nameplates (or the button on the /kw hub) turns them on.")
 	end
+	if pending then
+		UpdateButton() -- switched off in a fight and on again: finish what combat held up
+	end
 end
 
 function ns.OnDisable()
 	current = nil
 	wipe(plates) -- no REMOVED events while off: forget the tokens
 	UpdateButton()
+	if pending and not expiry then
+		expiry = true
+		C_Timer.After(5, Expire) -- combat locks the button: Expire takes it down afterwards
+	end
 end
 
 function ns.OnOptionChanged()

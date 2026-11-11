@@ -7,20 +7,23 @@
   README settings tables (tools\settings-doc.js), then zips the KroolWorldForever folder plus
   CHANGELOG.md. The zip has KroolWorldForever\ at its root, which is what CurseForge, Wago and
   manual installs expect. Version comes from the TOC unless -Version is given.
+
+  -Ref <commit or tag> packages that commit instead of the working tree (git archive), so the zip
+  holds exactly what was committed: several sessions share this tree, and another session's
+  unfinished edits must never ship. It runs no tests and writes no docs (the tree is not what is
+  being packaged). release.ps1 uses it. -CheckOnly runs the tests and the docs step and stops.
 #>
 param(
 	[string] $Version,
-	[switch] $SkipTests
+	[switch] $SkipTests,
+	[string] $Ref,
+	[switch] $CheckOnly
 )
 
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $addon = Join-Path $repo "KroolWorldForever"
 $toc = Join-Path $addon "KroolWorldForever_Forever.toc"
-
-if (-not $Version) {
-	$Version = ((Select-String -Path $toc -Pattern '^## Version:\s*(.+)$').Matches[0].Groups[1].Value).Trim()
-}
 
 # Native tools write notices to stderr; under "Stop" PowerShell 5.1 turns those into terminating
 # errors. Judge them by exit code instead.
@@ -32,22 +35,46 @@ function Native([string] $dir, [scriptblock] $cmd, [string] $what) {
 	if ($LASTEXITCODE -ne 0) { throw "$what failed (exit $LASTEXITCODE)." }
 }
 
-$test = Join-Path $repo "tools\test"
-if (-not $SkipTests) {
-	if (-not (Test-Path (Join-Path $test "node_modules"))) {
-		Native $test { npm install --silent --no-audit --no-fund } "npm install"
-	}
-	Native $test { npm test } "Tests"
+function TocVersion([string] $path) {
+	return ((Select-String -Path $path -Pattern '^## Version:\s*(.+)$').Matches[0].Groups[1].Value).Trim()
 }
 
-Native $repo { node tools\settings-doc.js } "settings-doc"
+if (-not $Ref) {
+	$test = Join-Path $repo "tools\test"
+	if (-not $SkipTests) {
+		if (-not (Test-Path (Join-Path $test "node_modules"))) {
+			Native $test { npm install --silent --no-audit --no-fund } "npm install"
+		}
+		Native $test { npm test } "Tests"
+	}
+	Native $repo { node tools\settings-doc.js } "settings-doc"
+}
+if ($CheckOnly) { return }
 
 $dist = Join-Path $repo "dist"
 $stage = Join-Path $dist "stage"
 if (Test-Path $stage) { Remove-Item -Recurse -Force $stage }
 New-Item -ItemType Directory -Force (Join-Path $stage "KroolWorldForever") | Out-Null
-Copy-Item -Recurse -Force (Join-Path $addon "*") (Join-Path $stage "KroolWorldForever")
-Copy-Item -Force (Join-Path $repo "CHANGELOG.md") (Join-Path $stage "KroolWorldForever\CHANGELOG.md")
+if ($Ref) {
+	# The commit's files, not the tree's. A tar file on disk: PowerShell 5.1 corrupts binary pipes.
+	$tar = Join-Path $dist "stage.tar"
+	Native $repo { git archive --format=tar -o $tar $Ref KroolWorldForever CHANGELOG.md } "git archive $Ref"
+	Native $repo { tar.exe -xf $tar -C $stage } "tar"
+	Remove-Item -Force $tar
+	Move-Item -Force (Join-Path $stage "CHANGELOG.md") (Join-Path $stage "KroolWorldForever\CHANGELOG.md")
+} else {
+	Copy-Item -Recurse -Force (Join-Path $addon "*") (Join-Path $stage "KroolWorldForever")
+	Copy-Item -Force (Join-Path $repo "CHANGELOG.md") (Join-Path $stage "KroolWorldForever\CHANGELOG.md")
+}
+
+# The zip is named for the version inside it. A name that disagrees with its TOC is two builds
+# under one version waiting to happen.
+$inside = TocVersion (Join-Path $stage "KroolWorldForever\KroolWorldForever_Forever.toc")
+if (-not $Version) { $Version = $inside }
+if ($Version -ne $inside) {
+	Remove-Item -Recurse -Force $stage
+	throw "Asked for version $Version but the TOC being packaged says $inside."
+}
 
 $zip = Join-Path $dist "KroolWorldForever-$Version.zip"
 if (Test-Path $zip) { Remove-Item -Force $zip }

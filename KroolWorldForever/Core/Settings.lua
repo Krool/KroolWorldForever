@@ -85,7 +85,7 @@ function root.BuildSettings()
 				layout:AddInitializer(CreateSettingsButtonInitializer("", "Open " .. (F.title or key), function()
 					if F.enabled then
 						SettingsPanel:Hide()
-						F.OnOpen()
+						root.Try(F, "opening", F.OnOpen)
 					end
 				end, F.description, true))
 			end

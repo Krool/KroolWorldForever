@@ -6,6 +6,9 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
 
 ## Live launch update (2026-11-05, build 1.60.1.70790)
 
+**Live on 2026-11-10: build 70888, Interface still 16001.** Builds 70840, 70862 and 70888 changed no
+function, event or enum (the allowlist in `tools/forever-api` is built from 70888).
+
 - **Build:** launch shipped 70790 (`.build.info`, product `wowf`). Builds since the beta snapshot:
   70532 (Oct 22), 70707 (Nov 2), 70755 (Nov 3), 70790 (Nov 4), 70840 (Nov 6), 70862 (Nov 7).
   wow-ui-source `forever` tracks the `wowf` product since Nov 2. 70840 and 70862 change no API
@@ -128,7 +131,7 @@ What that means in practice:
 economy, questing, map, UI layout and cosmetics are all wide open. In-combat decision making is
 deliberately closed.
 
-## Known beta bugs (may be fixed by launch)
+## Beta bugs (not rechecked on live)
 
 - SavedVariables not loading / settings wiped on client restart (fixed in 70009 per the wiki, but players
   reported it later too).

@@ -345,7 +345,16 @@ local function Same(slot, want)
 		return kind == "macro" and C_ActionBar.GetActionText(slot) == want.name
 	end
 	local map = { spell = "spell", item = "item", mount = "summonmount" }
-	return kind == map[want.t] and id == want.id
+	-- Any other type (equipment set, flyout) is saved under the client's own name for it.
+	return kind == (map[want.t] or want.t) and id == want.id
+end
+
+-- The action types Pickup can put back. A slot holding anything else (an equipment set, a flyout)
+-- is left alone by Apply: Undo could not restore it, and Undo promises to.
+local RESTORABLE = { spell = true, item = true, macro = true, summonmount = true }
+local function Unrestorable(slot)
+	local kind = GetActionInfo(slot)
+	return kind ~= nil and not RESTORABLE[kind]
 end
 
 local function MountIndex(mountID)
@@ -411,10 +420,14 @@ function apply.bars(data, opts, report)
 		Flag(report, "warn")
 		return
 	end
-	local placed, cleared, skipped = 0, 0, {}
+	local placed, cleared, kept, skipped = 0, 0, 0, {}
 	for slot = 1, MAX_SLOTS do
 		local want = data[slot]
-		if want and not Same(slot, want) then
+		if Same(slot, want) then
+			-- already as the setup has it
+		elseif Unrestorable(slot) then
+			kept = kept + 1
+		elseif want then
 			if Pickup(want) then
 				PlaceAction(slot)
 				placed = placed + 1
@@ -422,7 +435,7 @@ function apply.bars(data, opts, report)
 				skipped[#skipped + 1] = ("slot %d: %s"):format(slot, Describe(want))
 			end
 			ClearCursor()
-		elseif not want and opts.clearEmpty and C_ActionBar.HasAction(slot) then
+		elseif opts.clearEmpty and C_ActionBar.HasAction(slot) then
 			ClearCursor()
 			PickupAction(slot)
 			ClearCursor()
@@ -430,6 +443,9 @@ function apply.bars(data, opts, report)
 		end
 	end
 	report.lines[#report.lines + 1] = ("Action Bars: %d placed, %d cleared, %d not available"):format(placed, cleared, #skipped)
+	if kept > 0 then
+		report.lines[#report.lines + 1] = ("  - %d %s left alone: an equipment set or flyout button, which Undo could not put back"):format(kept, kept == 1 and "slot" or "slots")
+	end
 	if #skipped > 0 then
 		Flag(report, "warn")
 	end

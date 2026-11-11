@@ -332,7 +332,11 @@ local function DoUndo()
 			result = { setupId = selected, report = report, undo = true }
 			PrintReport(report)
 			needReload = needReload or report.reload
-			Toast("Undo finished", "ok")
+			if report.ok then
+				Toast("Undo finished", "ok")
+			else
+				Toast("Nothing undone", "fail") -- refused: combat, or the cursor is holding something
+			end
 		end
 		Refresh()
 	end)
@@ -1222,16 +1226,23 @@ local function Settle(wasNew)
 end
 ns.Settle = Settle -- test seam: what runs a few seconds after login
 
-local started = false
+-- Settle runs once per session. A timer that finds the feature switched off does nothing, so
+-- turning it on again while still unsettled starts another: otherwise Apply would answer "still
+-- loading" until a reload.
+local started, settling, wasNew = false, false, false
 function ns.OnEnable()
-	if started then
+	if not started then
+		started = true
+		wasNew = ns.Identify()
+	end
+	if ready or settling then
 		return
 	end
-	started = true
-	local wasNew = ns.Identify()
+	settling = true
 	-- Action bars, macros and bindings arrive from the server after login; wait before reading them.
 	C_Timer.After(8, Safe(function()
-		if ns.enabled then
+		settling = false
+		if ns.enabled and not ready then
 			Settle(wasNew)
 		end
 	end))

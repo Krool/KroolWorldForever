@@ -18,12 +18,6 @@ Enum = {
 	CraftingReagentType = { Modifying = 0, Basic = 1, Finishing = 2, Automatic = 3 },
 }
 
-function Secret()
-	return { __secret = true }
-end
-function issecretvalue(v)
-	return type(v) == "table" and v.__secret == true
-end
 
 Clock = 1000
 function GetTime()

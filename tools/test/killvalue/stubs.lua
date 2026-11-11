@@ -19,15 +19,12 @@ Enum = {
 	LootSlotType = { None = 0, Item = 1, Money = 2, Currency = 3 },
 }
 
--- Secret values: a table tagged __secret. Real secrets error on comparison and math; here the
--- addon must simply never get past issecretvalue.
-function Secret()
-	return { __secret = true }
-end
--- a secret that is still a well-formed string, so type() checks alone would let it through
+-- Secret() and issecretvalue come from ..\common.lua. SecretGuid is one more secret: still a
+-- well-formed string, so type() checks alone would let it through.
 SecretGuid = "Creature-0-1-2-3-4242-secret"
+local baseSecret = issecretvalue
 function issecretvalue(v)
-	return (type(v) == "table" and v.__secret == true) or v == SecretGuid
+	return baseSecret(v) or v == SecretGuid
 end
 
 Clock = 1000

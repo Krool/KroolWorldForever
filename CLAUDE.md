@@ -82,10 +82,19 @@ before writing addon code.
 
 - `cd tools\test; npm test` runs one fengari suite per folder (`tools/test/<feature>/stubs.lua` +
   `test.lua`). Each suite loads the whole bundle in TOC order. Then `tools/forever-api/api-lint.js`
-  rejects any `C_*` call, event or `Enum` not in Forever's API docs. Verify an API by grepping
-  `tools/forever-api/forever-api.json` before using it. Regenerate the allowlist with
-  `build-allowlist.js` when a new build drops.
-- A new feature gets its own suite folder, including a check that `/kwf <key> off` silences it.
+  rejects any `C_*` reference, event or `Enum` not in Forever's API docs. It follows
+  `local T = C_TradeSkillUI` aliases; an event name passed as a variable must come from a literal
+  list in the loop just above. Verify an API by grepping `tools/forever-api/forever-api.json`
+  before using it. Regenerate the allowlist with `build-allowlist.js` when a new build drops.
+  `node run.js <suite> --verbose` runs one suite and prints its passing lines too. GitHub Actions
+  runs `npm test` on every push (`.github/workflows/test.yml`).
+- A new feature gets its own suite folder, including a check that `/kwf <key> off` silences it
+  (run.js fails without one, and fails a suite that ran zero checks). `tools/test/core` covers
+  Core with a made-up feature; a `stubs.lua` can build on another with `__include("camp/stubs.lua")`.
+- `Secret()` and `issecretvalue` come from `tools/test/common.lua` for every suite. The stub errors
+  when a secret is indexed, called, concatenated, ordered or used in math. Lua cannot trap a truth
+  test (`if v`) or `v == 5`, so the suites cannot catch those: in feature code, `issecretvalue`
+  comes first, before any other test of the value.
 - Most suites' stub widgets return a no-op function for ANY unset key, so `frame.myField` reads
   truthy under test. Check fields with `type(x) == "table"`, or use a stub that returns nil for
   lowercase keys (the skillup suite does).
@@ -104,12 +113,16 @@ before writing addon code.
 
 - **Every change to the addon gets a new version and a commit.** Patch for fixes, minor for a new
   feature. Write the `## x.y.z` CHANGELOG section, then `scripts\release.ps1 -Version x.y.z`
-  (`-Publish` once project ids and tokens exist). It syncs the TOC version, runs the tests,
-  regenerates the README settings tables, builds `dist\KroolWorldForever-x.y.z.zip`, commits only
-  TOC/CHANGELOG/README, tags `vx.y.z`, and pushes. Never ship two builds under one version.
-- The public download is a GitHub release per tag with the dist zip attached
-  (`gh release create vx.y.z dist\KroolWorldForever-x.y.z.zip`); release.ps1 does not do this yet.
-  The README links `releases/latest`. `dist/` is git-ignored.
+  (`-Publish` once project ids and tokens exist). **Commit the addon changes first**: it refuses
+  while `KroolWorldForever\` has uncommitted files, because the zip is built from the tagged commit
+  (`build.ps1 -Ref`), not the shared working tree. It syncs the TOC version (and puts it back if
+  the gate fails), runs the tests, regenerates the README settings tables, commits only
+  TOC/CHANGELOG/README by pathspec, tags `vx.y.z`, builds `dist\KroolWorldForever-x.y.z.zip` from
+  the tag, pushes, and creates the GitHub release with the zip attached. Never ship two builds
+  under one version.
+- The public download is that GitHub release; the README links `releases/latest`. `dist/` is
+  git-ignored. If the push or `gh release create` fails, the script prints the commands that
+  finish the release by hand; do not rerun it for the same version.
 - `scripts\publish.ps1` (CurseForge + Wago) is UNTESTED until the projects exist. Ids go in the
   TOC (`X-Curse-Project-ID`, `X-Wago-ID`); tokens are the user env vars `CF_API_KEY` and
   `WAGO_API_TOKEN`. Never write them to a file or echo them.
@@ -129,4 +142,7 @@ before writing addon code.
   to grey 0%) scaled by the account's measured crafts (owner's call 2026-11-09: 174 crafts fit it);
   the per-range counts stay as the check. Change the model only on new data; see docs/features/skillup.md.
 - `scripts/` link-addon (dev junction), build, release, publish. `template/HelloForever` minimal skeleton.
-- Lint/format config: `.luacheckrc`, `stylua.toml` (tabs, Lua51).
+- Format config: `stylua.toml` (tabs, Lua51). No luacheck: the static checks are run.js's syntax
+  pass and the API lint.
+- The hub (`Core/Hub.lua`) shows as many cards as the screen fits (`root.HubRows`) and scrolls the
+  rest, so a new feature needs no hub layout work.

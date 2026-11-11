@@ -38,7 +38,9 @@ Sayge: your next fortune after 3h 50m more online (1:10 PM if you stay on), even
     a feature turned on later in the session still counts the time before.
   - A frame of the feature's own saves `left` at `PLAYER_LOGOUT`, whether the feature is on or off.
     The bundle's events reach only enabled features. The next login carries on from there
-    (`ns.Resume`), so time away does not count.
+    (`ns.Resume`), so time away does not count. A session that stays off from login to logout never
+    runs `ns.Resume`, so the save itself starts the count at that session's login (0.16.4; before
+    that, such a session counted the whole time logged out as played).
   - Other characters' waits stand still. `/sayge` lists another character from the last 8 days, or
     any older one whose wait is not used up.
   - While the fortune is on you, its own time left sets the wait exactly: 4 hours minus the

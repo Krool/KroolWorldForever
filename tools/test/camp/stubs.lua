@@ -14,13 +14,7 @@ end
 
 Enum = { TooltipDataType = { Item = 0, Unit = 2, Object = 4, UnitAura = 7 } }
 
--- Secret values: a table tagged __secret.
-function Secret()
-	return { __secret = true }
-end
-function issecretvalue(v)
-	return type(v) == "table" and v.__secret == true
-end
+-- Secret() and issecretvalue come from ..\common.lua.
 
 Clock = 1000
 function GetTime()

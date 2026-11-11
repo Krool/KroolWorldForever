@@ -252,6 +252,29 @@ check("undo is one level", ns.db.undo["Alt-Realm"], nil)
 check("polish: a toast says the undo finished", __ns.UI.ToastOf(F).text.text, "Undo finished")
 check("undo keeps created macros", GetMacroIndexByName("Charge+") > 0, true)
 
+-- A slot holding something Undo could not put back (an equipment set) is left alone, whether the
+-- setup wants another action there or wants it empty.
+Actions[30] = { "equipmentset", 2 }
+Actions[31] = { "equipmentset", 3 }
+local fire = { t = "spell", id = 133, name = "Fireball" }
+r = ns.Apply({ name = "keep", parts = { bars = { [1] = fire, [31] = fire } } }, { bars = true }, ns.db)
+check("apply leaves an equipment set button the setup would clear", Actions[30] and Actions[30][1], "equipmentset")
+check("and one the setup would replace", Actions[31] and Actions[31][1], "equipmentset")
+check("and says so", has(r.lines, "2 slots left alone"), true)
+-- A refused undo (the cursor holds something) must not toast success.
+ns.Refresh()
+Cursor = { "item", 5 }
+F.undo:Click()
+AcceptPopup()
+check("a refused undo does not say it finished", __ns.UI.ToastOf(F).text.text, "Nothing undone")
+check("and the undo is still there", ns.db.undo["Alt-Realm"] ~= nil, true)
+Cursor = nil
+r = ns.Undo()
+check("undo with an equipment set in the snapshot: ok", r and r.ok, true)
+check("and nothing reported as not available", has(r.lines, "equipmentset"), false)
+check("the equipment set buttons are still there", Actions[30][1] .. Actions[31][1], "equipmentsetequipmentset")
+Actions[30], Actions[31] = nil, nil
+
 -- ---------------------------------------------------------------- edge cases
 
 -- Rank fallback: setup has an id the player does not know, but knows the spell by name.

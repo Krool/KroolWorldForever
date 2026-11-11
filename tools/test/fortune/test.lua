@@ -502,6 +502,14 @@ local before = ns.Left(Mine(), Now, true)
 Advance(3600)
 Logout()
 check("off: the logout still saves the count", Mine().left, before - 3600)
+-- A whole session with the feature off: nothing calls Resume, and the 12 hours logged out must
+-- not be counted as time played.
+local saved = Mine().left
+Away(12 * 3600)
+ns.OnLoad() -- the next session loads, still off
+Advance(600)
+Logout()
+check("off for a whole session: the time logged out does not count", Mine().left, saved - 600)
 capture(function()
 	SlashCmdList.KROOLWORLDFOREVER("fortune on")
 end)

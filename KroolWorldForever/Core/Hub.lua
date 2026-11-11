@@ -7,7 +7,17 @@ local _, root = ...
 local UI = root.UI
 
 local W, CARD_H, GAP, TOP = 470, 62, 6, -32
+local SCROLLBAR = 24 -- extra width for UIPanelScrollFrameTemplate's bar, which sits right of the list
 local hub -- built on first open
+
+-- How many cards fit a screen `screenHeight` UI units tall (768 at the default UI scale), leaving
+-- the hub's own top and bottom (98) and a 40 unit margin. At least three.
+function root.HubRows(screenHeight)
+	if type(screenHeight) ~= "number" or screenHeight <= 0 then
+		screenHeight = 768
+	end
+	return math.max(3, math.floor((screenHeight - 40 - 98) / (CARD_H + GAP)))
+end
 
 local Version = root.Version
 
@@ -46,7 +56,7 @@ local ON_COLOR, OFF_COLOR = { 0.2, 1, 0.6 }, { 0.45, 0.45, 0.45 }
 
 local function Card(parent, F, i)
 	local card = CreateFrame("Button", nil, parent, "InsetFrameTemplate")
-	card:SetPoint("TOPLEFT", 10, TOP - 30 - (i - 1) * (CARD_H + GAP))
+	card:SetPoint("TOPLEFT", 0, -(i - 1) * (CARD_H + GAP))
 	card:SetSize(W - 20, CARD_H)
 	card.feature = F
 	UI.Hover(card, "card")
@@ -159,12 +169,29 @@ local function Build()
 	if type(hub.Inset) == "table" then
 		hub.Inset:Hide() -- each card is its own inset
 	end
+	-- The cards sit in a scroll frame, so the hub never grows past the screen: with more features
+	-- than fit, the list scrolls (mouse wheel or the bar) and the window keeps its height.
+	local n = #root.featureOrder
+	local visible = math.min(n, root.HubRows(UIParent and UIParent.GetHeight and UIParent:GetHeight()))
+	local scrolls = n > visible
+	if scrolls then
+		hub:SetWidth(W + SCROLLBAR)
+	end
+	local scroll = CreateFrame("ScrollFrame", nil, hub, "UIPanelScrollFrameTemplate")
+	scroll:SetPoint("TOPLEFT", 10, TOP - 30)
+	scroll:SetSize(W - 20, visible * (CARD_H + GAP) - GAP)
+	local content = CreateFrame("Frame", nil, scroll)
+	content:SetSize(W - 20, math.max(1, n * (CARD_H + GAP) - GAP))
+	scroll:SetScrollChild(content)
+	if not scrolls and type(scroll.ScrollBar) == "table" then
+		scroll.ScrollBar:Hide()
+	end
+	hub.scroll, hub.visibleCards = scroll, visible
 	hub.cards = {}
 	for i, key in ipairs(root.featureOrder) do
-		hub.cards[i] = Card(hub, root.features[key], i)
+		hub.cards[i] = Card(content, root.features[key], i)
 	end
-	local n = #root.featureOrder
-	local bottom = -TOP + 30 + n * (CARD_H + GAP) + 36
+	local bottom = -TOP + 30 + visible * (CARD_H + GAP) + 36
 	hub:SetHeight(bottom)
 
 	hub.intro = UI.Text(hub, "GameFontHighlight")
@@ -184,6 +211,11 @@ local function Build()
 		Settings(nil)
 	end)
 	hub.settings:SetPoint("BOTTOMRIGHT", -8, 4)
+	if scrolls then
+		hub.more = UI.Text(hub, "GameFontDisableSmall", "CENTER")
+		hub.more:SetPoint("BOTTOM", 0, 10)
+		hub.more:SetText(("%d features: scroll for more"):format(n))
+	end
 	UI.Tip(hub.settings, function()
 		return "All Settings", { "Every feature's options on one page (Options > AddOns > Krool World Forever)." }
 	end)

@@ -129,9 +129,13 @@ function ns.Resume(start)
 end
 
 -- Logging out (or reloading): keep what is left. Runs whether the feature is on or off, so time
--- played with it off still counts.
+-- played with it off still counts. A session that was off from login to logout never ran Resume,
+-- so the count starts at this session's login here too: the time logged out is not time played.
 local function Save()
 	local rec, now = ns.Mine(), Now()
+	if rec and rec.left and sessionStart and (type(rec.at) ~= "number" or rec.at < sessionStart) then
+		rec.at = sessionStart
+	end
 	local left = ns.Left(rec, now, true)
 	if left then
 		rec.left, rec.at = left, now

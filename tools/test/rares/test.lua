@@ -463,6 +463,18 @@ check("shift-right-click on the test entry ignores nothing", db.ignore[0], nil)
 check("but the test button stays", Button().shown, true)
 Button():Click("RightButton")
 check("right-click hides the test button", Button().shown, false)
+check("/kwr test says how long", has(out, "for a minute"), true)
+reset()
+InCombat = true
+out = capture(function()
+	ns.OnSlash("test")
+end)
+InCombat = false
+check("/kwr test in combat: refuses", has(out, "leave combat first"), true)
+capture(function()
+	FireEvent("PLAYER_REGEN_ENABLED")
+end)
+check("and no test button turns up after the fight", Button() == nil or Button().shown == false, true)
 out = capture(function()
 	ns.OnSlash("")
 end)
@@ -473,6 +485,32 @@ check("/kwr alone prints help", has(out, "/kwr ignore"), true)
 check("hub status", ns.HubStatus():find("ignored", 1, true) ~= nil, true)
 BoundKey = nil
 check("hub status says when no key is bound", ns.HubStatus():find("no key bound", 1, true) ~= nil, true)
+
+-- Switched off in a fight: combat locks the button, and no combat-end event reaches a feature
+-- that is off. The button must still come down once the fight is over.
+reset()
+Rare("nameplate1", 108, "Midfight")
+capture(function()
+	FireEvent("NAME_PLATE_UNIT_ADDED", "nameplate1")
+end)
+check("a rare's button is up", Button().shown, true)
+InCombat = true
+capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("rares off")
+end)
+check("off in combat: the locked button is not touched", #BlockedCalls, 0)
+Clock = Clock + 200
+RunTimers() -- the button's own timeout passes while still fighting
+check("still fighting: still not touched", #BlockedCalls, 0)
+InCombat = false
+Clock = Clock + 10
+RunTimers()
+check("off in combat: the button comes down after the fight", Button().shown, false)
+check("and is pointed at nothing", Button().attrs.macrotext1, "")
+capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("rares on")
+end)
+Units.nameplate1 = nil
 
 reset()
 capture(function()
