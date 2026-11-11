@@ -85,6 +85,7 @@ Optional companions:
 | `/kwr test` | Show the mark button with a test entry, to place it (shift-drag) and try your key |
 | `/kwr nameplates` | Turn enemy nameplates on (rares are noticed as soon as their nameplate shows) |
 | `/kwd` | Disenchanting material prices from Auctionator (which ones still have none) |
+| `/kwd seen` | Your disenchants, checked against the tables (what came out, and anything they do not list) |
 | `/kwc` | Every camp buff at your level, which ones a class buff of yours covers, and your Camp Benefits time |
 | `/kwu` | How your crafts sit against the line, overall and range by range |
 | `/kwu status` / `panel` | Where the numbers come from (data build, crafts logged); show or hide the Next Skill Point panel |

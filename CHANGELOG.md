@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.16.3
+
+- **Disenchant Value uses Forever's changes to classic items.** Forever kept the item ids but
+  changed some items. Some dungeon greens are blue now, such as Cloak of Blight, and some item
+  levels moved.
+  - A classic item now uses its 1.12 table only when Forever still shows it with that table's
+    quality.
+  - The 27 items whose quality or item level Forever's game data changed go by their Forever values.
+  - Blue items of item level 20 or below say "(unconfirmed on Forever)". Forever added new
+    disenchant results for them, and nobody has measured what they give yet.
+- **Disenchant Value records what your disenchants actually give.** Each disenchant is kept with
+  the item and the materials that came out. `/kwd seen` lists them and flags anything the tables
+  don't list, so the tables get checked against the game as you play. It only reads the loot
+  window.
+- **Skill-Up Odds checked against build 70888:** no recipe skill levels changed.
+
 ## 0.16.2
 
 Fixes from a review of 0.16.0 and 0.16.1.
