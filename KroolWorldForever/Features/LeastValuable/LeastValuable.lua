@@ -79,10 +79,15 @@ end
 
 -- -------------------------------------------------------------------- value
 
+-- The backpack and the equipped bags, but not the reagent bag (bag 5: ContainerFrame_IsReagentBag,
+-- Mainline ContainerFrame.lua, forever branch): what is kept there is kept for crafting.
+local REAGENT_BAG = 5
 local function Bags()
 	local bags = {}
 	for bag = 0, NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4 do
-		bags[#bags + 1] = bag
+		if bag ~= REAGENT_BAG then
+			bags[#bags + 1] = bag
+		end
 	end
 	return bags
 end
@@ -95,6 +100,7 @@ local function Context()
 		canDE = DE and DE.CanDisenchant and DE.CanDisenchant() or false,
 		DE = DE,
 		items = {},
+		pending = {}, -- item ids whose info has not loaded yet
 	}
 end
 
@@ -170,6 +176,7 @@ function ns.SlotValue(bag, slot, ctx)
 	end
 	local f = Facts(ctx, link, id)
 	if f.pending then
+		ctx.pending[id] = true
 		return nil, "pending"
 	end
 	if f.skip then
@@ -209,12 +216,12 @@ function ns.SlotValue(bag, slot, ctx)
 	}
 end
 
--- Every slot that counts, in bag order; the cheapest (the first of equals); and how many slots
--- each reason left out.
+-- Every slot that counts, in bag order; the cheapest (the first of equals); how many slots each
+-- reason left out; and the ids still loading.
 function ns.Scan()
 	local list, skipped, cheapest = {}, {}, nil
 	if not (C_Container and C_Container.GetContainerNumSlots) then
-		return list, nil, skipped
+		return list, nil, skipped, {}
 	end
 	local ctx = Context()
 	for _, bag in ipairs(Bags()) do
@@ -232,7 +239,7 @@ function ns.Scan()
 			end
 		end
 	end
-	return list, cheapest, skipped
+	return list, cheapest, skipped, ctx.pending
 end
 
 -- "2 x 3c at a vendor, no auction price"
@@ -330,23 +337,33 @@ ns.Coin = function()
 	return coin or nil
 end -- test seam
 
-local dirty, pending = true, false
+local dirty, pending = true, {} -- pending: item ids a rescan waits on
 
 -- Scans the bags, marks the cheapest slot and moves the coin. Returns the scan.
 local function Refresh()
 	dirty = false
-	local list, cheapest, skipped = ns.Scan()
-	ns.mark, pending = cheapest, (skipped.pending or 0) > 0
+	local list, cheapest, skipped, waiting = ns.Scan()
+	ns.mark, pending = cheapest, waiting or {}
 	ns.Place()
 	return list, cheapest, skipped
 end
 ns.Refresh = Refresh
+
+-- An open hub card shows the new mark (it rescans, when dirty, as it draws).
+local function HubChanged()
+	if root.RefreshHub then
+		pcall(root.RefreshHub)
+	end
+end
 
 -- The bags changed: rescan now when they are on screen, else on the next look.
 local function Changed()
 	dirty = true
 	if ns.enabled and BagsShown() then
 		Refresh()
+	end
+	if ns.enabled then
+		HubChanged()
 	end
 end
 
@@ -455,6 +472,7 @@ function ns.Ignore(id, name)
 	ns.db.ignore[id] = name or ns.db.ignore[id] or NameOf(id)
 	ns:Print("not marking " .. ns.db.ignore[id] .. " any more (/kwl unignore " .. id .. " to undo)")
 	Refresh()
+	HubChanged()
 end
 
 function ns.Unignore(arg)
@@ -464,6 +482,7 @@ function ns.Unignore(arg)
 			ns.db.ignore[itemId] = nil
 			ns:Print("marking " .. name .. " again")
 			Refresh()
+			HubChanged()
 			return true
 		end
 	end
@@ -638,7 +657,7 @@ ns:RegisterEvent("SPELLS_CHANGED", function()
 	dirty = true -- learning to disenchant reprices bound gear; the next look rescans
 end)
 ns:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(_, itemId)
-	if pending and not Secret(itemId) then -- the secret check first: testing a secret errors
+	if not Secret(itemId) and pending[itemId] then -- the secret check first: testing a secret errors
 		RefreshSoon()
 	end
 end)

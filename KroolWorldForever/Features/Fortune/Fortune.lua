@@ -110,17 +110,26 @@ function ns.Left(rec, now, live)
 	return math.max(0, left)
 end
 
+-- A fortune's own time left, from the wait left (both began with the same cast).
+local function FortuneLeft(left)
+	return left - (ns.WAIT - ns.BUFF)
+end
+
 -- A new session on this character: the time logged out does not count, so the wait goes on from
--- where the last session left it. Run once per login (also by the tests, to log in again).
-function ns.Resume()
-	local rec, now = ns.Mine(), Now()
-	if rec and now and rec.left then
-		rec.at = now
+-- where the last session left it, counting from the login (OnLoad notes it), even when the
+-- feature is turned on later. start: the login time (the tests log in again with it).
+local sessionStart
+function ns.Resume(start)
+	sessionStart = start or sessionStart or Now()
+	local rec = ns.Mine()
+	if rec and rec.left and sessionStart and (type(rec.at) ~= "number" or rec.at < sessionStart) then
+		rec.at = sessionStart
 	end
 	ns.remindFor = nil -- the last session's reminder died with it
 end
 
--- Logging out (or reloading): keep what is left.
+-- Logging out (or reloading): keep what is left. Runs whether the feature is on or off, so time
+-- played with it off still counts.
 local function Save()
 	local rec, now = ns.Mine(), Now()
 	local left = ns.Left(rec, now, true)
@@ -130,7 +139,8 @@ local function Save()
 end
 
 -- Records from before 0.16.1 kept only `got` and counted the real clock. The wait they had is the
--- best guess left; a refusal after it means Sayge disagreed.
+-- best guess left (`guess`: the fortune still on you corrects it); a refusal after it means Sayge
+-- disagreed, unless he offered later.
 local function Migrate()
 	local now = Now()
 	if not now then
@@ -138,9 +148,12 @@ local function Migrate()
 	end
 	for _, rec in pairs(Chars()) do
 		if type(rec) == "table" and type(rec.got) == "number" and rec.left == nil then
-			rec.left, rec.at = math.max(0, rec.got + ns.WAIT - now), now
-			if type(rec.refused) == "number" and rec.refused >= rec.got + ns.WAIT then
-				rec.turnedAway = rec.refused
+			rec.left, rec.at, rec.guess = math.max(0, rec.got + ns.WAIT - now), now, true
+			local refused, offered = Plain(rec.refused, "number"), Plain(rec.offered, "number")
+			if offered and offered > rec.got + ns.BUFF and (not refused or offered >= refused) then
+				rec.left = 0 -- the old code's "ready": he offered after the fortune ended
+			elseif refused and refused >= rec.got + ns.WAIT then
+				rec.turnedAway = refused
 			end
 		end
 	end
@@ -276,7 +289,7 @@ local function Lost()
 	seenInstance = nil
 	local rec, now = ns.Mine(), Now()
 	local left = ns.Left(rec, now, true)
-	if not (left and now) or rec.lost or left - (ns.WAIT - ns.BUFF) <= 60 then
+	if not (left and now) or rec.lost or FortuneLeft(left) <= 60 then
 		return -- ran out: its 2 hours are used
 	end
 	rec.lost = now
@@ -317,11 +330,15 @@ function ns.Scan()
 	end
 	local rec = Chars()[key]
 	local left = ns.Left(rec, now, true)
-	if left and waitLeft <= left + 120 then
-		rec.left, rec.at = waitLeft, now -- the same fortune
+	if left and (waitLeft <= left + 120 or (rec.guess and rec.spell == id)) then
+		rec.left, rec.at, rec.guess = waitLeft, now, nil -- the same fortune (it corrects a guess)
 		return
 	end
-	Chars()[key] = { got = began, spell = id, kind = ns.FORTUNES[id], left = waitLeft, at = now }
+	-- First seen well into its time (after a logout, or the feature newly on): when it was given
+	-- is unknown, since its time stood still while logged out. "late": got is when it was seen.
+	local used = ns.BUFF - FortuneLeft(waitLeft)
+	local late = used > 120 or nil
+	Chars()[key] = { got = late and now or began, late = late, spell = id, kind = ns.FORTUNES[id], left = waitLeft, at = now }
 	ns.Schedule()
 	Refresh()
 end
@@ -370,7 +387,7 @@ function ns.State(rec, now, have, live)
 	if not (left and now) then
 		return nil
 	end
-	local fortuneLeft = left - (ns.WAIT - ns.BUFF)
+	local fortuneLeft = FortuneLeft(left)
 	if have == true or (have == nil and not rec.lost and fortuneLeft > 0) then
 		return "active", left
 	end
@@ -389,7 +406,7 @@ function ns.StatusText(rec, now, have, live)
 	if not state then
 		return GREY .. "No fortune seen on this character yet|r"
 	elseif state == "active" then
-		return GREEN .. ("Fortune of %s, %s left|r"):format(rec.kind or "?", ns.Duration(left - (ns.WAIT - ns.BUFF)))
+		return GREEN .. ("Fortune of %s, %s left|r"):format(rec.kind or "?", ns.Duration(FortuneLeft(left)))
 	elseif state == "waiting" then
 		return ORANGE .. "Next fortune " .. ns.Wait(left, now, live) .. "|r"
 	elseif state == "refused" then
@@ -553,13 +570,14 @@ local function PrintStatus()
 			print("  " .. GREY .. "The next one " .. ns.Wait(left, now, true) .. ", even if you die.|r")
 		end
 		local c = ns.Clock(rec.got)
-		print("  " .. GREY .. "Last fortune: " .. (rec.kind or "?") .. (c and (", " .. c) or "") .. (rec.lost and ", lost early" or "") .. ".|r")
+		print("  " .. GREY .. "Last fortune: " .. (rec.kind or "?") .. (c and ((rec.late and ", first seen " or ", ") .. c) or "") .. (rec.lost and ", lost early" or "") .. ".|r")
 	end
 	print("  " .. GREY .. "Sayge's wait is 4 hours from a fortune, counted only while that character is logged in, and dying does not end it.|r")
 	local _, myKey = ns.Mine()
 	local others = {}
 	for key, r in pairs(Chars()) do
-		if key ~= myKey and type(r) == "table" and r.got and now and now - r.got < ns.KEEP then
+		-- this faire's, and any older one whose wait is not used up (it only runs while logged in)
+		if key ~= myKey and type(r) == "table" and r.got and now and (now - r.got < ns.KEEP or (ns.Left(r, now, false) or 0) > 0) then
 			others[#others + 1] = { key = key, rec = r }
 		end
 	end
@@ -612,7 +630,6 @@ ns:RegisterEvent("PLAYER_ENTERING_WORLD", function()
 	ns.Scan()
 	ns.Schedule()
 end)
-ns:RegisterEvent("PLAYER_LOGOUT", Save)
 ns:RegisterEvent("PLAYER_DEAD", function()
 	ns.Scan()
 end)
@@ -633,10 +650,17 @@ function ns.OnEnable()
 	ns.Schedule()
 end
 
+-- At login, on or off: note when the session began, and save the count at logout through a frame
+-- of our own (the bundle's events reach only enabled features).
 function ns.OnLoad()
 	Migrate()
-end
-
-function ns.OnDisable()
-	Save() -- off: PLAYER_LOGOUT no longer reaches it
+	sessionStart = Now()
+	if not ns.logoutFrame then
+		local f = CreateFrame("Frame")
+		f:RegisterEvent("PLAYER_LOGOUT")
+		f:SetScript("OnEvent", function()
+			root.TryQuiet(ns, "logout", Save)
+		end)
+		ns.logoutFrame = f
+	end
 end

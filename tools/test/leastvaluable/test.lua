@@ -225,7 +225,42 @@ ContainerFrameCombinedBags:Open()
 FireEvent("GET_ITEM_INFO_RECEIVED", LATE, true)
 check("loaded: counted", ns.mark and ns.mark.id, LATE)
 FireEvent("GET_ITEM_INFO_RECEIVED", Secret(), true) -- a secret id is not tested
+-- only the ids still loading start a rescan
+local LATE2 = 900131
+Put(0, 2, { id = LATE2 })
+ns.Refresh()
+local scans, realScan = 0, ns.Scan
+ns.Scan = function(...)
+	scans = scans + 1
+	return realScan(...)
+end
+FireEvent("GET_ITEM_INFO_RECEIVED", 12345, true)
+check("another item's info: no rescan", scans, 0)
+FireEvent("GET_ITEM_INFO_RECEIVED", LATE2, true)
+check("the loading item's info: a rescan", scans, 1)
+ns.Scan = realScan
 ContainerFrameCombinedBags:Close()
+
+-- the reagent bag (bag 5) is kept for crafting: never counted
+EmptyBags()
+NUM_TOTAL_EQUIPPED_BAG_SLOTS, BagSizes[5] = 5, 4
+Put(0, 1, { id = FANG, count = 10 })
+Put(5, 1, { id = SCALE, count = 1 })
+ns.Refresh()
+check("reagent bag: not counted", ns.mark and ns.mark.bag, 0)
+NUM_TOTAL_EQUIPPED_BAG_SLOTS, BagSizes[5] = 4, nil
+EmptyBags()
+
+-- a bag change refreshes an open hub card
+local hubRefreshes, realHub = 0, root.RefreshHub
+root.RefreshHub = function()
+	hubRefreshes = hubRefreshes + 1
+end
+Put(0, 1, { id = FANG, count = 10 })
+FireEvent("BAG_UPDATE_DELAYED")
+check("bag change: hub refreshed", hubRefreshes > 0, true)
+root.RefreshHub = realHub
+EmptyBags()
 
 -- ---------------------------------------------------------------- coin
 

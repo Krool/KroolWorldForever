@@ -34,14 +34,21 @@ Sayge: your next fortune after 3h 50m more online (1:10 PM if you stay on), even
   that fortune is unknown, but it matches the 9.2.5 change that hid hidden auras from addons.
 - **So it counts the wait itself.** Each record keeps `left` (seconds of wait) as of `at` (real
   clock):
-  - For the logged-in character, `left` runs down. `PLAYER_LOGOUT` (and turning the feature off)
-    saves it, and the next login carries on from there (`ns.Resume`), so time away does not count.
-  - Other characters' waits stand still.
+  - For the logged-in character, `left` runs down from the login. OnLoad notes the login time, so
+    a feature turned on later in the session still counts the time before.
+  - A frame of the feature's own saves `left` at `PLAYER_LOGOUT`, whether the feature is on or off.
+    The bundle's events reach only enabled features. The next login carries on from there
+    (`ns.Resume`), so time away does not count.
+  - Other characters' waits stand still. `/sayge` lists another character from the last 8 days, or
+    any older one whose wait is not used up.
   - While the fortune is on you, its own time left sets the wait exactly: 4 hours minus the
     fortune's time used.
-  - A fortune with more time left than the count allows is a new one.
-  - Records from 0.16.0 and before (`got` only) get the old clock guess. A refusal after that guess
-    marks them turned away.
+  - A fortune with more time left than the count allows is a new one. If it is first seen more than
+    2 minutes into its time (after a logout, or with the feature newly on), when it was given is
+    unknown. `got` is then when it was seen, `late` is set, and `/sayge` says "first seen".
+  - Records from 0.16.0 and before (`got` only) get the old clock guess, marked `guess`. A refusal
+    after that guess marks them turned away, unless Sayge offered later. If the same fortune is
+    still on you, its time left corrects the guess and the record is kept.
 - **The visible fortune is read** on `UNIT_AURA` (a fortune id among the added auras, or a full
   update), on `PLAYER_ENTERING_WORLD` and on enable, from the 16 fortune ids
   (`C_UnitAuras.GetPlayerAuraBySpellID`: the eight classic spells and Forever's eight copies,

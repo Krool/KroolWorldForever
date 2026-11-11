@@ -22,7 +22,10 @@ Least valuable in your bags                       30c
 - **Ties:** the first slot in bag order (backpack slot 1 first).
 - **Old prices** still count. The tooltip dates them ("price seen 5 days ago").
 - **Bags only:** the backpack and the equipped bags (0 to `NUM_TOTAL_EQUIPPED_BAG_SLOTS`), never
-  the bank.
+  the bank. The reagent bag (bag 5, `ContainerFrame_IsReagentBag` in Mainline `ContainerFrame.lua`)
+  is skipped too, since what is kept there is kept for crafting.
+- **Rescans:** an open hub card refreshes after each bag change. An item still loading is noted by
+  id, and only its own `GET_ITEM_INFO_RECEIVED` starts a rescan.
 
 ## Never marked
 

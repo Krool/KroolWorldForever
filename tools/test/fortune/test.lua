@@ -150,7 +150,10 @@ PlayerAuras[DAMAGE] = { spellId = DAMAGE, duration = 7200, expirationTime = Cloc
 capture(function()
 	FireEvent("PLAYER_ENTERING_WORLD")
 end)
-check("dated from its time left", Mine() and Mine().got, Now - 1800)
+-- its time stood still while logged out, so when it was given is unknown: dated when seen
+check("seen half an hour in: dated when seen", Mine() and Mine().got, Now)
+check("and marked late", Mine() and Mine().late, true)
+check("its wait from its time left", Mine() and Mine().left, 4 * 3600 - 1800)
 
 -- ---------------------------------------------------------------- death
 
@@ -340,7 +343,7 @@ local function Away(seconds)
 	end
 end
 local function Login()
-	ns.Resume()
+	ns.Resume(Now)
 	return capture(function()
 		FireEvent("PLAYER_ENTERING_WORLD")
 	end)
@@ -455,6 +458,54 @@ end)
 check("offered: no longer turned away", Status():find("Ready for a new fortune", 1, true) ~= nil, true)
 UnitGUIDs.npc = nil
 
+-- an old record offered after its refusal was "ready": it stays so
+db.chars = { ["Krool-Stormrage"] = { got = Now - 6 * 3600, spell = DAMAGE, kind = "Damage", refused = Now - 1800, offered = Now - 600 } }
+ns.Migrate()
+check("old record offered after the refusal: ready", Status():find("Ready for a new fortune", 1, true) ~= nil, true)
+
+-- an old record whose fortune is still on (it waited out a night): its time left corrects the
+-- guess, and it is the same fortune
+local oldGot = Now - 10 * 3600
+db.chars = { ["Krool-Stormrage"] = { got = oldGot, spell = DAMAGE, kind = "Damage", refused = Now - 3600 } }
+ns.Migrate()
+check("migrated: a guess", Mine().guess, true)
+PlayerAuras[DAMAGE] = { spellId = DAMAGE, duration = 7200, expirationTime = Clock + 3600, auraInstanceID = 400 }
+capture(function()
+	FireEvent("PLAYER_ENTERING_WORLD")
+end)
+check("guess corrected: the same fortune", Mine().got, oldGot)
+check("guess corrected: its refusal kept", Mine().refused ~= nil, true)
+check("guess corrected: 3h of wait", Mine().left, 3 * 3600)
+check("guess corrected: no longer a guess", Mine().guess, nil)
+wipe(PlayerAuras)
+
+-- an alt parked longer than a faire with wait left is still listed
+db.chars = {
+	["Mick-Stormrage"] = { got = Now - 9 * 24 * 3600, spell = DAMAGE, kind = "Damage", left = 2 * 3600, at = Now - 9 * 24 * 3600, lost = Now - 9 * 24 * 3600 },
+	["Tom-Stormrage"] = { got = Now - 9 * 24 * 3600, spell = DAMAGE, kind = "Damage", left = 0, at = Now - 9 * 24 * 3600 },
+}
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_FORTUNE("")
+end)
+check("parked alt with wait left: listed", has(out, "Mick-Stormrage: |cffff9955Next fortune after 2h 0m more online|r"), true)
+check("parked alt with its wait used: left out", has(out, "Tom-Stormrage"), false)
+
+-- time played with the feature off still counts
+db.chars = {}
+Gain(DAMAGE)
+Remove(DAMAGE)
+Advance(60)
+capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("fortune off")
+end)
+local before = ns.Left(Mine(), Now, true)
+Advance(3600)
+Logout()
+check("off: the logout still saves the count", Mine().left, before - 3600)
+capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("fortune on")
+end)
+
 -- ---------------------------------------------------------------- /sayge and other characters
 
 wipe(PlayerAuras)
@@ -475,7 +526,7 @@ Advance(9 * 24 * 3600)
 out = capture(function()
 	SlashCmdList.KROOLWORLDFOREVER_FORTUNE("")
 end)
-check("/sayge: old faires left out", has(out, "Krool-Stormrage"), false)
+check("/sayge: an alt's frozen wait outlasts the faire", has(out, "Krool-Stormrage"), true)
 PlayerName = "Krool"
 OpenedCategory = nil
 capture(function()
