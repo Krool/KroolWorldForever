@@ -245,6 +245,31 @@ C_Item = {
 }
 ItemNames = {}
 
+-- The loot window and bag slots, for the disenchant recorder.
+-- LootSlots = { {link=, source=guid, count=}, ... }; BagItems[bag * 100 + slot] = ContainerItemInfo
+LootSlots = {}
+Enum.LootSlotType = Enum.LootSlotType or { None = 0, Item = 1, Money = 2, Currency = 3 }
+function GetNumLootItems()
+	return #LootSlots
+end
+function GetLootSlotType(i)
+	return LootSlots[i] and Enum.LootSlotType.Item or Enum.LootSlotType.None
+end
+function GetLootSlotLink(i)
+	return LootSlots[i] and LootSlots[i].link
+end
+function GetLootSourceInfo(i)
+	local s = LootSlots[i]
+	if s then
+		return s.source, s.count
+	end
+end
+BagItems = {}
+C_Container = C_Container or {}
+C_Container.GetContainerItemInfo = function(bag, slot)
+	return BagItems[bag * 100 + slot]
+end
+
 CanDisenchant = false
 C_SpellBook = {
 	ContainsAnyDisenchantSpell = function()

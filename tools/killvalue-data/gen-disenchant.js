@@ -13,11 +13,50 @@
 //    Forever reports other item levels;
 //  * mats: material names, for when the client has not loaded the item yet.
 //
-// Usage:  node tools\killvalue-data\gen-disenchant.js
+// Forever kept the item ids but changed some items (quality, item level). Given Forever's
+// ItemSparse export, a classic item whose quality or item level differs there is not pinned, so
+// the addon goes by its Forever values through the bands. (The addon also drops a pin at runtime
+// when the client reports another quality: that covers items Forever hides from client data.)
+//
+// Usage:  node tools\killvalue-data\gen-disenchant.js [ItemSparse-<build>.csv]
+//   the CSV: https://wago.tools/db2/ItemSparse/csv?build=<wowf build> (send a browser User-Agent)
 "use strict";
 const fs = require("fs");
 const path = require("path");
 const { load, SOURCE_NAME } = require("./classicdb");
+
+// Forever's item facts by id ({ q, l }), from a wago.tools ItemSparse CSV, or null.
+const FOREVER_CSV = process.argv[2] || null;
+function parseCsv(text) {
+  const out = [];
+  let row = [], field = "", quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (quoted) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; } else quoted = false;
+      } else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") { row.push(field); field = ""; }
+    else if (c === "\n") { row.push(field); out.push(row); row = []; field = ""; }
+    else if (c !== "\r") field += c;
+  }
+  if (field || row.length) { row.push(field); out.push(row); }
+  return out;
+}
+function loadForever(file) {
+  const csv = parseCsv(fs.readFileSync(file, "utf8"));
+  const h = csv[0];
+  const iId = h.indexOf("ID"), iQ = h.indexOf("OverallQualityID"), iL = h.indexOf("ItemLevel");
+  if (iId < 0 || iQ < 0 || iL < 0) throw new Error(file + ": not an ItemSparse export");
+  const m = new Map();
+  for (let r = 1; r < csv.length; r++) {
+    if (csv[r].length < h.length) continue;
+    m.set(+csv[r][iId], { q: +csv[r][iQ], l: +csv[r][iL] });
+  }
+  return m;
+}
+const forever = FOREVER_CSV ? loadForever(FOREVER_CSV) : null;
 
 const OUT = path.join(__dirname, "..", "..", "KroolWorldForever", "Features", "Disenchant", "Data.lua");
 const { columns, rows, loadLoot } = load();
@@ -113,7 +152,17 @@ let exact = 0;
 for (const x of items) {
   if ((eligible(x.q, x.cls) ? bandFor(x.q, x.cls, x.il) : 0) === x.de) exact++;
 }
-const listed = items.map((x) => [x.id, x.de]).sort((a, b) => a[0] - b[0]);
+// Pins Forever changed: left to the bands (a 0 pin, cannot be disenchanted, stays).
+let changed = 0;
+const pinned = items.filter((x) => {
+  const f = forever && forever.get(x.id);
+  if (f && x.de && (f.q !== x.q || f.l !== x.il)) {
+    changed++;
+    return false;
+  }
+  return true;
+});
+const listed = pinned.map((x) => [x.id, x.de]).sort((a, b) => a[0] - b[0]);
 
 // ---- write ---------------------------------------------------------------------
 function fmt(n) {
@@ -139,7 +188,11 @@ const header = [
   "-- Data.items[item] = the 1.12 item's entry (0 = cannot be disenchanted); items not listed use the bands",
   "-- Data.mats[item] = material name",
   "-- Generated " + new Date().toISOString().slice(0, 10) + ": " + tables.size + " tables, " + bands.size + " band sets, " +
-    items.length + " items (" + exact + " follow their band), " + names.size + " materials.",
+    listed.length + " items (" + exact + " of all " + items.length + " follow their band), " + names.size + " materials.",
+  forever
+    ? "-- Forever: " + path.basename(FOREVER_CSV) + " (" + forever.size + " items); " + changed +
+      " classic items whose quality or item level Forever changed are left to the bands."
+    : "-- No Forever ItemSparse given: every classic item keeps its 1.12 table.",
   "",
   "local _, root = ...",
   "local ns = root.Feature(\"disenchant\")",
@@ -153,7 +206,8 @@ const out = header.join("\n") +
   "ns.Data = { tables = tables, bands = bands, items = items, mats = mats, source = \"" + SOURCE_NAME + "\" }\n";
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, out);
-console.log("wrote " + OUT + ": " + tables.size + " tables, " + bands.size + " band sets, " + items.length + " items, " +
+console.log("wrote " + OUT + ": " + tables.size + " tables, " + bands.size + " band sets, " + listed.length + " items (" +
+  changed + " left to the bands for Forever), " +
   exact + " follow their band, " + names.size + " materials, " +
   (out.length / 1024).toFixed(1) + " KB");
 for (const [k, runs] of [...bands].sort((a, b) => a[0] - b[0])) console.log("  band " + k + ": " + runs.map((r) => r[0] + ":" + r[1]).join(" "));

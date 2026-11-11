@@ -20,9 +20,34 @@ Best: disenchant it (auction 20s, vendor 5s)
   `item_template.DisenchantID`). The 1.12 data assigns tables by quality, class (weapon or armor)
   and item level bands; 6,372 of its 7,994 weapons and armor follow their band. 1,346 cannot be
   disenchanted (rings, necklaces and wands among them) and 276 armor pieces use a weapon table.
-  Every one of the 7,994 is stored with its own table, so classic items stay exact even if Forever
-  reports other item levels. Items not in the 1.12 data (Forever's new items have new ids, such as
-  273636 in Auctionator's cache) use the bands.
+  Each classic item is stored with its own 1.12 table. Items not in the 1.12 data (Forever's new
+  items have new ids, such as 273636 in Auctionator's cache) use the bands.
+- **Classic items Forever changed (0.16.3).** Forever kept the item ids but changed some items. The
+  research report `reports/WoW Forever data sources.md` (2026-11-10) found green-to-blue changes,
+  such as Cloak of Blight, and item level changes. Two guards follow:
+  - **The generator** takes Forever's ItemSparse export:
+    `node tools\killvalue-data\gen-disenchant.js ItemSparse-<build>.csv`, from
+    `https://wago.tools/db2/ItemSparse/csv?build=<wowf build>` with a browser User-Agent. A classic
+    item whose quality or item level differs there is not stored, so it goes by the bands with its
+    Forever values. Against 70888 that drops 27 of 7,994, leaving 7,967. A "cannot be disenchanted"
+    entry stays.
+  - **At runtime,** a stored table whose quality is not the item's quality in the client is
+    ignored, and the bands choose. Every 1.12 item uses a table of its own quality (all 6,648 with
+    a DisenchantID, checked 2026-11-10), so this only catches Forever's changes. It also covers
+    items Forever hides from client data, once the client has seen them.
+- **Low blues are unconfirmed.** Forever added disenchant brackets for blue items of item level
+  5-20 (ItemDisenchantLoot 335-338, build 70888); 1.12 has none. Their yield is server-side and
+  unmeasured, so those tooltips show the 1.12 Small Glimmering Shard and say "(unconfirmed on
+  Forever)".
+- **What disenchanting really gives (0.16.3).** Each disenchant is recorded in `ns.db.seen`, the
+  last 300, with the item, its client quality and item level, the table used, and the materials
+  that came out. The item is the bag item that locked as Disenchant (13262) was cast on it
+  (`ITEM_LOCK_CHANGED`, then `UNIT_SPELLCAST_SUCCEEDED`), else the loot window's source item. The
+  materials come from `LOOT_READY` / `LOOT_OPENED` within 10 seconds, through the same loot calls
+  Kill Value uses. Any secret value drops that disenchant. `/kwd seen` lists them and flags a
+  material the table does not list.
+  - Classic items the client shows with another quality are noted in `ns.db.changed`, up to 500.
+  - Both are evidence for the next regeneration and for the low-blue brackets.
 - **Data fix:** entry 50 (blue, item level 69+) lists only the 0.5% Nexus Crystal; the generator
   gives it entry 49's rows (Large Brilliant Shard 99.5%).
 - **Forever:** guides (2026-11) show the same dust, essence and shard tiers by level, armor mostly
@@ -57,11 +82,14 @@ duplicates it.
 ## Settings and commands
 
 Show On Item Tooltips, Say What Pays Best, Always List The Materials (else hold Shift). `/kwd`
-prints every material's price (which still need an auction scan); `/kwd options`.
+prints every material's price (which still need an auction scan); `/kwd seen` lists your disenchants against the tables; `/kwd options`.
 
 ## To check in game
 
 - A green's tooltip shows Disenchant with a value after an Auctionator scan, and the Best line.
 - Shift lists the materials. A soulbound item shows no auction compare.
 - Auctionator shows no second Disenchant line (if it does, its Forever tables changed).
-- Disenchant a few greens and compare with the tables (dust 75% on armor, essence 75% on weapons).
+- Disenchant a few greens and compare with the tables (dust 75% on armor, essence 75% on weapons):
+  `/kwd seen` does it, and `ns.db.seen` keeps them for the generator.
+- Disenchant a blue of item level 20 or below (Forever's new brackets): what does it give?
+- Hover a classic item Forever made blue (Cloak of Blight, Cragwood Maul): it uses the blue table.

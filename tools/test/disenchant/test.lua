@@ -131,7 +131,8 @@ for id, entry in pairs(ns.Data.items) do
 		break
 	end
 end
-check("a classic exception keeps its own table", exId and ns.TableFor(exId, 2, 4, 1), exEntry)
+local exQuality = exEntry and (exEntry <= 31 and 2 or exEntry <= 50 and 3 or 4)
+check("a classic exception keeps its own table", exId and ns.TableFor(exId, exQuality, 4, 1), exEntry)
 local bandId
 for id, entry in pairs(ns.Data.items) do
 	if entry == 4 then
@@ -144,7 +145,21 @@ local listed = 0
 for _ in pairs(ns.Data.items) do
 	listed = listed + 1
 end
-check("every classic weapon and armor piece is listed", listed, 7994)
+-- 7994 classic pieces, less the 27 whose quality or item level Forever 70888 changed (left to the bands)
+check("every classic weapon and armor piece Forever kept is listed", listed, 7967)
+-- Forever gave a classic item another quality (a green became blue): its Forever values choose
+check("Forever made a classic green blue: the blue band", bandId and ns.TableFor(bandId, 3, 4, 28), 42)
+check("quality unknown: the classic table stays", bandId and ns.TableFor(bandId, nil, 4, 60), 4)
+-- Forever's new brackets for blue items of item level 5-20: shown, but marked unconfirmed
+local lowBlue = ns.Evaluate(0, 3, 4, 18)
+check("low blue: Small Glimmering Shard", lowBlue and lowBlue.entry, 41)
+check("low blue: unconfirmed", lowBlue and lowBlue.unsure, true)
+check("blue at 21: confirmed", (ns.Evaluate(0, 3, 4, 21) or {}).unsure, nil)
+check("green at 18: confirmed", (ns.Evaluate(0, 2, 4, 18) or {}).unsure, nil)
+local LOWBLUE = 900077
+Items[LOWBLUE] = { name = "Forever Shoulders", quality = 3, ilvl = 18, sell = 400, class = 4, bind = 2 }
+check("low blue tooltip says unconfirmed", has(ShowItem(LOWBLUE).left, "unconfirmed on Forever"), true)
+check("a classic green tooltip does not", has(ShowItem(CHEST).left, "unconfirmed"), false)
 check("blue 69+ table has the Large Brilliant Shard", ns.Data.tables[50][1][1], 14344)
 for entry, rows in pairs(ns.Data.tables) do
 	local sum = 0
@@ -376,6 +391,79 @@ capture(function()
 	SlashCmdList.KROOLWORLDFOREVER_DISENCHANT("options")
 end)
 check("/kwd options opens settings", OpenedCategory, "Disenchant Value")
+
+-- ---------------------------------------------------------------- what disenchanting gives
+
+check("records start empty", #db.seen, 0)
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_DISENCHANT("seen")
+end)
+check("/kwd seen with none", has(out, "no disenchants recorded yet"), true)
+-- Disenchant cast on the chestguard in bag 0, slot 3: it locks, the cast succeeds, loot opens
+BagItems[3] = { hyperlink = "|cff1eff00|Hitem:" .. CHEST .. "::::::::|h[Forever Chestguard]|h|r", isLocked = true }
+LootSlots = { { link = "|Hitem:" .. SOUL .. "|h", source = "Item-0-0-0-1", count = 2 } }
+capture(function()
+	FireEvent("ITEM_LOCK_CHANGED", 0, 3)
+	FireEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-1", 13262)
+	FireEvent("LOOT_READY")
+	FireEvent("LOOT_OPENED")
+end)
+local rec = db.seen[1]
+check("a disenchant is recorded once", #db.seen, 1)
+check("its item", rec and rec.item, CHEST)
+check("its quality and item level", rec and rec.q == 2 and rec.il == 28, true)
+check("the table used", rec and rec.de, 4)
+check("what came out", rec and rec.mats[SOUL], 2)
+check("as the table lists", rec and ns.SeenMatches(rec), true)
+-- a material the table does not list
+LootSlots = { { link = "|Hitem:10940|h", source = "Item-0-0-0-2", count = 1 } }
+capture(function()
+	FireEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-2", 13262)
+	FireEvent("LOOT_OPENED")
+end)
+check("outside the table: flagged", db.seen[2] and ns.SeenMatches(db.seen[2]), false)
+-- other casts, other units, a loot window long after, secrets: nothing
+local okSecret = pcall(function()
+	capture(function()
+		FireEvent("UNIT_SPELLCAST_SUCCEEDED", "party1", "Cast-3", 13262)
+		FireEvent("LOOT_OPENED")
+		FireEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-4", 12345)
+		FireEvent("LOOT_OPENED")
+		FireEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-5", 13262)
+		Clock = Clock + 30
+		FireEvent("LOOT_OPENED")
+		FireEvent("UNIT_SPELLCAST_SUCCEEDED", Secret(), Secret(), Secret())
+		FireEvent("ITEM_LOCK_CHANGED", Secret(), Secret())
+		FireEvent("ITEM_LOCK_CHANGED", 16) -- an equipped slot
+	end)
+end)
+check("other casts and secrets: no error", okSecret, true)
+check("other casts and late windows: nothing recorded", #db.seen, 2)
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_DISENCHANT("seen")
+end)
+check("/kwd seen counts them", has(out, "2 disenchants recorded: 1 match the tables, 1 gave something they do not list"), true)
+check("/kwd seen lists them", has(out, "not in the table"), true)
+-- a classic green the client shows as blue is noted
+local pinnedGreen
+for id, entry in pairs(ns.Data.items) do
+	if entry == 4 then
+		pinnedGreen = id
+		break
+	end
+end
+Items[pinnedGreen] = { name = "Changed Vest", quality = 3, ilvl = 28, sell = 500, class = 4, bind = 2 }
+ShowItem(pinnedGreen)
+check("a classic item Forever changed is noted", db.changed[pinnedGreen] and db.changed[pinnedGreen].was, 4)
+check("with its Forever quality", db.changed[pinnedGreen] and db.changed[pinnedGreen].q, 3)
+local recorderErrors = {}
+for _, e in ipairs(KroolWorldForeverDB.errors or {}) do
+	local w = tostring(e.where)
+	if w:find("LOOT") or w:find("SPELLCAST") or w:find("ITEM_LOCK") or w == "loot" then
+		recorderErrors[#recorderErrors + 1] = tostring(e.feature) .. " " .. w .. ": " .. tostring(e.message)
+	end
+end
+check("the recorder (and Kill Value's loot reader) log no errors", table.concat(recorderErrors, "; "), "")
 
 -- ---------------------------------------------------------------- shared prices
 

@@ -95,7 +95,7 @@ check("and knows it", ns.auctionHooked, true)
 -- ---------------------------------------------------------------- data and bands
 
 local r = ns.Recipe(VEST)
-check("data build", ns.Data.build, "1.60.1.70862")
+check("data build", ns.Data.build, "1.60.1.70888")
 check("vest yellow", r.y, 45)
 check("vest grey", r.g, 70)
 check("vest profession", r.line, 197)
@@ -532,7 +532,7 @@ check("/kwu sets each range against the line", has(out, "the line expected 9"), 
 out = capture(function()
 	SlashCmdList.KROOLWORLDFOREVER_SKILLUP("status")
 end)
-check("/kwu status names the data build", has(out, "1.60.1.70862"), true)
+check("/kwu status names the data build", has(out, "1.60.1.70888"), true)
 check("/kwu status names the skill source", has(out, "recipe"), true)
 check("/kwu status: refreshed by Auctionator's scans", has(out, "refreshes after its scans"), true)
 check("hub status counts crafts", ns.HubStatus():find("11 crafts measured", 1, true) ~= nil, true)

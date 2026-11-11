@@ -35,7 +35,9 @@ you have." `/kwc` prints all ten first objects with their value at your level.
 - **Only at a camp.** Lines are added only while you have **Campfire Nearby** (1283391), the area
   aura everyone close to a fire gets, so an inn's chair or a city's anvil is left alone. Walking away
   (hovering a camp object without the aura) forgets the hovered list. Entries also expire after 15
-  minutes, about one fire.
+  minutes, about one fire. That is the owner's experience in game (2026-11-10); Warcraft Tavern's
+  Forever camping guide says "about 10 minutes" with a 5-minute cooldown on placing one, and the
+  owner's 15 stands.
 - **Auras used:** Camp Benefits 1229741, Welcoming Campfire 1229739 / 1289723 (the sitting minute;
   the second is the "crafting counts too" version), Boosted Rest 1229451 (no Camp Tent rested
   experience for an hour), and each bonus's own aura (Boosted Attack Power 1230164 and so on). All
