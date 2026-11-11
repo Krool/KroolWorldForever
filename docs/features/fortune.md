@@ -24,6 +24,11 @@ Sayge: your next fortune after 3h 50m more online (1:10 PM if you stay on), even
     about 3h 20m of play (login and logout times from `Logs\Connection.log`).
   - A wait on the real clock would have ended at 5:35 AM. So the wait is time online on that
     character, not hours on the clock.
+  - **Confirmed the same day.** Predicted from the logs: ready about 38 minutes into the next
+    session. Stone entered the world at 3:39:50 PM. Sayge refused at 3:40, 3:57 and 4:08:56 PM, about
+    231 minutes online. He offered at 4:17:11 PM, 239.7 minutes online, which is 4 hours to within the
+    login timestamps. 0.16.1 recorded that fortune with `left` 14400 and saved 14396 at the logout
+    4 seconds later.
 - **The hidden debuff cannot be read.** The owner's check (2026-11-09:
   `C_UnitAuras.GetPlayerAuraBySpellID(23770)`) printed nothing. It is not proof, since the time of
   that fortune is unknown, but it matches the 9.2.5 change that hid hidden auras from addons.

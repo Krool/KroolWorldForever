@@ -41,12 +41,14 @@ Blizzard's server code is not public, so this is the best reading of the evidenc
   which is likely where the "die and just ask again" belief comes from. The client data says the
   original design is the 4-hour marker.
 - **So: a new fortune about 4 hours after the last one, and dying does not shorten it.**
-  Unverified on Forever.
+  The 4 hours is confirmed on Forever, counted in time online (below). That dying does not shorten
+  it is untested.
 - **On Forever, neither timer runs while you are logged out** (the owner's visits, 2026-11-10).
   warcraft.wiki.gg says the fortune keeps running in real time, but on Forever both stop:
   - A fortune taken at 1:35 AM was still on the character after a night logged out.
   - Sayge refused 10.7 and 12.3 hours after it, about 3h 20m of play in.
-  - So the wait is 4 hours online on that character. Details: `docs/features/fortune.md`.
+  - So the wait is 4 hours online on that character. Confirmed when he offered again at 239.7
+    minutes online, after refusing at 231. Details: `docs/features/fortune.md`.
 
 ## What an addon can see
 
