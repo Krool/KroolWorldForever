@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.16.2
+
+Fixes from a review of 0.16.0 and 0.16.1.
+
+- **Sayge's Fortune:**
+  - Time played with the feature turned off now counts toward Sayge's wait. It is saved at logout
+    either way, and counted from the login even if you turn the feature on later.
+  - A fortune first seen partway through its time says "first seen" instead of a guessed start
+    time.
+  - An older record whose fortune is still on keeps its history; the fortune's time left corrects
+    the count.
+  - An older record where Sayge offered after turning you away now reads ready.
+  - `/sayge` lists another character from an earlier faire if its wait isn't used up, since the
+    wait stands still while that character is logged out.
+- **Least Valuable:**
+  - The reagent bag is never counted.
+  - An open hub card updates when your bags change.
+  - Only the item still loading starts a rescan when its info arrives, not every item the game
+    loads.
+
 ## 0.16.1
 
 - **Least Valuable: a copper coin instead of the glow.** The slot worth the least now has a small
