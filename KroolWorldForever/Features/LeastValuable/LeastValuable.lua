@@ -111,13 +111,14 @@ local function Facts(ctx, link, id)
 	if f then
 		return f
 	end
-	local ok, name, _, quality, itemLevel, _, _, _, _, _, _, sellPrice, classID, subclassID =
+	local ok, name, _, quality, itemLevel, _, _, _, _, _, _, sellPrice, classID, subclassID, bindType =
 		Call(C_Item and C_Item.GetItemInfo, link or id)
 	if not (ok and type(name) == "string") then
 		f = { pending = true } -- not cached yet: GET_ITEM_INFO_RECEIVED rescans
 	else
 		f = {
 			name = name,
+			bind = type(bindType) == "number" and bindType or nil, -- 1: bound when picked up (Bags Full's loot)
 			quality = type(quality) == "number" and quality or 1,
 			sell = type(sellPrice) == "number" and sellPrice > 0 and sellPrice or nil,
 		}
@@ -144,6 +145,9 @@ local function Best(ctx, de, auction, vendor)
 	end
 	return nil
 end
+
+-- What the Bags Full card (BagsFull.lua) prices loot with, the same way as the bags.
+ns.Bags, ns.Context, ns.Facts, ns.Best = Bags, Context, Facts, Best
 
 -- One bag slot: { bag, slot, id, link, name, quality, count, unit, value, how, stale, noAuction },
 -- or nil and why it does not count: "empty", "nosale" or a SKIPPED key.
@@ -517,6 +521,15 @@ ns.options = {
 		type = "toggle",
 		label = "Say It On The Tooltip",
 		tooltip = "Adds what the marked slot is worth, and at which price, to its tooltip.",
+		default = true,
+	},
+	{
+		key = "bagsfull",
+		type = "toggle",
+		label = "Bags Full Card",
+		tooltip = "When a full bag stops a pickup, shows a small card with your least valuable item and what the loot "
+			.. "is worth, so you can decide what to make room for. It only shows text and a mark: it never drops, "
+			.. "sells or deletes anything.",
 		default = true,
 	},
 }

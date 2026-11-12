@@ -418,6 +418,240 @@ check("on: coin back", coin:IsVisible(), true)
 check("on: tooltip back", Said(Tip(0, 2)), true)
 ContainerFrameCombinedBags:Close()
 
+-- ---------------------------------------------------------------- Bags Full card
+
+EmptyBags()
+wipe(Prices)
+AuctionatorOn(true)
+db.ignore = {}
+local GEM, LOWLOOT, QLOOT, GREENLOOT, LATE = 900130, 900131, 900132, 900133, 900140
+Items[GEM] = { name = "Moss Agate", quality = 1, sell = 50, class = 7 }
+Items[LOWLOOT] = { name = "Worn Rag", quality = 0, sell = 2, class = 15 }
+Items[QLOOT] = { name = "Quest Gizmo", quality = 1, sell = 1, class = 12 }
+Items[GREENLOOT] = { name = "Odd Charm", quality = 2, sell = 40, class = 15 }
+local function LootLink(id)
+	return "|cffffffff|Hitem:" .. id .. "::::::::|h[loot " .. id .. "]|h|r"
+end
+local function FillBags()
+	EmptyBags()
+	Put(0, 1, { id = FANG, count = 10 }) -- 30c
+	Put(0, 2, { id = SCALE }) -- 5c: the cheapest
+	Put(0, 3, { id = FANG, count = 2 }) -- 6c
+	for slot = 4, 16 do
+		Put(0, slot, { id = CLOTH }) -- 13c each
+	end
+end
+local function Err(message)
+	FireEvent("UI_ERROR_MESSAGE", 0, message)
+end
+local function Card()
+	return ns.BagsFullShown()
+end
+local function OpenLoot(slots)
+	LootSlots = slots
+	FireEvent("LOOT_OPENED")
+end
+local function CloseLoot()
+	FireEvent("LOOT_CLOSED")
+	LootSlots = {}
+end
+
+check("bags full card on by default", db.bagsfull, true)
+check("card absent before any error", Card(), false)
+
+FillBags()
+Err("Out of range.")
+check("another error message: no card", Card(), false)
+Put(0, 16, nil)
+Err(ERR_INV_FULL)
+check("full error with a free slot: no card", Card(), false)
+FillBags()
+FreeSlotsSecret = true
+Err(ERR_INV_FULL)
+check("free slots unreadable: no card", Card(), false)
+FreeSlotsSecret = false
+FireEvent("UI_ERROR_MESSAGE", 0, Secret())
+check("secret message ignored", Card(), false)
+FireEvent("UI_ERROR_MESSAGE", Secret(), ERR_INV_FULL)
+check("secret error type ignored", Card(), false)
+db.bagsfull = false
+Err(ERR_INV_FULL)
+check("option off: no card", Card(), false)
+db.bagsfull = true
+
+-- No loot window: the card sits at the top of the screen.
+Err(ERR_INV_FULL)
+check("ERR_INV_FULL with zero free slots: card", Card(), true)
+local ui = ns.BagsFullUI()
+local st = ns.BagsFullState()
+check("no loot window: top of the screen", ui.card.point, "TOP")
+check("no loot window: no verdict", st.verdict, nil)
+check("no loot window: says nothing to loot", ui.loot.text:find("Nothing to loot", 1, true) ~= nil, true)
+CloseLoot()
+check("loot closed hides the card", Card(), false)
+Err(ERR_LOOT_NO_SPACE)
+check("ERR_LOOT_NO_SPACE with zero free slots: card", Card(), true)
+
+-- The browse order is the scan's: cheapest first, ties in bag order.
+ns.Refresh()
+check("first candidate is the bag mark", st.list[1].slot, ns.mark.slot)
+local order = {}
+for _, e in ipairs(st.list) do
+	order[#order + 1] = e.slot
+end
+check("browse order", table.concat(order, ","), "2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,1")
+check("card shows the cheapest", ui.least.text:find("5c", 1, true) ~= nil, true)
+check("card names how it was priced", ui.least.text:find("at a vendor", 1, true) ~= nil, true)
+ns.BagsFullBrowse(1)
+check("next: second candidate", st.idx, 2)
+check("next: shows its value", ui.least.text:find("6c", 1, true) ~= nil, true)
+ns.BagsFullBrowse(-1)
+ns.BagsFullBrowse(-1)
+check("previous stops at the first", st.idx, 1)
+ui.next.scripts.OnClick(ui.next)
+check("the > button browses", st.idx, 2)
+ui.prev.scripts.OnClick(ui.prev)
+check("the < button browses", st.idx, 1)
+for _ = 1, 30 do
+	ns.BagsFullBrowse(1)
+end
+check("next stops at the last", st.idx, #st.list)
+while st.idx > 1 do
+	ns.BagsFullBrowse(-1)
+end
+
+-- Verdicts, with a loot window open.
+OpenLoot({ { link = LootLink(GEM), qty = 1 } })
+Err(ERR_INV_FULL)
+check("loot beating the least valuable: worth", st.verdict, "worth")
+check("worth: card says it", ui.verdict.text:find("Worth making room", 1, true) ~= nil, true)
+check("worth: shows the loot value", ui.loot.text:find("50c", 1, true) ~= nil, true)
+CloseLoot()
+OpenLoot({ { link = LootLink(LOWLOOT), qty = 1 } })
+Err(ERR_INV_FULL)
+check("loot below the least valuable: not worth", st.verdict, "notworth")
+check("not worth: card says it", ui.verdict.text:find("Not worth picking up", 1, true) ~= nil, true)
+CloseLoot()
+OpenLoot({ { link = LootLink(LOWLOOT), qty = 3 } })
+Err(ERR_INV_FULL)
+check("a stack counts whole: 3 x 2c beats 5c", st.verdict, "worth")
+CloseLoot()
+OpenLoot({ { link = LootLink(LOWLOOT), qty = 2 } })
+Err(ERR_INV_FULL)
+check("4c against 5c: not worth", st.verdict, "notworth")
+check("loot window without LootFrame shown: top", ui.card.point, "TOP")
+LootFrame.shown = true
+Err(ERR_INV_FULL)
+check("docked beside the loot window", ui.card.point, "TOPLEFT")
+LootFrame.shown = false
+CloseLoot()
+
+OpenLoot({ { kind = Enum.LootSlotType.Money }, { link = LootLink(LOWLOOT), qty = 1 } })
+Err(ERR_INV_FULL)
+check("money slots are ignored", #st.loot, 1)
+CloseLoot()
+
+OpenLoot({ { link = LootLink(QLOOT), qty = 1, quest = true } })
+Err(ERR_INV_FULL)
+check("quest loot: worth taking", st.verdict, "worth")
+check("quest loot: labeled", ui.loot.text:find("quest item", 1, true) ~= nil, true)
+CloseLoot()
+OpenLoot({ { link = LootLink(GREENLOOT), qty = 1 } })
+Err(ERR_INV_FULL)
+check("unknown value (unpriced green): worth taking", st.verdict, "worth")
+check("unknown value: labeled", ui.loot.text:find("value unknown", 1, true) ~= nil, true)
+CloseLoot()
+Items[LATE] = nil
+OpenLoot({ { link = LootLink(LATE), qty = 1 } })
+Err(ERR_INV_FULL)
+check("uncached loot: worth taking, value unknown", st.verdict .. ":" .. tostring(st.shown.label), "worth:value unknown")
+Items[LATE] = { name = "Late Gem", quality = 1, sell = 900, class = 7 }
+FireEvent("GET_ITEM_INFO_RECEIVED", Secret())
+FireEvent("GET_ITEM_INFO_RECEIVED", LATE)
+check("item info arrives: the card prices it", st.shown.value, 900)
+CloseLoot()
+Items[LATE] = nil
+OpenLoot({ { link = LootLink(QLOOT), secret = true } })
+Err(ERR_INV_FULL)
+check("unreadable loot slot left out", #st.loot, 0)
+CloseLoot()
+
+-- Auctionator prices the loot too; without it, vendor only and no error.
+Prices[LOWLOOT] = 100 -- 95c net beats the 5c scale
+OpenLoot({ { link = LootLink(LOWLOOT), qty = 1 } })
+Err(ERR_INV_FULL)
+check("loot priced at auction", st.shown.how .. ":" .. math.floor(st.shown.value), "auction:95")
+AuctionatorOn(false)
+Err(ERR_INV_FULL)
+check("no Auctionator: vendor price", st.shown.how, "vendor")
+AuctionatorOn(true)
+Prices[LOWLOOT] = nil
+CloseLoot()
+
+-- Highlight: with the bags open the browsed slot gets the coin.
+ContainerFrameCombinedBags:Open()
+Err(ERR_INV_FULL)
+check("bags open: mark on the browsed slot", ui.mark.parent == ButtonFor(0, 2) and ui.mark:IsVisible(), true)
+ns.BagsFullBrowse(1)
+check("browsing moves the mark", ui.mark.parent == ButtonFor(0, 3), true)
+ContainerFrameCombinedBags:Close()
+ns.BagsFullBrowse(-1)
+check("bags closed: no mark", ui.mark:IsVisible(), false)
+
+-- Never Mark.
+local ignored
+local realIgnore = ns.Ignore
+ns.Ignore = function(id, name)
+	ignored = id
+	return realIgnore(id, name)
+end
+ui.never.scripts.OnClick(ui.never)
+ns.Ignore = realIgnore
+check("Never Mark calls ns.Ignore with the item", ignored, SCALE)
+check("Never Mark: the item is on the ignore list", db.ignore[SCALE] ~= nil, true)
+check("Never Mark: next candidate shown", st.list[1].slot, 3)
+check("Never Mark: card still up", Card(), true)
+db.ignore[SCALE] = nil
+
+-- A slot frees up: the card goes.
+Put(0, 9, nil)
+FireEvent("BAG_UPDATE_DELAYED")
+check("a freed slot hides the card", Card(), false)
+FillBags()
+Err(ERR_INV_FULL)
+check("shown again", Card(), true)
+FireEvent("BAG_UPDATE_DELAYED")
+check("still full: card stays", Card(), true)
+Put(0, 2, nil)
+Put(0, 3, nil)
+FireEvent("BAG_UPDATE_DELAYED")
+check("freed slots: gone", Card(), false)
+FillBags()
+
+-- Off switches.
+Err(ERR_INV_FULL)
+root.SetOption(ns, "bagsfull", false)
+check("option off hides the card", Card(), false)
+Err(ERR_INV_FULL)
+check("option off keeps it silent", Card(), false)
+root.SetOption(ns, "bagsfull", true)
+Err(ERR_INV_FULL)
+check("option on again", Card(), true)
+capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("leastvaluable off")
+end)
+check("/kwf leastvaluable off hides the card", Card(), false)
+Err(ERR_INV_FULL)
+check("/kwf leastvaluable off keeps it silent", Card(), false)
+capture(function()
+	SlashCmdList.KROOLWORLDFOREVER("leastvaluable on")
+end)
+Err(ERR_INV_FULL)
+check("on again", Card(), true)
+CloseLoot()
+
+check("no item or loot action was ever called", table.concat(ForbiddenCalls, ","), "")
+
 -- ---------------------------------------------------------------- other features untouched
 
 local de = root.features.disenchant

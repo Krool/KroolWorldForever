@@ -79,9 +79,39 @@ move an item.
   Enchanting reprices bound gear).
 - Bag addons that replace the default frames get the tooltip line and the hub card, but no coin. `/kwl` says when the bags are open but the coin found no button for the slot.
 
+## Bags Full card
+
+Owner's request, 2026-11-12 (a better take on One For All's bags-full helper, which ranks by vendor
+price only and deletes items; ours does neither). `Features/LeastValuable/BagsFull.lua`.
+**Text and a mark only.** It never calls `DeleteCursorItem`, `PickupContainerItem`, `ClearCursor`,
+`LootSlot` or `ConfirmLootSlot`; the suite stubs each to fail if it is ever reached.
+
+- **Trigger:** `UI_ERROR_MESSAGE` whose message is `ERR_INV_FULL` or `ERR_LOOT_NO_SPACE`, and only
+  when the normal bags (the same bags the mark scans, no reagent bag, no specialty bags) have zero
+  free slots (`C_Container.GetContainerNumFreeSlots`). Both arguments are checked with
+  `issecretvalue` first; an unreadable free count counts as "not full".
+- **Card:** a `UI.Window` ("Bags Full"), docked to the right of `LootFrame` while it is shown, else
+  near the top of the screen (herbs, quest objects, mail). It hides on `LOOT_CLOSED`, on
+  `BAG_UPDATE_DELAYED` once a slot is free, when Escape or the close button is used, and when
+  the feature or the option is switched off.
+- **Least valuable:** icon, link, count, value and how it was priced, from `ns.Scan` (so it is the
+  bag mark's own item). `<` and `>` walk the candidates in `/kwl` order (cheapest first, ties in bag
+  order). Never Mark calls `ns.Ignore` and shows the next one. With the default bags open, the
+  browsed slot is flashed with the same copper coin (a second frame; the bag mark stays put).
+- **Loot:** each item slot of the open loot window (`GetNumLootItems`, `GetLootSlotLink`,
+  `GetLootSlotInfo`) is priced like a bag slot (`ns.Facts` / `ns.Best`: vendor, auction and
+  disenchant, after the cut; a bind-on-pickup item has no auction price). Money and currency slots
+  are ignored.
+- **Verdict:** "Worth making room" when the best loot is worth more than the cheapest bag item,
+  else "Not worth picking up" (a tie is not worth it). Quest items, kept items (tools, reagents)
+  and loot with no price we can know (uncached, or an unbound green with no auction price and no
+  disenchant value) always count as worth taking, labeled "quest item" or "value unknown". An
+  uncached item re-prices on `GET_ITEM_INFO_RECEIVED`.
+- **Option:** Bags Full Card (default on).
+
 ## Settings and commands
 
-Mark It In Your Bags, Say It On The Tooltip. `/kwl` lists the five least valuable slots and what was
+Mark It In Your Bags, Say It On The Tooltip, Bags Full Card. `/kwl` lists the five least valuable slots and what was
 not counted, by reason. `/kwl ignore` ignores the marked item, `/kwl ignore <item>` any item
 (shift-click it into the chat line), `/kwl unignore <item, id or name>`, `/kwl ignored`.
 
@@ -92,5 +122,10 @@ not counted, by reason. `/kwl ignore` ignores the marked item, `/kwl ignore <ite
 - Switch combined and separate bags (bag menu): the coin follows the slot.
 - The Hearthstone, a Mining Pick, an enchanting rod, arrows and quest items never get the coin.
 - An unscanned BoE green gets no coin; after an auction scan it counts at its price.
+- Fill the bags, then loot a corpse: the card appears beside the loot window with the verdict.
+  Herb a node or take mail with full bags: it appears at the top of the screen. Open the bags and
+  browse with `<` `>`: the coin flashes on each slot. Nothing is ever picked up or dropped for you.
+  Unverified in game: the card's layout inside the window template, and whether `UI_ERROR_MESSAGE`
+  carries the message text as its second argument on Forever.
 - A still-locked lockbox: unverified whether the game reports `hasLoot` before it is picked. If it
   does not, the box counts at its vendor or auction price (`/kwl ignore` it if you pick locks).

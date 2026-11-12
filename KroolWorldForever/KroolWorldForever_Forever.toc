@@ -41,6 +41,7 @@ Features\SkillUp\UI.lua
 Features\Fortune\Fortune.lua
 
 Features\LeastValuable\LeastValuable.lua
+Features\LeastValuable\BagsFull.lua
 
 # Bindings.xml (Rare Alert's key) loads by itself; it is not listed here.
 # Hub, then Init last: every feature has declared itself before ADDON_LOADED.

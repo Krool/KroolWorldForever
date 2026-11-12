@@ -480,3 +480,55 @@ end
 function ButtonFor(bag, slot)
 	return (ContainerFrameUtil_GetItemButtonAndContainer(bag, slot))
 end
+
+-- ---------------------------------------------------------------- Bags Full card
+
+ERR_INV_FULL = "Inventory is full."
+ERR_LOOT_NO_SPACE = "No room to loot."
+Enum.LootSlotType = { None = 0, Item = 1, Money = 2, Currency = 3 }
+function GetLootSourceInfo() end
+
+-- Free slots: a bag's size less the slots Put into it. FreeSlotsSecret makes the count secret.
+FreeSlotsSecret = false
+C_Container.GetContainerNumFreeSlots = function(bag)
+	if FreeSlotsSecret then
+		return Secret(), 0
+	end
+	local used = 0
+	for _ in pairs(Bag[bag] or {}) do
+		used = used + 1
+	end
+	return math.max((BagSizes[bag] or 0) - used, 0), 0
+end
+
+-- The open loot window: LootSlots[i] = { kind=, link=, qty=, quest=, secret= }.
+LootSlots = {}
+function GetNumLootItems()
+	return #LootSlots
+end
+function GetLootSlotType(i)
+	return LootSlots[i].kind or Enum.LootSlotType.Item
+end
+function GetLootSlotLink(i)
+	return LootSlots[i].link
+end
+function GetLootSlotInfo(i)
+	local s = LootSlots[i]
+	if s.secret then
+		return 134400, "x", Secret(), nil, 1, false, Secret()
+	end
+	return 134400, "x", s.qty or 1, nil, 1, false, s.quest or false
+end
+LootFrame = NewWidget("LootFrame")
+LootFrame.shown = false
+
+-- Every call that would pick up, drop, delete or loot something fails the suite.
+ForbiddenCalls = {}
+for _, name in ipairs({ "DeleteCursorItem", "PickupContainerItem", "ClearCursor", "LootSlot", "ConfirmLootSlot", "PickupItem", "UseContainerItem", "SellCursorItem" }) do
+	_G[name] = function()
+		table.insert(ForbiddenCalls, name)
+	end
+	if C_Container then
+		C_Container[name] = _G[name]
+	end
+end
