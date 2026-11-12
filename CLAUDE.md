@@ -73,6 +73,10 @@ before writing addon code.
   automatic apply opens the window on its result with Reload Now instead. Keep those guards.
   Rare Alert (owner's request, 2026-11-05) is not an exception: its target-and-mark runs only from
   the player's click or key on the secure button; the addon only points the button at the rare.
+  One-Button Fishing (owner's request, 2026-11-12) is the same: it casts and reels only from the
+  player's key or double right-click through bindings it re-points out of combat. It sets the
+  soft-interact CVars only while the bobber is out and puts them back. The owner refuses any
+  auto-delete ("definitely dont want auto delete anywhere"): never call DeleteCursorItem.
 - **Never let an error reach the client.** Tooltip and event work runs under pcall (the core
   dispatcher already wraps events).
 - Saved data: `KroolWorldForeverDB.features.<key>` is the feature's slice (`ns.db`). Option values
