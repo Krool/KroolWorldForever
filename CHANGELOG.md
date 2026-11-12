@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.17.0
+
+Two new features and a bags-full card, after a look at what Forever players like in other addons.
+
+- **New: One-Button Fishing.**
+  - Bind one key under Key Bindings > AddOns > Krool World. It casts your line; while the line is
+    out, the same key reels in the bite.
+  - With a fishing pole in your main hand, a double right-click does the same. It doesn't work
+    while you are moving, mounted, swimming, stealthed or in combat. Option: Double Right-Click To
+    Fish.
+  - Every cast and reel is your own key press or click. The addon only points the key at the cast
+    or at the bobber, and only out of combat.
+  - While the line is out it turns on the soft-interact settings that find the bobber, then puts
+    them back. If you change one of them yourself in the meantime, your value stays.
+  - `/kwfish` shows your key and whether a pole is equipped.
+- **New: Quest Reward Value.** When a quest asks you to pick a reward, a coin marks the one worth
+  the most: its stack at the best of vendor price, auction price and disenchant value. Each
+  reward's tooltip shows its value and how it was priced.
+  - A reward that binds on pickup counts no auction price.
+  - Only items count; a currency choice is left out.
+  - A tie, or rewards still loading, shows no coin.
+  - It never picks the reward for you.
+- **Least Valuable: Bags Full card.** When your bags are full and you try to loot, a card opens
+  beside the loot window.
+  - It names your least valuable item, priced the same way as the bag coin, and the best item in
+    the loot.
+  - It says whether the loot is "Worth making room" or "Not worth picking up". Quest items and loot
+    with no known price always count as worth taking.
+  - Browse the next cheapest items with < and >. Never Mark adds one to the ignore list.
+  - It never deletes, picks up or loots anything. Option: Bags Full Card.
+
 ## 0.16.4
 
 Fixes from a review of the whole project.

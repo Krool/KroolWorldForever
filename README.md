@@ -18,9 +18,11 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
 | **Skill-Up Odds** | In the crafting window: the chance each recipe gives a skill point, beside its arrow. It is the common straight line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters (hover for the numbers and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average, and only reorders when a recipe is clearly cheaper. | Nothing (Auctionator optional) |
 | **Sayge's Fortune** | When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune, counted only while that character is logged in, and dying does not end it, but the game hides it: this counts it on every character and shows what is left on the hub, on Sayge's tooltip and on the fortune buff. If you die with the buff, a chat line says when you can get the next one. | Nothing |
-| **Least Valuable** | A copper coin on the corner of the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear, worthless items like the Hearthstone, or an unscanned green. `/kwl ignore` skips anything else you keep. | Nothing (Auctionator optional) |
+| **Least Valuable** | A copper coin on the corner of the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear, worthless items like the Hearthstone, or an unscanned green. `/kwl ignore` skips anything else you keep. When your bags are full and you try to loot, a card beside the loot window names that item and its value against the loot's, says whether the loot is worth making room for, and lets you browse the next cheapest or never mark one. It never deletes anything. | Nothing (Auctionator optional) |
+| **Quest Reward Value** | A coin on the quest reward worth the most when you pick one, at the best of its vendor price, auction price and disenchant value, and that value on each reward's tooltip. It never picks the reward for you. | Nothing (Auctionator optional) |
+| **One-Button Fishing** | One key casts your line and, while it is out, reels in the bite. Set it under Key Bindings > AddOns > Krool World. With a fishing pole in your main hand, a double right-click does the same. Every cast and reel is your own key press or click. | Nothing |
 
-All nine are on by default.
+All eleven are on by default.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -28,9 +30,10 @@ All nine are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune and Least Valuable never delete, sell,
+- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable and Quest Reward Value never delete, sell,
   loot, craft or click anything for you. Rare Alert's marker comes from your own click or key press: the game does not let an
-  addon place one by itself. Setups is the one feature that changes your UI: only out of combat,
+  addon place one by itself. One-Button Fishing works the same way: it only points your key at the
+  cast or the bobber, out of combat, and puts back the interact settings it borrows when the line is in. Setups is the one feature that changes your UI: only out of combat,
   only when you click Apply (or for a brand-new level 1 character, if you marked a setup for that),
   and always with an undo snapshot first. A character with any experience is never changed without
   a click.
@@ -68,7 +71,7 @@ Optional companions:
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
 | `/kw errors` | List the errors the addon caught (`/kw errors clear` empties the list) |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`, `leastvaluable`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`, `leastvaluable`, `rewardvalue`, `fishing`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
 | `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
@@ -93,8 +96,9 @@ Optional companions:
 | `/kwl` | The five least valuable bag slots, and what was not counted (quest items, tools...) |
 | `/kwl ignore` / `ignore <item>` | Never mark the marked item, or any item (shift-click it into the chat line) |
 | `/kwl unignore <item>` / `ignored` | Mark it again (item, id or name); show the ignore list |
+| `/kwfish` | Your fishing key, and whether a pole is equipped for double right-click |
 
-The mark key is under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
+The mark key and the fishing key are under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
 `/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide`,
 `/skillup`, `/kwsayge` and `/leastvaluable` are long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd`,
 `/kwc`, `/kwu`, `/sayge` and `/kwl`.
@@ -223,6 +227,28 @@ On by default: yes. Toggle: `/kwf leastvaluable on|off`. Commands: `/kwl, /least
 |---|---|---|
 | Mark It In Your Bags | On | A copper coin in the top-right corner of the slot worth the least, in the default bags. Its value counts the whole stack. /kwl ignore <item> stops an item from being marked. |
 | Say It On The Tooltip | On | Adds what the marked slot is worth, and at which price, to its tooltip. |
+| Bags Full Card | On | When a full bag stops a pickup, shows a small card with your least valuable item and what the loot is worth, so you can decide what to make room for. It only shows text and a mark: it never drops, sells or deletes anything. |
+
+### Quest Reward Value
+
+Marks the quest reward choice worth the most, with a coin on its button: each choice at the best of its vendor price, Auction House price (Auctionator) and disenchant value. It only marks; you still pick the reward. Without Auctionator it counts vendor prices only.
+
+On by default: yes. Toggle: `/kwf rewardvalue on|off`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Mark Best Reward | On | A copper coin on the reward choice worth the most, counting the whole stack at its best price (vendor, Auction House or disenchant). Nothing is marked when choices tie or are worth nothing. |
+| Value On Reward Tooltips | On | Adds what a reward choice is worth, and at which price, to its tooltip while you choose. |
+
+### One-Button Fishing
+
+One key casts your line and reels in the bite: set it in Key Bindings > AddOns > Krool World. With a fishing pole in your main hand a double right-click does the same. Every cast and reel is your own key press or click; the addon only re-points keys, and only out of combat.
+
+On by default: yes. Toggle: `/kwf fishing on|off`. Commands: `/kwfish`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Double Right-Click To Fish | On | While a fishing pole is in your main hand, a quick double right-click casts, and reels in when the line is out. Not while moving, mounted, swimming, stealthed, in a vehicle or in combat. |
 <!-- settings:end -->
 
 ## FAQ
