@@ -9,8 +9,16 @@ GetQuestRewardCalls = 0
 function GetNumQuestChoices()
 	return #Choices
 end
+-- 0 = item, 1 = currency (a choice { currency = true } has no item link).
+function GetQuestItemInfoLootType(kind, i)
+	local c = kind == "choice" and Choices[i]
+	return c and c.currency and 1 or 0
+end
 function GetQuestItemLink(kind, i)
 	local c = kind == "choice" and Choices[i]
+	if c and c.currency then
+		return nil
+	end
 	return c and ("|cffffffff|Hitem:" .. c.id .. "::::::::|h[" .. (Items[c.id] and Items[c.id].name or "?") .. "]|h|r") or nil
 end
 function GetQuestItemInfo(kind, i)

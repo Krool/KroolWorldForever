@@ -42,6 +42,12 @@ end
 -- One choice's facts from its link: { index, id, link, name, count, unit, value, how, stale } or
 -- { index, pending = true } while the item is not cached.
 local function Price(i, ctx)
+	-- A currency choice has no item link: skip it, or it would wait for an item that never loads.
+	-- Loot type 1 is LOOT_LIST_CURRENCY (Blizzard's forever QuestInfo.lua, QuestInfo_ShowRewards).
+	local okT, lootType = Call(GetQuestItemInfoLootType, "choice", i)
+	if okT and not Secret(lootType) and lootType == 1 then
+		return { index = i, currency = true, value = 0 }
+	end
 	local ok, link = Call(GetQuestItemLink, "choice", i)
 	if not ok or Secret(link) or type(link) ~= "string" then
 		return { index = i, pending = true }

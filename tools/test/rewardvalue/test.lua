@@ -154,6 +154,14 @@ OpenQuest()
 check("all unpriced: no mark", Marked(), nil)
 check("all unpriced: no best", ns.best, nil)
 
+-- A currency choice has no item link: it is skipped, not waited on, so the items still get a mark.
+Choose({ currency = true }, SWORD, DAGGER)
+OpenQuest()
+check("a currency choice does not block the mark", Marked(), 3)
+local _, _, waitingFor = ns.Scan()
+check("a currency choice is not waited on", next(waitingFor), nil)
+check("a currency choice is not pending", ns.Scan()[1].pending, nil)
+
 -- ---------------------------------------------------------------- uncached items
 
 local LATE = 900210
