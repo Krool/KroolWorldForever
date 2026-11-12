@@ -2,4 +2,7 @@
 	<!-- Rare Alert: clicks the secure mark button (Features/Rares/Rares.lua). Names: BINDING_HEADER_KROOLWORLDFOREVER and BINDING_NAME_CLICK ... there. -->
 	<Binding name="CLICK KroolWorldForeverRareButton:LeftButton" header="KROOLWORLDFOREVER" category="ADDONS">
 	</Binding>
+	<!-- One-Button Fishing: clicks the secure fishing button (Features/Fishing/Fishing.lua). Name set there. -->
+	<Binding name="CLICK KroolWorldForeverFishButton:LeftButton" category="ADDONS">
+	</Binding>
 </Bindings>

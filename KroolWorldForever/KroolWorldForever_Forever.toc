@@ -45,6 +45,8 @@ Features\LeastValuable\BagsFull.lua
 
 Features\RewardValue\RewardValue.lua
 
+Features\Fishing\Fishing.lua
+
 # Bindings.xml (Rare Alert's key) loads by itself; it is not listed here.
 # Hub, then Init last: every feature has declared itself before ADDON_LOADED.
 Core\Hub.lua
