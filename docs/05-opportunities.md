@@ -53,6 +53,48 @@ Against our features:
   and NaowhForever time the camp auras. Ours adds the clash with your own class buffs and the
   campfire's list of what you hovered.
 
+## How the leaders work (source read 2026-11-12)
+
+Asked after the r/wowforever "addons you're most pleased with" megathread. We read source copies
+and ran nothing from them.
+
+- **Questie / QuestieDB.** Phantom "!" quest givers come from the data, not the logic. Every check
+  in `QuestieDB.IsDoable` fails open: a missing prerequisite or a race mask of 0 passes. Forever data
+  is a Wowhead scrape laid over Era data. Fixes ship fast: 8 Questie and 6 QuestieDB releases
+  Nov 4-11. QuestieDB 1.0.14-1.0.15 held back 212 quests nobody can obtain.
+  - Questie already compares an NPC's offered quests with its own list on gossip, but hides only
+    dailies. It has no public API for hiding a quest.
+  - Anything we build on QuestieDB inherits the same holes, so show "unknown" rather than guess.
+  - To report a phantom, use Questie's "Quest issue" template. `/questie doable <id>` prints why
+    Questie thinks a quest is available.
+- **Attune** (All Rights Reserved: take ideas only, no data).
+  - It hand-writes its dungeon chains and checks them against Wowhead /forever/. About 12% of its
+    quest ids are new to Forever (90000+).
+  - Players like its "Next" window most: one row per unfinished chain near your level.
+  - A quest in the log is not done even if it is flagged complete. Quest Trash already checks
+    "active" first.
+  - It detects Forever by interface 16000-19999 and uses PARTY_KILL / UNIT_DIED in place of the
+    combat log.
+- **One For All** (GPL-3, smoergi/OneForAll_Forever) is a large bundle.
+  - Its bags-full helper triggers on UI_ERROR_MESSAGE (ERR_INV_FULL, ERR_LOOT_NO_SPACE) and ranks
+    items by vendor price only.
+  - It shows a card beside the LootFrame: "Destroy & loot" (it deletes the item, even in combat)
+    and "Not worth picking up" when the loot is worth less than your cheapest item.
+  - It also puts a best-sell coin on quest rewards, by vendor price only.
+  - Our edge: pricing at the best of vendor, AH and disenchant, and never deleting.
+- **BetterFishing.** Protected actions ride the player's key press through a client binding.
+  - Out of combat it points the key at `SetOverrideBindingSpell(..., "Fishing")`.
+  - On CHANNEL_START it rebinds the key to INTERACTTARGET with the SoftTargetInteract CVars, then
+    clears that on CHANNEL_STOP.
+  - CVars are cached at load. Player edits are tracked with `hooksecurefunc(C_CVar, "SetCVar")`,
+    and everything is restored on stop and logout.
+  - One-button fishing is crowded (BetterFishing, Forever Fishing, EllesmereUI). Not for us.
+- **What's Training?** Static per-class tables keyed by Forever spell ids (`Classes/Camelot/`).
+  - Rank chains count replaced ranks as known; `IsSpellKnown` alone misses them.
+  - The data was built from in-game trainers and fixed by hand after launch. It covers professions
+    too.
+  - Done well. Not for us.
+
 ## Suggested first project
 
 Start small to learn the platform: a classic-mechanics panel (ammo + pet happiness + weapon skill
