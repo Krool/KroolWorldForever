@@ -1,6 +1,6 @@
 {
  "source": "Gethe/wow-ui-source forever branch, Blizzard_APIDocumentationGenerated",
- "version": "1.60.1.70888",
+ "version": "1.60.1.70938",
  "functions": [
   "AbortDrag",
   "AcceptAreaSpiritHeal",
@@ -3904,6 +3904,7 @@
   "C_TradeSkillUI.GetSourceTypeFilter",
   "C_TradeSkillUI.GetTradeSkillDisplayName",
   "C_TradeSkillUI.HasFavoriteOrderRecipes",
+  "C_TradeSkillUI.HasNoReagentCost",
   "C_TradeSkillUI.IsEnchantTargetValid",
   "C_TradeSkillUI.IsGuildTradeSkillsEnabled",
   "C_TradeSkillUI.IsNPCCrafting",
