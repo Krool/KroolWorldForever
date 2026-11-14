@@ -90,7 +90,7 @@ end
 -- spawn parts, so only the kind and the 6th field are read. Returns npcID (or nil) and the
 -- kind word. Pets, players, objects, secret and malformed values all give nil.
 function FKV.ParseGUID(guid)
-	if guid == nil or Secret(guid) or type(guid) ~= "string" then
+	if Secret(guid) or guid == nil or type(guid) ~= "string" then
 		return nil
 	end
 	local parts = Split(guid, "-")
@@ -423,7 +423,7 @@ end
 local function IsLiveUnit(guid)
 	for _, token in ipairs({ "target", "mouseover", "focus" }) do
 		local ok, g = pcall(UnitGUID, token)
-		if ok and g ~= nil and not Secret(g) and g == guid then
+		if ok and not Secret(g) and g == guid then
 			local ok2, dead = pcall(UnitIsDead, token)
 			if ok2 and not Secret(dead) and dead == false then
 				return true
@@ -443,8 +443,11 @@ function FKV.CaptureLoot()
 	if not (ns.db and cfg.learn) then
 		return 0
 	end
-	if IsFishingLoot and IsFishingLoot() then
-		return 0
+	if IsFishingLoot then
+		local fishing = IsFishingLoot()
+		if Secret(fishing) or fishing then -- secret first: even a truth test on a secret errors
+			return 0
+		end
 	end
 	local num = GetNumLootItems()
 	if Secret(num) or type(num) ~= "number" or num < 1 then
@@ -715,7 +718,17 @@ function FKV.Compute(npcId)
 			end
 		end
 		for id in pairs(ids) do
-			local est = FKV.Blend(L and L.items[id] or 0, n, base and (baseQty[id] or 0) or nil)
+			-- An item the baseline lacks (Forever added it) is judged by what was seen once the
+			-- creature has MIN_OBSERVED corpses, as for a creature with no baseline: a baseline of
+			-- 0 would pull an always-dropping item down to observed / (n + K).
+			local itemBase
+			if base then
+				itemBase = baseQty[id]
+				if itemBase == nil and n < MIN_OBSERVED then
+					itemBase = 0
+				end
+			end
+			local est = FKV.Blend(L and L.items[id] or 0, n, itemBase)
 			if est and est > 0 then
 				AddQty(acc, id, est)
 			end

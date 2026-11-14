@@ -321,7 +321,7 @@ local CONFIG_HELP = {
 
 local function TargetNpc()
 	local ok, guid = pcall(UnitGUID, "target")
-	if not ok or guid == nil or Secret(guid) then
+	if not ok or Secret(guid) or guid == nil then
 		return nil
 	end
 	return FKV.ParseGUID(guid)

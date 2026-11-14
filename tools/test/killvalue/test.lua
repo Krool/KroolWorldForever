@@ -528,8 +528,29 @@ do
 	end
 	near("item1 blend (10 + 10*1) / 20", by[9100001].qty, 1.0)
 	near("item2 never dropped: (0 + 10*0.5) / 20", by[9100002].qty, 0.25)
-	near("new item3: (5 + 0) / 20", by[9100003].qty, 0.25)
-	near("total", acc.total, 225 + 1.0 * 50 + 0.25 * 1000 + 0.25 * 200)
+	near("item3 is not in the baseline, 10 corpses: observed rate 5 / 10", by[9100003].qty, 0.5)
+	near("total", acc.total, 225 + 1.0 * 50 + 0.25 * 1000 + 0.5 * 200)
+
+	-- An item the baseline lacks: under MIN_OBSERVED corpses it is blended toward 0, from
+	-- MIN_OBSERVED on the observed rate stands alone (a Forever-added drop that always drops).
+	ns.Data.mob[9000011] = "100:200|9100001:1|||5:0:100"
+	for i = 1, 2 do
+		FKV.RecordCorpse(9000011, G(9000011, "N" .. i), 0, { [9100003] = 1 })
+	end
+	local few = {}
+	for _, c in ipairs(FKV.Compute(9000011).top) do
+		few[c.id] = c
+	end
+	near("2 corpses, item not in the baseline: (2 + 0) / 12", few[9100003].qty, 2 / 12)
+	for i = 3, 15 do
+		FKV.RecordCorpse(9000011, G(9000011, "N" .. i), 0, { [9100003] = 1 })
+	end
+	local many = {}
+	for _, c in ipairs(FKV.Compute(9000011).top) do
+		many[c.id] = c
+	end
+	near("15 corpses, always dropped, not in the baseline: 1.0, not 15 / 25", many[9100003].qty, 1.0)
+	near("a baseline item is still blended: (0 + 10 * 1) / 25", many[9100001].qty, 0.4)
 
 	-- creature without any baseline
 	check("unseen creature", FKV.Compute(9000020), nil)

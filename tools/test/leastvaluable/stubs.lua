@@ -490,6 +490,8 @@ function GetLootSourceInfo() end
 
 -- Free slots: a bag's size less the slots Put into it. FreeSlotsSecret makes the count secret.
 FreeSlotsSecret = false
+-- BagFamily[bag]: the bag's family mask (0 general, 32 herbs, 128 soul...); unset reads 0.
+BagFamily = {}
 C_Container.GetContainerNumFreeSlots = function(bag)
 	if FreeSlotsSecret then
 		return Secret(), 0
@@ -498,7 +500,7 @@ C_Container.GetContainerNumFreeSlots = function(bag)
 	for _ in pairs(Bag[bag] or {}) do
 		used = used + 1
 	end
-	return math.max((BagSizes[bag] or 0) - used, 0), 0
+	return math.max((BagSizes[bag] or 0) - used, 0), BagFamily[bag] or 0
 end
 
 -- The open loot window: LootSlots[i] = { kind=, link=, qty=, quest=, secret= }.

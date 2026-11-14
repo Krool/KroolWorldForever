@@ -53,10 +53,27 @@ function QuestInfo_ShowRewards()
 		b.shown = true
 	end
 end
--- The quest frame opens: the event first, then Blizzard lays the buttons out.
+-- As in the client (QuestInfo.lua, forever branch): the templates hold the element function
+-- itself, and QuestInfo_Display calls it from the table, so a hook on the global name never runs.
+QUEST_TEMPLATE_REWARD = { questLog = nil, chooseItems = true, elements = { QuestInfo_ShowRewards, 0, -10 } }
+QUEST_TEMPLATE_DETAIL = { questLog = nil, chooseItems = nil, elements = { QuestInfo_ShowRewards, 0, -15 } }
+QUEST_TEMPLATE_LOG = { questLog = true, chooseItems = nil, elements = { QuestInfo_ShowRewards, 0, -10 } }
+function QuestInfo_Display(template, parentFrame, acceptButton, material, mapView)
+	QuestInfoFrame.questLog = template.questLog
+	QuestInfoFrame.chooseItems = template.chooseItems
+	local elements = template.elements
+	for i = 1, #elements, 3 do
+		elements[i](parentFrame)
+	end
+end
+-- The quest frame opens: the event first, then Blizzard displays the template.
 function OpenQuest(event)
 	FireEvent(event or "QUEST_COMPLETE")
-	QuestInfo_ShowRewards()
+	QuestInfo_Display(event == "QUEST_DETAIL" and QUEST_TEMPLATE_DETAIL or QUEST_TEMPLATE_REWARD)
+end
+-- The quest log (or map view) shows a quest: no event, the log template.
+function OpenQuestLog()
+	QuestInfo_Display(QUEST_TEMPLATE_LOG)
 end
 function CloseQuest()
 	rewards.shown = false

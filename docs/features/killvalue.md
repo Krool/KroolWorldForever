@@ -31,7 +31,10 @@ Blend, per item (coin works the same way), with K = 10 pseudo-kills:
 
     estimate = (observed + K x baselineRate) / (corpses + K)
 
-With no baseline, observed-only numbers are used once 3 corpses are looted. Rates are in
+With no baseline, observed-only numbers are used once 3 corpses are looted. An item the creature's
+baseline does not list (a drop Forever added) is treated the same way: from 3 corpses on, its
+estimate is the observed rate alone. Before that it is blended toward 0, so an item that always
+drops reads 100% after 3 kills, not 60% after 15. Rates are in
 quantity per corpse, so they are comparable with the baseline's `chance x average stack`.
 
 ### Caveats

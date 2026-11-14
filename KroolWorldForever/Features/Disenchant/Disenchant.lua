@@ -188,7 +188,7 @@ local function SaysBound(data)
 	local marks = { ITEM_SOULBOUND, ITEM_ACCOUNTBOUND, ITEM_BNETACCOUNTBOUND }
 	for _, line in ipairs(lines) do
 		local text = type(line) == "table" and line.leftText or nil
-		if text ~= nil and not Secret(text) and type(text) == "string" then
+		if not Secret(text) and type(text) == "string" then
 			for _, mark in pairs(marks) do
 				if text == mark then
 					return true

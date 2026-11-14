@@ -128,6 +128,22 @@ Choose(SWORD, CHEST, DAGGER)
 OpenQuest()
 check("disenchant value beats vendor", Marked(), 2)
 check("how: disenchant", ns.best.how, "disenchant")
+check("a classic green: not unsure", ns.best.unsure, nil)
+
+-- A low blue's disenchant value is unmeasured on Forever: the tooltip says so.
+local LOWBLUE = 900077
+Items[LOWBLUE] = { name = "Forever Shoulders", quality = 3, ilvl = 18, sell = 400, class = 4 }
+Prices[10978] = 3000 -- Small Glimmering Shard, the low blue bracket
+Choose(SWORD, LOWBLUE, DAGGER)
+OpenQuest()
+check("low blue wins by disenchant", ns.best.index .. ":" .. ns.best.how, "2:disenchant")
+check("low blue: unsure carried", ns.best.unsure, true)
+check("low blue: tooltip says unconfirmed", Says(Hover(LOWBLUE, Button(2)), "(unconfirmed)"), true)
+check("a vendor-priced choice: no unconfirmed", Says(Hover(SWORD, Button(1)), "unconfirmed"), false)
+Choose(SWORD, CHEST, DAGGER)
+OpenQuest()
+check("a classic green's tooltip: no unconfirmed", Says(Hover(CHEST, Button(2)), "unconfirmed"), false)
+Prices[10978] = nil
 for _, id in ipairs({ SOUL, ASTRAL, GLIMMER }) do
 	Prices[id] = nil
 end
@@ -187,6 +203,16 @@ check("another quest moves the coin", Marked(), 1)
 Button(1).shown = false
 check("a hidden button hides the coin", Marked(), nil)
 Button(1).shown = true
+
+-- The quest log and the map view display through QuestInfo_Display too (a template with
+-- questLog = true); the dialog's choices are not theirs, so nothing is priced or marked.
+CloseQuest()
+Choose(SWORD, DAGGER)
+OpenQuestLog()
+check("the quest log display marks nothing", Marked(), nil)
+check("the quest log display prices nothing", ns.best, nil)
+OpenQuest()
+check("the quest dialog display marks (the layout hook ran)", Marked(), 2)
 
 -- ---------------------------------------------------------------- tooltip
 

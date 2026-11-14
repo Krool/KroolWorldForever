@@ -59,9 +59,35 @@ local function FreeSlots()
 	return total
 end
 
--- Every bag candidate in the order /kwl lists them: cheapest first, ties in bag order.
+-- The general bags (bag family 0), by bag id: loot can only go into those. A herb, enchanting or
+-- soul bag takes only its own kind, so what it holds frees nothing for loot. A bag whose family
+-- the client will not say is left out.
+local function GeneralBags()
+	local general = {}
+	local C = C_Container
+	if not (C and C.GetContainerNumFreeSlots) then
+		return general
+	end
+	for _, bag in ipairs(ns.Bags()) do
+		local ok, free, family = Call(C.GetContainerNumFreeSlots, bag)
+		if ok and not Secret(free) and not Secret(family) and (family == nil or family == 0) then
+			general[bag] = true
+		end
+	end
+	return general
+end
+
+-- Every bag candidate in the order /kwl lists them: cheapest first, ties in bag order. Only items
+-- in general bags: the loot could take no other slot (FreeSlots counts the same bags).
 local function Candidates()
-	local list, _, _, pending = ns.Scan()
+	local scanned, _, _, pending = ns.Scan()
+	local general = GeneralBags()
+	local list = {}
+	for _, e in ipairs(scanned) do
+		if general[e.bag] then
+			list[#list + 1] = e
+		end
+	end
 	local order = {}
 	for i, e in ipairs(list) do
 		order[e] = i
@@ -112,6 +138,7 @@ local function LootEntry(ctx, link, id, count, isQuest)
 		return e
 	end
 	e.how, e.unit, e.value = how, unit, unit * count
+	e.unsure = how == "disenchant" and f.deUnsure or nil
 	return e
 end
 

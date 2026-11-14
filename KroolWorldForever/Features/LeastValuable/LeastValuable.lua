@@ -129,6 +129,7 @@ local function Facts(ctx, link, id)
 			local e = ctx.DE and ctx.DE.Evaluate and ctx.DE.Evaluate(id, quality, classID, itemLevel)
 			f.de = e and e.value or nil
 			f.deStale = e and e.stale or nil
+			f.deUnsure = e and e.unsure or nil -- a low blue: what it disenchants into on Forever is unmeasured
 		end
 	end
 	ctx.items[key] = f
@@ -204,6 +205,7 @@ function ns.SlotValue(bag, slot, ctx)
 		stale = f.deStale
 	end
 	return {
+		unsure = how == "disenchant" and f.deUnsure or nil,
 		bag = bag,
 		slot = slot,
 		id = id,
@@ -251,6 +253,9 @@ function ns.Detail(m)
 	local text = GREY .. HOW[m.how] .. "|r"
 	if m.count > 1 then
 		text = GREY .. m.count .. " x|r " .. root.Money(m.unit) .. GREY .. " " .. HOW[m.how] .. "|r"
+	end
+	if m.unsure then
+		text = text .. " " .. OLD .. "(unconfirmed)|r"
 	end
 	if m.stale then
 		text = text .. " " .. OLD .. "(price " .. root.SeenText(m.stale) .. ")|r"

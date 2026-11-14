@@ -18,6 +18,8 @@ Least valuable in your bags                       30c
   off the last two. This is Disenchant Value's `ns.Best`; it now also returns the copper.
 - **Bound items** have no auction price. Their disenchant value counts only when you can disenchant
   yourself (`C_SpellBook.ContainsAnyDisenchantSpell`); an unbound item's counts either way.
+- **Low blues** (item level 20 or less): Forever's disenchant results for them are unmeasured. When
+  the disenchant value is the one used, the detail text adds "(unconfirmed)".
 - **Each slot on its own:** of two part stacks of one item, the smaller is the cheaper slot.
 - **Ties:** the first slot in bag order (backpack slot 1 first).
 - **Old prices** still count. The tooltip dates them ("price seen 5 days ago").
@@ -95,7 +97,9 @@ price only and deletes items; ours does neither). `Features/LeastValuable/BagsFu
   `BAG_UPDATE_DELAYED` once a slot is free, when Escape or the close button is used, and when
   the feature or the option is switched off.
 - **Least valuable:** icon, link, count, value and how it was priced, from `ns.Scan` (so it is the
-  bag mark's own item). `<` and `>` walk the candidates in `/kwl` order (cheapest first, ties in bag
+  bag mark's own item), but only from general bags (bag family 0, the second return of
+  `GetContainerNumFreeSlots`): loot cannot go into a herb, enchanting or soul bag, so what sits
+  there makes no room. The bag mark itself still looks at every bag. `<` and `>` walk the candidates in `/kwl` order (cheapest first, ties in bag
   order). Never Mark calls `ns.Ignore` and shows the next one. With the default bags open, the
   browsed slot is flashed with the same copper coin (a second frame; the bag mark stays put).
 - **Loot:** each item slot of the open loot window (`GetNumLootItems`, `GetLootSlotLink`,

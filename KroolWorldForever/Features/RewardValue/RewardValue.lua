@@ -8,12 +8,17 @@
 -- No mark with fewer than two choices, while any choice is still loading, when every choice is
 -- worth nothing, or when the top two are worth the same.
 --
--- Where the buttons are (Blizzard's Mainline QuestInfo.lua, forever branch; read from memory,
--- not re-fetched on 2026-11-12): QuestInfo_ShowRewards lays out QuestInfoFrame.rewardsFrame
--- (global QuestInfoRewardsFrame), taking each button from QuestInfo_GetRewardButton, which keeps
--- them in rewardsFrame.RewardButtons (globals QuestInfoRewardsFrameQuestInfoItem<n>). A choice
--- button has .type == "choice" and :GetID() the choice index; its tooltip is
+-- Where the buttons are (Blizzard's Mainline QuestInfo.lua, forever branch, read 2026-11-13):
+-- QuestInfo_ShowRewards lays out QuestInfoFrame.rewardsFrame (global QuestInfoRewardsFrame),
+-- taking each button from QuestInfo_GetRewardButton, which keeps them in
+-- rewardsFrame.RewardButtons (globals QuestInfoRewardsFrameQuestInfoItem<n>). A choice button has
+-- .type == "choice" and :GetID() the choice index; its tooltip is
 -- GameTooltip:SetQuestItem("choice", index), owned by that button.
+-- QuestInfo_ShowRewards is hooked through QuestInfo_Display, not by name: the QUEST_TEMPLATE_*
+-- tables hold the function itself in .elements, and QuestInfo_Display calls it from there
+-- (elementsTable[i](parentFrame)), so a hook on the global never runs. QuestFrame.lua calls
+-- QuestInfo_Display(QUEST_TEMPLATE_REWARD / QUEST_TEMPLATE_DETAIL, ...); the quest log and the
+-- map view pass templates with questLog = true, which the hook skips.
 
 local _, root = ...
 local ns = root.Feature("rewardvalue")
@@ -64,7 +69,7 @@ local function Price(i, ctx)
 	local id = tonumber(link:match("item:(%d+)"))
 	local bound = BIND_ON_PICKUP[bindType] == true
 	local vendor = type(sell) == "number" and sell > 0 and sell or nil
-	local auction, age, de, deStale
+	local auction, age, de, deStale, deUnsure
 	if not bound then
 		auction = root.AuctionPrice(link)
 		age = auction and root.AuctionAge(link) or nil
@@ -73,6 +78,7 @@ local function Price(i, ctx)
 		local e = ctx.DE.Evaluate(id, quality, classID, itemLevel)
 		de = e and e.value or nil
 		deStale = e and e.stale or nil
+		deUnsure = e and e.unsure or nil -- a low blue: unmeasured on Forever
 	end
 	local how, unit
 	if ctx.DE and ctx.DE.Best then
@@ -87,6 +93,7 @@ local function Price(i, ctx)
 			r.stale = age
 		elseif how == "disenchant" then
 			r.stale = deStale
+			r.unsure = deUnsure
 		end
 	else
 		r.value = 0
@@ -234,6 +241,9 @@ local function Annotate(tooltip, data)
 	else
 		text = GREY .. "Worth|r " .. what
 	end
+	if r.unsure then
+		text = text .. " " .. OLD .. "(unconfirmed)|r"
+	end
 	if r.stale then
 		text = text .. " " .. OLD .. "(price " .. root.SeenText(r.stale) .. ")|r"
 	end
@@ -304,15 +314,28 @@ local function Shown()
 	end
 end
 
+-- QuestInfo_Display(template, ...) lays a quest panel out. The quest log and the map view use it
+-- too (their templates have questLog = true): Scan reads the NPC dialog's choices, so those are
+-- left alone.
+local function Displayed(template)
+	if type(template) == "table" and template.questLog then
+		return
+	end
+	if type(QuestInfoFrame) == "table" and QuestInfoFrame.questLog then
+		return
+	end
+	Shown()
+end
+
 -- Tooltip and layout hooks cannot be removed, so they are added once and check ns.enabled.
 function ns.OnEnable()
 	if not ns.tooltipHooked and TooltipDataProcessor and Enum and Enum.TooltipDataType then
 		ns.tooltipHooked = true
 		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnItemTooltip)
 	end
-	-- The buttons are set up after QUEST_COMPLETE fires, when QuestInfo_ShowRewards runs.
-	if not ns.layoutHooked and type(hooksecurefunc) == "function" and type(QuestInfo_ShowRewards) == "function" then
-		ns.layoutHooked = pcall(hooksecurefunc, "QuestInfo_ShowRewards", Shown)
+	-- The buttons are set up after QUEST_COMPLETE fires, when QuestInfo_Display runs.
+	if not ns.layoutHooked and type(hooksecurefunc) == "function" and type(QuestInfo_Display) == "function" then
+		ns.layoutHooked = pcall(hooksecurefunc, "QuestInfo_Display", Displayed)
 	end
 	Shown()
 end

@@ -177,6 +177,23 @@ check("bound green, no enchanter: vendor", e.how .. ":" .. e.value, "vendor:500"
 CanDisenchant = true
 e = ns.SlotValue(0, 1)
 check("bound green, enchanter: disenchant", e.how, "disenchant")
+check("a classic green's disenchant is not marked unconfirmed", e.unsure, nil)
+check("its detail does not say unconfirmed", ns.Detail(e):find("unconfirmed", 1, true), nil)
+-- A low blue (item level 20 or less): Forever's disenchant brackets for it are unmeasured.
+local LOWBLUE = 900077
+Items[LOWBLUE] = { name = "Forever Shoulders", quality = 3, ilvl = 18, sell = 400, class = 4 }
+Prices[10978] = 3000 -- Small Glimmering Shard, the low blue bracket
+Put(0, 1, { id = LOWBLUE })
+e = ns.SlotValue(0, 1)
+check("low blue: priced by disenchant", e.how, "disenchant")
+check("low blue: unsure carried", e.unsure, true)
+check("low blue: detail says unconfirmed", ns.Detail(e):find("(unconfirmed)", 1, true) ~= nil, true)
+Put(0, 1, { id = LOWBLUE, bound = true })
+CanDisenchant = false
+check("low blue priced at the vendor: not unsure", (ns.SlotValue(0, 1)).unsure, nil)
+Prices[10978] = nil
+CanDisenchant = true
+Put(0, 1, { id = CHEST, bound = true })
 CanDisenchant = false
 wipe(Prices)
 Put(0, 1, { id = CHEST })
@@ -520,6 +537,38 @@ while st.idx > 1 do
 	ns.BagsFullBrowse(-1)
 end
 
+-- A herb bag (family 32) holding the cheapest item: the bag mark may pick it, but loot cannot use
+-- its slots, so the card never offers it and its free slots do not count.
+BagSizes[1], BagFamily[1] = 4, 32
+Put(1, 1, { id = LOWLOOT }) -- 2c, cheaper than the 5c scale
+ns.Refresh()
+check("herb bag: the bag mark still takes the cheapest", ns.mark.bag .. ":" .. ns.mark.slot, "1:1")
+Err(ERR_INV_FULL)
+check("herb bag with free slots: card still opens (general bags are full)", Card(), true)
+local inHerb = false
+for _, e in ipairs(st.list) do
+	if e.bag == 1 then
+		inHerb = true
+	end
+end
+check("herb bag: no candidate from it", inHerb, false)
+check("herb bag: the card's first candidate is the cheapest general slot", st.list[1].bag .. ":" .. st.list[1].slot, "0:2")
+check("herb bag: candidate count is the general bags' slots", #st.list, 16)
+BagFamily[1] = 0 -- the same bag as a general one
+FireEvent("BAG_UPDATE_DELAYED") -- its free slots now count: the card goes
+check("general bag with free slots: no card", Card(), false)
+Put(1, 2, { id = FANG })
+Put(1, 3, { id = FANG })
+Put(1, 4, { id = FANG })
+Err(ERR_INV_FULL)
+check("general bag, full: its items are candidates", st.list[1].bag .. ":" .. st.list[1].slot, "1:1")
+BagFamily[1], BagSizes[1] = nil, nil
+EmptyBags()
+FillBags()
+FireEvent("BAG_UPDATE_DELAYED")
+Err(ERR_INV_FULL)
+check("card back up on the general bag only", Card(), true)
+
 -- Verdicts, with a loot window open.
 OpenLoot({ { link = LootLink(GEM), qty = 1 } })
 Err(ERR_INV_FULL)
@@ -586,6 +635,15 @@ Err(ERR_INV_FULL)
 check("no Auctionator: vendor price", st.shown.how, "vendor")
 AuctionatorOn(true)
 Prices[LOWLOOT] = nil
+CloseLoot()
+
+-- A low blue as loot: its disenchant value is unconfirmed, and the card says so.
+Prices[10978] = 3000
+OpenLoot({ { link = LootLink(LOWBLUE), qty = 1 } })
+Err(ERR_INV_FULL)
+check("low blue loot: priced by disenchant", st.shown.how, "disenchant")
+check("low blue loot: the card says unconfirmed", ui.loot.text:find("(unconfirmed)", 1, true) ~= nil, true)
+Prices[10978] = nil
 CloseLoot()
 
 -- Highlight: with the bags open the browsed slot gets the coin.

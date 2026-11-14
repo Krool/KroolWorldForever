@@ -18,6 +18,8 @@ Best value: 1g 20s (Auction House)
 - **Rewards that bind on pickup** (bind type 1, or 4 for a quest item) have no auction price. Their
   disenchant value counts only when you can disenchant yourself.
 - **Without Auctionator** only vendor prices count (the tooltip says so).
+- **Low blues** (item level 20 or less): Forever's disenchant results for them are unmeasured, so a
+  disenchant-based value carries "(unconfirmed)" on the tooltip.
 
 ## When it marks
 
@@ -39,13 +41,16 @@ others. An Auction House price older than three days adds "(price seen 5 days ag
 
 ## Where the frames are
 
-Blizzard's Mainline `QuestInfo.lua` (forever branch; written from memory, not re-fetched on
-2026-11-12, so check it in game): `QuestInfo_ShowRewards` lays out `QuestInfoFrame.rewardsFrame`
-(global `QuestInfoRewardsFrame`); buttons are `rewardsFrame.RewardButtons[n]` (globals
-`QuestInfoRewardsFrameQuestInfoItem<n>`) with `.type == "choice"` and `:GetID()` the choice index.
-`QUEST_COMPLETE` fires before the buttons are laid out, so the feature also hooks
-`QuestInfo_ShowRewards`. The coin is Blizzard's `coin-copper` atlas (as Least Valuable), on one frame
-of ours parented to the button.
+Blizzard's Mainline `QuestInfo.lua` (forever branch, read 2026-11-13): `QuestInfo_ShowRewards` lays
+out `QuestInfoFrame.rewardsFrame` (global `QuestInfoRewardsFrame`); buttons are
+`rewardsFrame.RewardButtons[n]` (globals `QuestInfoRewardsFrameQuestInfoItem<n>`) with
+`.type == "choice"` and `:GetID()` the choice index. `QUEST_COMPLETE` fires before the buttons are
+laid out, so the feature also hooks `QuestInfo_Display`. It cannot hook `QuestInfo_ShowRewards`:
+the `QUEST_TEMPLATE_*` tables hold that function itself in `.elements`, and `QuestInfo_Display`
+calls it from the table, so a hook on the global name never runs. `QuestFrame.lua` calls
+`QuestInfo_Display(QUEST_TEMPLATE_REWARD / QUEST_TEMPLATE_DETAIL, ...)`; the quest log and the map
+view call it with templates that have `questLog = true`, and the hook ignores those. The coin is
+Blizzard's `coin-copper` atlas (as Least Valuable), on one frame of ours parented to the button.
 
 ## Options
 
