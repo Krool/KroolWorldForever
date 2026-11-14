@@ -51,10 +51,14 @@ $cfToken = EnvToken "CF_API_KEY"
 if (-not $cfId -or -not $cfToken) {
 	Write-Host "CurseForge: skipped (needs ## X-Curse-Project-ID in the TOC and CF_API_KEY)."
 } else {
-	$req = New-Object System.Net.Http.HttpRequestMessage ([System.Net.Http.HttpMethod]::Get), "https://wow.curseforge.com/api/game/versions"
+	# The packager reads /api/game/wow/versions (release.sh, 2026-11-13). Prefer the version named
+	# for this patch, else the newest Forever one.
+	$req = New-Object System.Net.Http.HttpRequestMessage ([System.Net.Http.HttpMethod]::Get), "https://wow.curseforge.com/api/game/wow/versions"
 	$req.Headers.Add("X-Api-Token", $cfToken)
 	$versions = $client.SendAsync($req).Result.Content.ReadAsStringAsync().Result | ConvertFrom-Json
-	$forever = $versions | Where-Object { $_.gameVersionTypeID -eq 88568 } | Sort-Object id -Descending | Select-Object -First 1
+	$foreverAll = @($versions | Where-Object { $_.gameVersionTypeID -eq 88568 })
+	$forever = $foreverAll | Where-Object { $_.name -eq $patch } | Select-Object -First 1
+	if (-not $forever) { $forever = $foreverAll | Sort-Object id -Descending | Select-Object -First 1 }
 	if (-not $forever) { throw "CurseForge: no Forever game version (type 88568) found." }
 	$meta = @{ changelog = $Notes; changelogType = "markdown"; gameVersions = @($forever.id); releaseType = "release"; displayName = "KroolWorldForever-$Version" } | ConvertTo-Json -Compress
 	$form = New-Object System.Net.Http.MultipartFormDataContent

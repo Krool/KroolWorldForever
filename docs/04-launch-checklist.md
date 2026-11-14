@@ -166,6 +166,13 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 
 ## Before publishing anything
 
-- [ ] Create CurseForge and Wago projects and put their IDs in the TOC (`X-Curse-Project-ID`, `X-Wago-ID`).
-- [ ] Add API tokens as GitHub repo secrets. Pin a packager version that knows `forever`.
-- [ ] Confirm the first upload is tagged with the Forever game version.
+- [ ] Owner: create the CurseForge project (authors.curseforge.com, World of Warcraft, MIT, source
+      link to the GitHub repo) and wait for moderation; create the Wago project. Put their ids in the
+      TOC (`X-Curse-Project-ID`, `X-Wago-ID`).
+- [ ] Owner: make a CurseForge API token and a Wago API token and save them as the user environment
+      variables `CF_API_KEY` and `WAGO_API_TOKEN` (never in a file). Uploads run locally from
+      `release.ps1 -Publish` (`publish.ps1`), not from GitHub Actions, so no repo secrets or packager.
+- [ ] Fresh in-game screenshots for the project page (the one in docs/screenshots is from 1.12).
+- [ ] Confirm the first upload is tagged with the Forever game version (CurseForge type 88568, Wago
+      `supported_forever_patches` 1.60.1: both checked against the packager and Wago's patch list
+      2026-11-13).
