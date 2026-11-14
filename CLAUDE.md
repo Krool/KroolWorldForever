@@ -26,10 +26,12 @@ before writing addon code.
   (2026-10-21) showed no lasting change from `ffxGlow`, horizon/farclip, `volumeFogLevel` or
   Compute Effects. No fog feature. See docs/07.
 - Install folder is `World of Warcraft\_forever_`, Battle.net product `wowf` (confirmed 2026-10-20).
-  Live launched (2026-11-04) on 1.60.1.70790. **Live is now 70888 (2026-11-10, the installed
+  Live launched (2026-11-04) on 1.60.1.70790. **Live is now 70938 (2026-11-13, the installed
   `.build.info`), Interface still 16001** (the bundle loads on it). The allowlist is built from
-  wow-ui-source `forever` at 70888 (it tracks `wowf` since Nov 2); 70840, 70862 and 70888 changed
-  no function, event or enum. Still no `WOW_PROJECT_FOREVER`.
+  wow-ui-source `forever` at 70938 (it tracks `wowf` since Nov 2); 70840, 70862 and 70888 changed
+  no function, event or enum; 70938 added `C_TradeSkillUI.HasNoReagentCost` and changed 26 recipe
+  thresholds. Builds drop every few days: rebuilding the allowlist makes `run.js` fail until
+  Skill-Up's `Data.lua` is regenerated for the same build. Still no `WOW_PROJECT_FOREVER`.
 - **Protected calls need a click.** `C_UI.Reload` (and anything else hardware-event restricted) is
   blocked with `ADDON_ACTION_BLOCKED` from a timer or event handler; the API docs carry no flag for
   it, so the lint cannot see it. The Setups test stubs model this (`HardwareDepth`, `BlockedCalls`).
@@ -71,6 +73,10 @@ before writing addon code.
   means level 1 with zero XP, not merely "not seen by the addon yet" (that is the picker only). It
   may reload the UI by itself after a clicked apply that needs it (option, default on); the
   automatic apply opens the window on its result with Reload Now instead. Keep those guards.
+  Brand-new also needs 0 money (0.18.0: level 1 bank alts). Setups applies only per-character state:
+  account CVars, Edit Mode's account settings and `KroolWorldForeverDB` are shared by every
+  character already, so "copying" them only rolls them back (Undo excepted). Never add an
+  account-scoped part to an apply, least of all the automatic one.
   Rare Alert (owner's request, 2026-11-05) is not an exception: its target-and-mark runs only from
   the player's click or key on the secure button; the addon only points the button at the rare.
   One-Button Fishing (owner's request, 2026-11-12) is the same: it casts and reels only from the
