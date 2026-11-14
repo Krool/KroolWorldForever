@@ -266,9 +266,12 @@ SlashCmdList = {}
 
 -- ---------------------------------------------------------------- player / quests / items
 
-Player = { raceID = 1, classFile = "WARRIOR" } -- Human Warrior
+Player = { raceID = 1, classFile = "WARRIOR", level = 20 } -- level 20 Human Warrior
 function UnitRace()
 	return "Human", "Human", Player.raceID
+end
+function UnitLevel()
+	return Player.level
 end
 function UnitClass()
 	return "Warrior", Player.classFile
@@ -304,7 +307,12 @@ C_Item = {
 
 Bags = {} -- [bag] = { itemID, ... }
 Stacks = {} -- [itemID] = stack size of each slot holding it (default 1)
+ClientStarts = {} -- [itemID] = the quest the client says the item starts (the "!" on its slot)
 C_Container = {
+	GetContainerItemQuestInfo = function(bag, slot)
+		local id = Bags[bag] and Bags[bag][slot]
+		return { isQuestItem = id ~= nil and ItemClass[id] == 12, questID = id and ClientStarts[id], isActive = false }
+	end,
 	GetContainerNumSlots = function(bag)
 		return Bags[bag] and #Bags[bag] or 0
 	end,
@@ -331,6 +339,8 @@ local NUMERIC = {
 	breadcrumbForQuestId = true,
 	sourceItemId = true,
 	startQuest = true,
+	requiredMaxLevel = true,
+	availableUntilCompleted = true,
 }
 
 -- QuestieDB semantics: numeric fields read 0 when absent, unknown ids read nil everywhere.

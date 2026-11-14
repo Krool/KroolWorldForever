@@ -21,7 +21,10 @@ local GROUPS = {
 local function Why(e)
 	local v = e.verdict
 	if v == "safe" then
-		return FQT.IsQuestItem(e.id) == false and "No quest needs it" or "Quests done"
+		if FQT.IsQuestItem(e.id) == false then
+			return "No quest needs it"
+		end
+		return FQT.SafeReason(e.links) == "closed" and "Quests closed" or "Quests done"
 	end
 	return ({
 		notyours = "Not for your race/class",

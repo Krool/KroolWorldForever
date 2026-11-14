@@ -80,8 +80,44 @@ Quests[1019] = { name = "Use On Target", objectives = { nil, nil, nil, nil, nil,
 ItemClass[5019] = QUEST
 ItemClass[16309] = QUEST -- Drakefire Amulet
 
+-- Closed for good. 1020 is capped at level 10 (the player is 20): item 5020
+Quests[1020] = { name = "Low Cap", requiredMaxLevel = 10, objectives = { nil, nil, { { 5020 } } } }
+ItemClass[5020] = QUEST
+-- 1021 is offered until 1022 is done, and it is: item 5021
+Quests[1021] = { name = "Window Shut", availableUntilCompleted = 1022, objectives = { nil, nil, { { 5021 } } } }
+Quests[1022] = { name = "Window Closer" }
+ItemClass[5021] = QUEST
+-- 1023 needs 1009, closed by its done variant 1010: item 5023
+Quests[1023] = { name = "Lost Branch", preQuestGroup = { 1009 }, objectives = { nil, nil, { { 5023 } } } }
+ItemClass[5023] = QUEST
+-- 1024 needs one of 1009 (closed) or 1011 (a breadcrumb whose target is done): item 5024
+Quests[1024] = { name = "Both Doors Shut", preQuestSingle = { 1009, 1011 }, objectives = { nil, nil, { { 5024 } } } }
+ItemClass[5024] = QUEST
+-- 1025 needs one of 1009 (closed) or 1015 (open): item 5025
+Quests[1025] = { name = "One Door Open", preQuestSingle = { 1009, 1015 }, objectives = { nil, nil, { { 5025 } } } }
+ItemClass[5025] = QUEST
+-- 1026 needs 1006, which is Orc only: a race lock on a prerequisite does not close it. Item 5026
+Quests[1026] = { name = "After Orc Quest", preQuestGroup = { 1006 }, objectives = { nil, nil, { { 5026 } } } }
+ItemClass[5026] = QUEST
+-- 1027 and 1028 need each other (bad data): item 5027
+Quests[1027] = { name = "Loop A", preQuestGroup = { 1028 }, objectives = { nil, nil, { { 5027 } } } }
+Quests[1028] = { name = "Loop B", preQuestGroup = { 1027 } }
+ItemClass[5027] = QUEST
+-- 1029 needs 1031, which needs 1023 (closed): item 5029
+Quests[1029] = { name = "Far Down The Chain", preQuestGroup = { 1031 }, objectives = { nil, nil, { { 5029 } } } }
+Quests[1031] = { name = "Middle Step", preQuestGroup = { 1023 } }
+ItemClass[5029] = QUEST
+-- 5030 links only to a quest QuestieDB does not have
+Items[5030] = { relatedQuests = { 9999 } }
+ItemClass[5030] = QUEST
+-- 5032 starts 1032 (done) by the client's word only: QuestieDB has no entry for the item
+Quests[1032] = { name = "Client Start" }
+ItemClass[5032] = QUEST
+ClientStarts[5032] = 1032
+
 Completed[1001], Completed[1002], Completed[1003], Completed[16], Completed[1005] = true, true, true, true, true
 Completed[1010], Completed[1012], Completed[1014], Completed[1016], Completed[1018] = true, true, true, true, true
+Completed[1022], Completed[1032] = true, true
 
 -- ---------------------------------------------------------------- lifecycle
 
@@ -134,6 +170,41 @@ check("ordinary item tooltip untouched", #HoverItem(5017), 0)
 check("relatedQuests link counts", FQT.GetVerdict(5018), "safe")
 check("spell objective item is linked", FQT.GetVerdict(5019), "maybe")
 check("never-delete list wins", FQT.GetVerdict(16309), "keep")
+
+-- ---------------------------------------------------------------- closed for good
+
+check("over the level cap -> safe", FQT.GetVerdict(5020), "safe")
+check("level cap reason on the tooltip", has(HoverItem(5020), "over its level cap"), true)
+check("closed-only item: closed wording", has(HoverItem(5020), "quests closed to you"), true)
+Player.level = 10
+FQT.ClearCache()
+check("at the level cap -> maybe", FQT.GetVerdict(5020), "maybe")
+Player.level = 11
+FireEvent("PLAYER_LEVEL_UP", 11)
+check("levelling past the cap rechecks -> safe", FQT.GetVerdict(5020), "safe")
+Player.level = 20
+FQT.ClearCache()
+check("its window ended -> safe", FQT.GetVerdict(5021), "safe")
+check("window reason on the tooltip", has(HoverItem(5021), "no longer offered"), true)
+check("a quest it needs is closed -> safe", FQT.GetVerdict(5023), "safe")
+check("prerequisite reason on the tooltip", has(HoverItem(5023), "a quest it needs is closed"), true)
+check("every alternative prerequisite closed -> safe", FQT.GetVerdict(5024), "safe")
+check("one alternative still open -> maybe", FQT.GetVerdict(5025), "maybe")
+check("a race-locked prerequisite does not close it", FQT.GetVerdict(5026), "maybe")
+check("a prerequisite loop stays open", FQT.GetVerdict(5027), "maybe")
+check("a closed quest two steps up the chain -> safe", FQT.GetVerdict(5029), "safe")
+check("breadcrumb reason on the tooltip", has(HoverItem(5011), "you took the quest it leads to"), true)
+check("done and closed variants: mixed wording", has(HoverItem(5009), "quests completed or closed"), true)
+check("a quest QuestieDB lacks -> unknown", FQT.GetVerdict(5030), "unknown")
+check("a quest QuestieDB lacks says so", has(HoverItem(5030), "not in QuestieDB"), true)
+
+-- The client's own "starts a quest" flag, read from the bag slot.
+check("client-only starter before a bag read -> unknown", FQT.GetVerdict(5032), "unknown")
+Bags[0] = { 5032 }
+FQT.Collect()
+check("client-only starter, quest done -> safe after a bag read", FQT.GetVerdict(5032), "safe")
+check("client-only starter names its quest", has(HoverItem(5032), "Client Start"), true)
+Bags[0] = nil
 
 -- ---------------------------------------------------------------- state changes
 
@@ -270,6 +341,10 @@ win:Hide()
 Bags[0] = { 5001 }
 FireEvent("BAG_UPDATE_DELAYED")
 check("a closed window is not rebuilt", win.empty.shown, true)
+Bags[0] = { 5021 }
+QT.RefreshWindow(true)
+check("a row for a closed quest says why", rowsShown()[1].why.text, "Quests closed")
+Bags[0] = { 5001 }
 
 check("hub status counts deletable items", QT.HubStatus():find("1 item you can delete", 1, true) ~= nil, true)
 Bags[0] = {}

@@ -6,6 +6,10 @@ local function Print(msg)
 	ns:Print(msg)
 end
 
+local function Secret(v)
+	return issecretvalue ~= nil and issecretvalue(v) and true or false
+end
+
 -- -------------------------------------------------------------------- text
 
 local ROLE_TEXT = {
@@ -24,6 +28,7 @@ local STATE_COLOR = {
 	done = "|cffff5555",
 	never = "|cff888888",
 	closed = "|cff888888",
+	nodata = "|cffaaaaaa",
 	open = "|cffffcc00",
 }
 
@@ -33,9 +38,32 @@ local STATE_TEXT = {
 	event = "seasonal",
 	done = "completed",
 	never = "not for your race/class",
-	closed = "closed by an alternate version",
+	closed = "closed to you",
+	nodata = "not in QuestieDB",
 	open = "not done yet",
 }
+
+-- What closed a quest, for its line under the verdict.
+local CLOSED_TEXT = {
+	exclusive = "closed: you did another version",
+	breadcrumb = "closed: you took the quest it leads to",
+	expired = "no longer offered to you",
+	maxlevel = "closed: you are over its level cap",
+	prereq = "closed: a quest it needs is closed",
+}
+
+-- "done", "closed" or "mixed": what made a safe item safe.
+function FQT.SafeReason(links)
+	local done, closed = false, false
+	for _, link in ipairs(links or {}) do
+		done = done or link[3] == "done"
+		closed = closed or link[3] == "closed"
+	end
+	if closed and not done then
+		return "closed"
+	end
+	return closed and "mixed" or "done"
+end
 
 local VERDICT_LINE = {
 	active = "|cff33ff99Keep - needed for an active quest|r",
@@ -48,11 +76,13 @@ local VERDICT_LINE = {
 
 -- Deletion advice only applies to true quest items; anything else (tradable mats,
 -- class-locked drops, keys) gets sell/AH wording instead of "delete".
-local function VerdictLine(verdict, itemID)
+local SAFE_REASON = { done = "quests completed", closed = "quests closed to you", mixed = "quests completed or closed" }
+
+local function VerdictLine(verdict, itemID, links)
 	if verdict ~= "safe" and verdict ~= "notyours" then
 		return VERDICT_LINE[verdict]
 	end
-	local reason = verdict == "safe" and "quests completed" or "only race/class-locked quests use it"
+	local reason = verdict == "safe" and SAFE_REASON[FQT.SafeReason(links)] or "only race/class-locked quests use it"
 	local isQuest = FQT.IsQuestItem(itemID)
 	if isQuest then
 		return "|cffff5555Can be deleted|r |cffaaaaaa(" .. reason .. ")|r"
@@ -64,12 +94,29 @@ local function VerdictLine(verdict, itemID)
 	return "|cffff9955" .. head .. "|r |cffaaaaaa(tradable - sell or AH it)|r"
 end
 
+-- A bag slot's tooltip: learn the quest the client says the item starts.
+local function LearnFromOwner(tooltip, itemID)
+	local owner = tooltip.GetOwner and tooltip:GetOwner()
+	if type(owner) ~= "table" or type(owner.GetBagID) ~= "function" or type(owner.GetID) ~= "function" then
+		return
+	end
+	local okB, bag = pcall(owner.GetBagID, owner)
+	local okS, slot = pcall(owner.GetID, owner)
+	if not (okB and okS) or Secret(bag) or Secret(slot) then
+		return
+	end
+	if type(bag) == "number" and type(slot) == "number" then
+		FQT.LearnSlot(bag, slot, itemID)
+	end
+end
+
 local function Annotate(tooltip, itemID)
+	LearnFromOwner(tooltip, itemID)
 	local verdict, links = FQT.GetVerdict(itemID)
 	if not verdict then
 		return
 	end
-	tooltip:AddLine(VerdictLine(verdict, itemID))
+	tooltip:AddLine(VerdictLine(verdict, itemID, links))
 	if not ns.db.questList then
 		return
 	end
@@ -96,7 +143,8 @@ local function Annotate(tooltip, itemID)
 			tooltip:AddLine("|cffaaaaaa  ...and " .. (#lines - 4) .. " more|r")
 			break
 		end
-		local qid, role, state = link[1], link[2], link[3]
+		local qid, role, state, why = link[1], link[2], link[3], link[4]
+		local stateText = state == "closed" and CLOSED_TEXT[why] or STATE_TEXT[state]
 		tooltip:AddLine(
 			"|cffaaaaaa  "
 				.. ROLE_TEXT[role]
@@ -105,7 +153,7 @@ local function Annotate(tooltip, itemID)
 				.. " "
 				.. STATE_COLOR[state]
 				.. "("
-				.. STATE_TEXT[state]
+				.. stateText
 				.. ")|r"
 		)
 	end
@@ -176,6 +224,9 @@ function FQT.Collect()
 		for slot = 1, (ok and slots or 0) do
 			local itemID = C_Container.GetContainerItemID(bag, slot)
 			if itemID then
+				if byId[itemID] == nil then
+					FQT.LearnSlot(bag, slot, itemID) -- before its verdict, which may need it
+				end
 				local e = byId[itemID]
 				if e == nil then
 					local verdict, links = FQT.GetVerdict(itemID)
@@ -350,6 +401,7 @@ local function ClearCache()
 end
 ns:RegisterEvent("QUEST_LOG_UPDATE", ClearCache)
 ns:RegisterEvent("QUEST_TURNED_IN", ClearCache)
+ns:RegisterEvent("PLAYER_LEVEL_UP", ClearCache) -- a level cap can close a quest
 ns:RegisterEvent("BAG_UPDATE_DELAYED", WindowChanged)
 ns:RegisterEvent("BANKFRAME_OPENED", function()
 	bankOpen = true

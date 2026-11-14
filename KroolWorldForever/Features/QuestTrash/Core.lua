@@ -12,11 +12,18 @@
 --   QuestDB.objectives[6][3]     "use"    item used for a spell objective
 --   QuestDB.requiredSourceItems  "req"    carried, not an objective
 --   QuestDB.sourceItemId         "prov"   handed out when the quest is accepted
+--   C_Container.GetContainerItemQuestInfo "start" the quest a bag item starts, as the client
+--                                reports it (the "!" on its slot); learned from the bags
 -- The quest-side links need a full quest scan, which runs in slices after login. Until it
 -- finishes, a verdict that would allow deletion is reported as "pending" instead.
 --
--- Quest state, first match wins: active > repeat > event > done > never > closed > open.
--- Item verdict, most protective wins: active > farm > maybe > safe > notyours.
+-- Quest state, first match wins: active > repeat > event > done > never > closed > nodata > open.
+-- "closed" means out of reach for good, for a reason the player's own progress proves: an
+-- exclusive variant done, a breadcrumb's target taken, its window ended (availableUntilCompleted
+-- done), over its level cap (requiredMaxLevel), or a prerequisite closed for one of those reasons.
+-- A prerequisite that is only race/class-locked ("never") does not close the quest after it: that
+-- would rest on the race masks alone.
+-- Item verdict, most protective wins: active > farm > maybe > unknown > safe > notyours.
 -- Everything unknown fails toward keep.
 
 local _, root = ...
@@ -173,9 +180,37 @@ function FQT.ScanStep(sliceSize)
 	return scan.done
 end
 
+local function Secret(v)
+	return issecretvalue ~= nil and issecretvalue(v) and true or false
+end
+
+-- The quest each bag item starts, as the client reports it: [itemID] = questID. It fills in for
+-- items QuestieDB has no starter link for (new Forever items). Learned per session from the bags.
+local clientStarts = {}
+local cache = {} -- verdicts, [itemID] = { verdict, links }
+
+function FQT.LearnSlot(bag, slot, itemID)
+	if not (C_Container and C_Container.GetContainerItemQuestInfo) or type(itemID) ~= "number" then
+		return
+	end
+	local ok, info = pcall(C_Container.GetContainerItemQuestInfo, bag, slot)
+	if not ok or type(info) ~= "table" then
+		return
+	end
+	local qid = info.questID
+	if Secret(qid) or type(qid) ~= "number" or qid <= 0 then
+		return
+	end
+	if clientStarts[itemID] ~= qid then
+		clientStarts[itemID] = qid
+		cache[itemID] = nil
+	end
+end
+
 local function LinksFor(itemID)
 	local links = {}
 	AddLink(links, ItemDB.startQuest(itemID), "start")
+	AddLink(links, clientStarts[itemID], "start")
 	for _, l in ipairs(reverseIndex[itemID] or {}) do
 		AddLink(links, l[1], l[2])
 	end
@@ -205,6 +240,14 @@ local function IsActive(qid)
 	return C_QuestLog.GetLogIndexForQuestID(qid) ~= nil
 end
 
+local function PlayerLevel()
+	local level = UnitLevel("player")
+	if Secret(level) or type(level) ~= "number" then
+		return nil
+	end
+	return level
+end
+
 local QUEST_STATE_FIELDS = {
 	"specialFlags",
 	"questFlags",
@@ -213,19 +256,25 @@ local QUEST_STATE_FIELDS = {
 	"requiredClasses",
 	"exclusiveTo",
 	"breadcrumbForQuestId",
+	"requiredMaxLevel",
+	"availableUntilCompleted",
+	"preQuestGroup",
+	"preQuestSingle",
 }
 
--- "active" | "repeat" | "event" | "done" | "never" | "closed" | "open"
-function FQT.QuestState(qid)
+local PREREQ_DEPTH = 6 -- how far back a chain is followed to find a closed prerequisite
+
+-- state, why. why says what closed it: exclusive | breadcrumb | expired | maxlevel | prereq.
+local function StateOf(qid, depth, seen)
 	if IsActive(qid) then
 		return "active"
 	end
 	local v = QuestDB.GetAll(qid, QUEST_STATE_FIELDS)
 	if not v then
-		return "open" -- not in the database: assume it still matters
+		return "nodata" -- not in the database: assume it still matters
 	end
-	local special, flags, sort, races, classes, exclusive, breadcrumbFor =
-		v[1], v[2], v[3], v[4], v[5], v[6], v[7]
+	local special, flags, sort, races, classes, exclusive, breadcrumbFor = v[1], v[2], v[3], v[4], v[5], v[6], v[7]
+	local maxLevel, untilDone, group, single = v[8], v[9], v[10], v[11]
 	if
 		ns.EXTRA_REPEATABLE[qid]
 		or HasBit(special, SPECIAL_REPEATABLE)
@@ -250,19 +299,57 @@ function FQT.QuestState(qid)
 	-- Mutually exclusive variants: completing one closes the rest for good.
 	for _, other in ipairs(exclusive or {}) do
 		if other ~= qid and IsCompleted(other) then
-			return "closed"
+			return "closed", "exclusive"
 		end
 	end
 	-- A breadcrumb is dead once the quest it leads to is taken or done.
-	if breadcrumbFor ~= 0 and (IsCompleted(breadcrumbFor) or IsActive(breadcrumbFor)) then
-		return "closed"
+	if breadcrumbFor and breadcrumbFor ~= 0 and (IsCompleted(breadcrumbFor) or IsActive(breadcrumbFor)) then
+		return "closed", "breadcrumb"
+	end
+	-- Offered only until another quest is done, and that one is.
+	if untilDone and untilDone ~= 0 and IsCompleted(untilDone) then
+		return "closed", "expired"
+	end
+	-- A level cap: levels only go up.
+	local level = PlayerLevel()
+	if maxLevel and maxLevel ~= 0 and level and level > maxLevel then
+		return "closed", "maxlevel"
+	end
+	-- Prerequisites: closed when one the quest needs (group) or every one it could use (single)
+	-- is closed. Unknown, open, race/class-locked and repeat prerequisites leave it open.
+	if depth < PREREQ_DEPTH then
+		seen[qid] = true
+		for _, p in ipairs(group or {}) do
+			if not seen[p] and StateOf(p, depth + 1, seen) == "closed" then
+				seen[qid] = nil
+				return "closed", "prereq"
+			end
+		end
+		if type(single) == "table" and #single > 0 then
+			local allClosed = true
+			for _, p in ipairs(single) do
+				if seen[p] or StateOf(p, depth + 1, seen) ~= "closed" then
+					allClosed = false
+					break
+				end
+			end
+			if allClosed then
+				seen[qid] = nil
+				return "closed", "prereq"
+			end
+		end
+		seen[qid] = nil
 	end
 	return "open"
 end
 
--- -------------------------------------------------------------------- verdict
+-- "active" | "repeat" | "event" | "done" | "never" | "closed" | "nodata" | "open", and for
+-- "closed" why (exclusive | breadcrumb | expired | maxlevel | prereq).
+function FQT.QuestState(qid)
+	return StateOf(qid, 0, {})
+end
 
-local cache = {}
+-- -------------------------------------------------------------------- verdict
 
 function FQT.ClearCache()
 	wipe(cache)
@@ -281,7 +368,7 @@ function FQT.IsQuestItem(itemID)
 	return classID == Enum.ItemClass.Questitem
 end
 
--- Returns verdict, links ({ {qid, role, state}, ... }); nil for items no quest uses that
+-- Returns verdict, links ({ {qid, role, state, why}, ... }); nil for items no quest uses that
 -- are not quest items. Verdicts: keep, active, farm, maybe, pending, safe, notyours, unknown.
 function FQT.GetVerdict(itemID)
 	local hit = cache[itemID]
@@ -301,8 +388,8 @@ function FQT.GetVerdict(itemID)
 			local has = {}
 			out = {}
 			for _, link in ipairs(links) do
-				local state = FQT.QuestState(link[1])
-				out[#out + 1] = { link[1], link[2], state }
+				local state, why = FQT.QuestState(link[1])
+				out[#out + 1] = { link[1], link[2], state, why }
 				has[state] = true
 			end
 			if has.active then
@@ -311,6 +398,8 @@ function FQT.GetVerdict(itemID)
 				verdict = "farm"
 			elseif has.open then
 				verdict = "maybe"
+			elseif has.nodata then
+				verdict = "unknown" -- a quest QuestieDB does not have: keep
 			elseif not scan.done then
 				verdict = "pending" -- a quest-side link may still turn up
 			elseif has.done or has.closed then
