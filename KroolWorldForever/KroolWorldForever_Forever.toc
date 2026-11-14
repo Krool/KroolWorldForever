@@ -4,6 +4,7 @@
 ## Author: Krool
 ## Version: 0.18.0
 ## Category: Interface Enhancements
+## X-Curse-Project-ID: 1804317
 ## IconTexture: Interface\Icons\INV_Misc_Bag_10
 ## AddonCompartmentFunc: KroolWorldForever_OnCompartmentClick
 ## OptionalDeps: QuestieDB, Auctionator

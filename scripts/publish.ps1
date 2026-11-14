@@ -60,7 +60,13 @@ if (-not $cfId -or -not $cfToken) {
 	$forever = $foreverAll | Where-Object { $_.name -eq $patch } | Select-Object -First 1
 	if (-not $forever) { $forever = $foreverAll | Sort-Object id -Descending | Select-Object -First 1 }
 	if (-not $forever) { throw "CurseForge: no Forever game version (type 88568) found." }
-	$meta = @{ changelog = $Notes; changelogType = "markdown"; gameVersions = @($forever.id); releaseType = "release"; displayName = "KroolWorldForever-$Version" } | ConvertTo-Json -Compress
+	# Optional dependencies, sent with every file (the project's default relations may not apply
+	# to API uploads): Auctionator prices several features, QuestieDB feeds Quest Trash.
+	$relations = @{ projects = @(
+		@{ slug = "auctionator"; type = "optionalDependency" },
+		@{ slug = "questiedb"; type = "optionalDependency" }
+	) }
+	$meta = @{ changelog = $Notes; changelogType = "markdown"; gameVersions = @($forever.id); releaseType = "release"; displayName = "KroolWorldForever-$Version"; relations = $relations } | ConvertTo-Json -Compress -Depth 5
 	$form = New-Object System.Net.Http.MultipartFormDataContent
 	$form.Add((New-Object System.Net.Http.StringContent $meta), "metadata")
 	$form.Add((FileContent $Zip), "file", [IO.Path]::GetFileName($Zip))
