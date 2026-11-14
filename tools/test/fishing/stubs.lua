@@ -115,6 +115,12 @@ end
 function IsMouseButtonDown(b)
 	return MouseDown[b] == true
 end
+-- What the mouse is over: nil = the game world, or a window's frame (a bag slot, a vendor item).
+WorldFrame = { name = "WorldFrame" }
+MouseFocus = nil
+function GetMouseFoci()
+	return { MouseFocus or WorldFrame }
+end
 Channel = nil -- spell id of the running channel
 function UnitChannelInfo()
 	if Channel then

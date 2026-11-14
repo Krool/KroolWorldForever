@@ -16,7 +16,7 @@ local ns = root.Feature("fishing")
 local BUTTON = "KroolWorldForeverFishButton"
 local REEL_OWNER = "KroolWorldForeverFishReel" -- owns the reel overrides
 local BINDING = "CLICK " .. BUTTON .. ":LeftButton"
--- Fishing ranks and variants, tried in this order; the first one the character knows is cast.
+-- Fishing ranks and variants; the highest one the character knows is cast (tried from the end).
 local CAST_IDS = { 7620, 7731, 7732, 18248, 33095, 51294, 88868, 110410, 131474, 158743 }
 local IS_FISHING = {}
 for _, id in ipairs(CAST_IDS) do
@@ -26,14 +26,17 @@ end
 local REEL_CVARS = { { "SoftTargetInteract", 3 }, { "SoftTargetInteractArc", 2 }, { "SoftTargetInteractRange", 60 } }
 local DOUBLE_MIN, DOUBLE_MAX = 0.04, 0.4 -- seconds between the two right-clicks
 local DEBOUNCE = 0.5 -- after acting, ignore clicks this long
+local CLICK_GRACE = 0.3 -- a double-click's cast override is cleared this long after the mouse up
+local LOOT_WAIT = 0.3 -- after the line comes in, how long the reel keys wait for a loot window
 
 -- Key Bindings > AddOns (Bindings.xml). The header is set by Rare Alert too; same text.
 BINDING_HEADER_KROOLWORLDFOREVER = "Krool World"
 _G["BINDING_NAME_" .. BINDING] = "Fish: Cast Or Reel In"
 
 local button, reelOwner
-local held = {} -- cvar -> { orig = value before us, mine = the value we set }
 local reeling = false -- a fishing channel is running (by our events)
+local stopping = false -- the line is in; the reel keys wait for the loot window (or LOOT_WAIT)
+local lootOpen = false
 local clickBound = false -- BUTTON2 is overridden by a double-click
 local interactBound = false -- ... to INTERACTTARGET (cleared on the mouse up)
 local dirty = false -- something waits for combat to end
@@ -97,9 +100,9 @@ local function CastId()
 	if not (C_SpellBook and C_SpellBook.IsSpellKnown) then
 		return nil
 	end
-	for _, id in ipairs(CAST_IDS) do
-		if Read(C_SpellBook.IsSpellKnown, id) == true then
-			return id
+	for i = #CAST_IDS, 1, -1 do
+		if Read(C_SpellBook.IsSpellKnown, CAST_IDS[i]) == true then
+			return CAST_IDS[i]
 		end
 	end
 	return nil
@@ -143,7 +146,21 @@ local function GetCVarValue(name)
 	return type(v) == "string" and v or nil
 end
 
+-- cvar -> { orig = value before us, mine = the value we set, as the client reads it back }. Kept in
+-- the saved variables: a reload, crash or disconnect while the line is out (or in combat, when the
+-- restore has to wait) leaves our values in Config.wtf, and the next load puts the originals back.
+local function Held()
+	if type(ns.db) ~= "table" then
+		return {}
+	end
+	if type(ns.db.held) ~= "table" then
+		ns.db.held = {}
+	end
+	return ns.db.held
+end
+
 local function HoldCVars()
+	local held = Held()
 	for _, c in ipairs(REEL_CVARS) do
 		local name, want = c[1], tostring(c[2])
 		local cur = GetCVarValue(name)
@@ -156,6 +173,8 @@ local function HoldCVars()
 		end
 		if held[name] and held[name].mine and C_CVar and C_CVar.SetCVar then
 			pcall(C_CVar.SetCVar, name, want)
+			-- The client may store it in its own form ("60.000000"): compare against what it reads back.
+			held[name].mine = GetCVarValue(name) or want
 		end
 	end
 end
@@ -164,7 +183,7 @@ end
 -- bobber is out, nil otherwise. Setups' snapshot reads it so it never records our temporary values.
 function ns.HeldCVars()
 	local out
-	for name, h in pairs(held) do
+	for name, h in pairs(Held()) do
 		if h.mine ~= nil then
 			out = out or {}
 			out[name] = h.orig
@@ -178,6 +197,7 @@ local function RestoreCVars()
 	if InCombat() then
 		return false
 	end
+	local held = Held()
 	for name, h in pairs(held) do
 		if h.mine ~= nil and GetCVarValue(name) == h.mine and C_CVar and C_CVar.SetCVar then
 			pcall(C_CVar.SetCVar, name, h.orig)
@@ -189,15 +209,13 @@ end
 
 -- -------------------------------------------------------------------- the button
 
-local function UseKeyDown()
-	return GetCVarValue("ActionButtonUseKeyDown") == "1"
-end
-
+-- The button acts on the press, whatever ActionButtonUseKeyDown says (its "useOnKeyDown" attribute
+-- wins over the CVar: SecureActionButton_ShouldUseOnKeyDown). The release then does nothing, so the
+-- reel key's release cannot recast, and the double-click override is spent on the press.
 -- Clears the double-click override after its one click. It runs in the secure environment, so it
 -- works in combat too.
 local CLEAR_SNIPPET = [[
-	local useKeyDown = self:GetAttribute("usekeydown")
-	if (useKeyDown and down) or (not useKeyDown and not down) then
+	if down then
 		self:ClearBindings()
 	end
 ]]
@@ -210,7 +228,8 @@ local function Build()
 		return nil
 	end
 	local b = CreateFrame("Button", BUTTON, UIParent, "SecureActionButtonTemplate")
-	b:RegisterForClicks("AnyUp", "AnyDown") -- works whichever way ActionButtonUseKeyDown is set
+	b:RegisterForClicks("AnyUp", "AnyDown")
+	b:SetAttribute("useOnKeyDown", true)
 	b:SetAttribute("type1", "spell")
 	if SecureHandlerWrapScript then
 		SecureHandlerWrapScript(b, "PostClick", b, CLEAR_SNIPPET)
@@ -233,7 +252,6 @@ local function SyncButton()
 		return
 	end
 	b:SetAttribute("spell1", ns.enabled and CastId() or nil)
-	b:SetAttribute("usekeydown", UseKeyDown())
 end
 
 -- -------------------------------------------------------------------- overrides
@@ -257,8 +275,9 @@ local function StartReel()
 		return
 	end
 	Build()
-	reeling = true
+	reeling, stopping = true, false
 	HoldCVars()
+	ClearReel() -- a recast while the last line's keys still wait: set them once
 	local k1, k2 = BindingKeys()
 	for _, key in ipairs({ k1 or false, k2 or false }) do
 		if key then
@@ -269,7 +288,7 @@ end
 
 -- The line is in (or the feature went off): everything back. Combat defers it.
 local function StopReel()
-	reeling = false
+	reeling, stopping = false, false
 	if InCombat() then
 		dirty = true
 		return
@@ -278,12 +297,27 @@ local function StopReel()
 	RestoreCVars()
 end
 
+-- The line came in. The reel keys stay on "interact" until the catch's loot window closes (or
+-- LOOT_WAIT passes with none), so pressing the key again over the loot does not cast a new line.
+local function LineIn()
+	reeling, stopping = false, true
+	if not (C_Timer and C_Timer.After) then
+		StopReel()
+		return
+	end
+	C_Timer.After(LOOT_WAIT, function()
+		if stopping and not reeling and not lootOpen and (Read(GetNumLootItems) or 0) == 0 then
+			StopReel()
+		end
+	end)
+end
+
 local function Cleanup()
 	if InCombat() then
 		dirty = true
 		return false
 	end
-	dirty = false
+	dirty, stopping = false, false
 	ClearReel()
 	ClearClick()
 	RestoreCVars()
@@ -315,11 +349,25 @@ local function CanFish()
 	return true
 end
 
+-- The mouse is over the game world, not a window: a click a frame (bags, a vendor) takes never
+-- reaches a binding, so an override set for it would wait for the next right-click anywhere.
+local function OverWorld()
+	if type(GetMouseFoci) ~= "function" then
+		return false
+	end
+	local ok, foci = pcall(GetMouseFoci)
+	if not ok or type(foci) ~= "table" then
+		return false
+	end
+	local top = foci[1]
+	return top == nil or top == WorldFrame
+end
+
 local function OnMouseDown(_, which)
 	if Secret(which) or which ~= "RightButton" then
 		return
 	end
-	if not ns.db.doubleClick or not PoleEquipped() then
+	if not ns.db.doubleClick or not PoleEquipped() or not OverWorld() then
 		lastDown = nil
 		return
 	end
@@ -354,8 +402,30 @@ local function OnMouseDown(_, which)
 	end
 end
 
+-- A cast override the snippet did not spend (the click went somewhere else) is taken back shortly
+-- after the button comes up, so it can never wait for a later right-click.
+local function ClearUnspentClick()
+	if not clickBound or interactBound then
+		return
+	end
+	if InCombat() then
+		dirty = true
+		return
+	end
+	ClearClick()
+end
+
 local function OnMouseUp(_, which)
-	if Secret(which) or which ~= "RightButton" or not interactBound then
+	if Secret(which) or which ~= "RightButton" then
+		return
+	end
+	if clickBound and not interactBound then
+		if C_Timer and C_Timer.After then
+			C_Timer.After(CLICK_GRACE, ClearUnspentClick)
+		end
+		return
+	end
+	if not interactBound then
 		return
 	end
 	if InCombat() then
@@ -408,8 +478,25 @@ local function Retry()
 	end
 end
 
+-- Values held when the last session ended (a reload or crash with the line out, or a logout in
+-- combat): put the originals back, unless a line is out right now.
+local function RestoreLeftovers()
+	if next(Held()) == nil or reeling or IsFishing() then
+		return
+	end
+	if not RestoreCVars() then
+		dirty = true
+	end
+end
+
+-- Saved variables are ready, on or off: an earlier session's leftovers go back either way.
+function ns.OnLoad()
+	RestoreLeftovers()
+end
+
 function ns.OnEnable()
 	SyncButton()
+	RestoreLeftovers()
 end
 
 function ns.OnDisable()
@@ -440,19 +527,14 @@ end)
 ns:RegisterEvent("PLAYER_REGEN_ENABLED", function()
 	if dirty then
 		dirty = false
-		if interactBound then
-			ClearClick() -- the right button came up in combat
+		if clickBound then
+			ClearClick() -- the right button came up in combat, or a cast override went unspent
 		end
 		if reeling then
 			SyncButton() -- still fishing: keep the reel keys, only the button catches up
 		else
 			Cleanup()
 		end
-	end
-end)
-ns:RegisterEvent("CVAR_UPDATE", function(_, name)
-	if not Secret(name) and name == "ActionButtonUseKeyDown" then
-		SyncButton()
 	end
 end)
 ns:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START", function(_, unit, _, spellId)
@@ -465,11 +547,23 @@ ns:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP", function(_, unit, _, spellId)
 	if Secret(unit) or unit ~= "player" or Secret(spellId) or not IS_FISHING[spellId] then
 		return
 	end
-	StopReel()
+	LineIn()
 end)
+ns:RegisterEvent("LOOT_OPENED", function()
+	lootOpen = true
+end)
+ns:RegisterEvent("LOOT_CLOSED", function()
+	lootOpen = false
+	if stopping and not reeling then
+		StopReel()
+	end
+end)
+-- In combat the restore cannot run: the values stay in the saved variables for the next load.
 ns:RegisterEvent("PLAYER_LOGOUT", function()
-	reeling = false
-	pcall(ClearReel)
+	reeling, stopping = false, false
+	if not InCombat() then
+		pcall(ClearReel) -- protected in combat; override bindings end with the session anyway
+	end
 	pcall(RestoreCVars)
 end)
 ns:RegisterEvent("GLOBAL_MOUSE_DOWN", OnMouseDown)
