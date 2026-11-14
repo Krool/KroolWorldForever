@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.18.0
+
+More quest items Quest Trash can call deletable, and fixes from a review of every feature against
+build 70938.
+
+- **Quest Trash: quests closed for good count as done.** An item for a quest you can never take now
+  reads Can be deleted, and its quest line says why:
+  - you are over the quest's level cap;
+  - it was offered only until another quest was done, and that one is;
+  - a quest it needs is closed to you, followed up to six steps back.
+  A quest that is only locked to another race or class does not close the quests after it. Grey
+  quests you skipped still count as wanted.
+- **Quest Trash: items that start a quest.** The game marks which quest a bag item starts. Quest
+  Trash now uses that when QuestieDB has no entry for the item. A quest QuestieDB does not have now
+  reads "No quest data" instead of "not done yet", and breadcrumbs no longer say "closed by an
+  alternate version".
+- **Setups no longer rolls back account-wide settings.** Interface settings saved for the whole
+  account, Edit Mode's own checkboxes and (on a new character) this addon's settings are shared by
+  every character already. Applying an older setup used to put them back to how they were when it
+  was saved. Now only per-character settings are applied. Undo still reverses an older version's
+  apply.
+- **Setups: other fixes.**
+  - A setup from another class leaves stance, stealth and form bars alone instead of clearing them.
+  - The automatic apply on a new character also needs 0 gold, so an old level 1 bank alt gets the
+    picker instead.
+  - A character on its own keybinding set saves applied keys there, and Undo puts them back there.
+  - A setting the game refuses is reported as refused, not changed.
+  - The addon list is changed for this character only, even with a same-named character on
+    another realm.
+  - Fishing's temporary settings are never saved into a snapshot.
+- **One-Button Fishing fixes.**
+  - A quick double right-click on a bag or vendor item no longer leaves your right button set to
+    cast Fishing on the next right-click.
+  - After a catch, the key keeps reeling until the loot window closes, so pressing it over the
+    loot does not cast a new line.
+  - The soft-interact settings come back after a reload, crash or logout in combat with the line
+    out.
+  - The key acts on the press, so its release never recasts. The highest Fishing rank you know is
+    cast.
+- **Skill-Up Odds: recipe data for build 70938.** 26 recipes changed. Coarse Grinding Stone now goes
+  grey at 90, and most camp objects and the Journeyman and Expert campfires go grey at the skill
+  they turn yellow.
+- **Least Valuable: the Bags Full card names only items in your general bags.** An item in a herb,
+  enchanting or soul bag frees no slot your loot can use.
+- **Quest Reward Value hooks the call the quest window really makes** when it lays out rewards.
+  Before, the coin relied on event order to find the buttons. It also skips the quest log's map
+  view.
+- **Kill Value: drops Forever added get their real rate.** An item missing from a creature's classic
+  loot table no longer shrinks toward zero once you have looted a few of that creature.
+- **Disenchant-based values for low blues say "(unconfirmed)"** in Least Valuable and Quest Reward
+  Value: those disenchant tables are still a guess.
+- **Rare Alert: a rare still on screen keeps its button**, even through a fight longer than a
+  minute.
+- Several reads now check that the game is not hiding a value before testing it, as the rest of the
+  bundle does.
+
 ## 0.17.0
 
 Two new features and a bags-full card, after a look at what Forever players like in other addons.
