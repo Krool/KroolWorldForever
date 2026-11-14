@@ -28,11 +28,12 @@ layout, interface settings and the addon list, and applies any of them to the ch
 - **Reload bar:** after an apply that changed Edit Mode or the addon list, a yellow strip with
   **Reload Now** stays until the UI reloads.
 - **New characters:** with a setup marked **Use For New Characters**, a brand-new character (level 1
-  with no experience, at its first login) gets it about 8 seconds in (option **Apply The Default Setup
+  with no experience and no money, at its first login) gets it about 8 seconds in (option **Apply The Default Setup
   Automatically**, on by default), and the window opens on what changed. A character the addon has
   not seen before but that is not brand-new (the addon was installed later, or the default was chosen
   later) gets the picker instead, never an automatic apply. Without a default, or with that option
-  off, the window opens as a picker. Closing it counts as Not Now.
+  off, the window opens as a picker. Closing it counts as Not Now. The automatic apply skips Krool
+  World Settings (they are account-wide); a manual apply keeps that part.
 - **Reload:** Edit Mode and the addon list need a UI reload. Apply reloads by itself and prints the
   report again after it (option **Reload Automatically After Apply**, on by default). The automatic
   apply on a new character cannot: it runs from a timer, and the client blocks `C_UI.Reload` outside
@@ -44,11 +45,11 @@ Slash: `/kws save [name]`, `/kws list`, `/kws undo`.
 
 | Part | Saved | Applied |
 |---|---|---|
-| Action Bars | Every slot 1-180: spell (id and name), item, macro (by name), mount; and which of Action Bars 2-8 are switched on | Spells by id, then by name (another rank). A slot whose action this character cannot use keeps what it has. Slots the setup leaves empty are cleared (option). Flyouts and other types are reported, not placed. |
-| Keybindings | Every bound command, both keys | Full replace, saved per character (option) or for the account |
+| Action Bars | Every slot 1-180: spell (id and name), item, macro (by name), mount; and which of Action Bars 2-8 are switched on | Spells by id, then by name (another rank). A slot whose action this character cannot use keeps what it has. Slots the setup leaves empty are cleared (option). A setup from another class leaves slots 73-144 (stance, form and override bars) alone. Flyouts and other types are reported, not placed. |
+| Keybindings | Every bound command, both keys | Full replace, saved per character (option) or for the account. A character already on its own set always saves there, and the report says which. |
 | Macros | Account and character macros | Missing ones are created; one with the same name is kept as is; full macro slots are reported |
-| Edit Mode Layout | The active layout (or which built-in one: Modern or Classic), including unit frame options such as the player portrait; and Edit Mode's own checkboxes (show target and focus, cast bar, party frames, pet frame, grid, snap...) | Added as a new character layout with a unique name and made active; refused when the character has 5 layouts. Finishes after a UI reload. |
-| Interface Settings | Server-stored CVars changed from default; never secure, locked or read-only ones | Set, and server-stored ones the setup left at default are reset. Graphics and sound are local (Config.wtf) and not touched. |
+| Edit Mode Layout | The active layout (or which built-in one: Modern or Classic), including unit frame options such as the player portrait; and Edit Mode's own checkboxes (show target and focus, cast bar, party frames, pet frame, grid, snap...) | Added as a new character layout with a unique name and made active; refused when the character has 5 layouts. Finishes after a UI reload. The account-wide checkboxes are only put back by Undo, never copied. |
+| Interface Settings | Per-character server-stored CVars changed from default (account-wide ones are shared already, so they are not copied); never secure, locked or read-only ones | Set (one the client refuses is counted as refused), and server-stored ones the setup left at default are reset. Graphics and sound are local (Config.wtf) and not touched. |
 | Addon List | Which addons are on for the character | Turned on/off for this character; never turns itself off; missing addons listed. Finishes after a reload. |
 | Krool World Settings | Every bundle feature's Enabled switch and declared options (Kill Value, Quest Trash, Setups...). A feature's new options are included automatically. Learned data is not. | Set through the settings panel's own setting objects, so the panel and each feature react at once. Slider values are clamped to the current range; options this version does not have are skipped and counted. Never turns Setups itself off. These settings are account-wide today, so this part is a backup/restore until some become per character. |
 

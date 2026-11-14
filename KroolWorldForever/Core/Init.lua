@@ -30,7 +30,7 @@ local function Load()
 			root.Try(F, "load", F.OnLoad)
 		end
 	end
-	root.BuildSettings()
+	root.Try(nil, "settings panel", root.BuildSettings)
 end
 
 local function Login()
@@ -116,7 +116,7 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:SetScript("OnEvent", function(self, event, ...)
 	if event == "ADDON_LOADED" then
 		if ... == addonName then
-			Load()
+			root.Try(nil, "startup", Load)
 			RegisterSlash()
 		end
 	elseif event == "PLAYER_LOGIN" then

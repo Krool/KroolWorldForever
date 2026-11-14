@@ -1166,11 +1166,12 @@ end
 -- this addon has simply not seen before (installed later, played with Setups off, a default chosen
 -- later) can have years of bars and bindings on it, so it gets the picker, never an apply.
 local function BrandNew()
-	local level, xp = UnitLevel("player"), UnitXP("player")
-	if issecretvalue and (issecretvalue(level) or issecretvalue(xp)) then
+	local level, xp, money = UnitLevel("player"), UnitXP("player"), GetMoney()
+	if issecretvalue and (issecretvalue(level) or issecretvalue(xp) or issecretvalue(money)) then
 		return false
 	end
-	return level == 1 and xp == 0
+	-- Money too: a level-1, 0 XP bank alt usually holds some.
+	return level == 1 and xp == 0 and money == 0
 end
 
 local function Settle(wasNew)
@@ -1196,7 +1197,11 @@ local function Settle(wasNew)
 			if ns.db.autosave then
 				ns.AutoSnapshot()
 			end
-			local report = ns.Apply(default, AllParts(default), ns.db)
+			-- Not the bundle's own settings: they live in account-wide SavedVariables, so applying them
+			-- here would roll back every character's.
+			local which = AllParts(default)
+			which.kwf = nil
+			local report = ns.Apply(default, which, ns.db)
 			if report.ok then
 				c.onboarded, c.askAgain = true, nil
 				ns:Print(("new character: applied your setup %s"):format(Title(default)))

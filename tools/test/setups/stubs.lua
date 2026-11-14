@@ -400,6 +400,9 @@ end
 function UnitXP()
 	return Player.xp or 0
 end
+function GetMoney()
+	return Player.money or 0
+end
 function GetNormalizedRealmName()
 	return Player.realm
 end
@@ -617,6 +620,9 @@ C_CVar = {
 		if c[6] then
 			error("secure cvar")
 		end
+		if RefusedCVars and RefusedCVars[name] then
+			return false -- the client refuses and says so with false
+		end
 		c[1] = tostring(value)
 		return true
 	end,
@@ -638,6 +644,8 @@ C_AddOns = {
 		return AddonNames[i]
 	end,
 	GetAddOnEnableState = function(name, char)
+		-- Blizzard's AddonList passes UnitGUID("player"); a name is not a valid character here.
+		assert(tostring(char):find("^Player%-"), "addon enable state needs a GUID, got " .. tostring(char))
 		return OnFor(char)[name] and 2 or 0
 	end,
 	EnableAddOn = function(name, char)

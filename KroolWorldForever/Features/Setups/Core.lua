@@ -237,7 +237,9 @@ local serverCVarNames
 
 local function Qualifies(name)
 	local value, _, account, character, locked, secure, readOnly = C_CVar.GetCVarInfo(name)
-	return value ~= nil and (account or character) and not (locked or secure or readOnly)
+	-- Per-character only: an account-wide CVar is shared already, so "copying" it would only roll
+	-- it back for every character.
+	return value ~= nil and character and not account and not (locked or secure or readOnly)
 end
 
 local function ServerCVars()
@@ -264,9 +266,16 @@ ns.ServerCVars = ServerCVars
 
 function capture.cvars()
 	local out, n = {}, 0
+	-- One-Button Fishing sets a few CVars while the bobber is out: record the values it will put back.
+	local fishing = root.features and root.features.fishing
+	local held = fishing and fishing.HeldCVars and fishing.HeldCVars() or {}
 	for _, c in ipairs(ServerCVars()) do
-		if c.value ~= c.default then
-			out[c.name] = c.value
+		local value = held[c.name]
+		if value == nil then
+			value = c.value
+		end
+		if value ~= c.default then
+			out[c.name] = value
 			n = n + 1
 		end
 	end
@@ -275,7 +284,7 @@ end
 
 function capture.addons()
 	local out, n = {}, 0
-	local me = UnitName("player")
+	local me = UnitGUID("player") -- Blizzard's AddonList passes the GUID
 	for i = 1, C_AddOns.GetNumAddOns() do
 		local name = C_AddOns.GetAddOnInfo(i)
 		if name then
@@ -400,7 +409,7 @@ end
 
 -- A slot whose action this character cannot use (unknown spell, item not owned) keeps whatever
 -- the character already has there; only slots the setup leaves empty are cleared (clearEmpty).
-function apply.bars(data, opts, report)
+function apply.bars(data, opts, report, setup)
 	local toggles = data.toggles
 	if type(toggles) == "table" and #toggles > 0 and not C_GameRules.IsMultiActionBarVisibilityForced() then
 		local now, differs, shown = { GetActionBarToggles() }, false, 0
@@ -420,10 +429,16 @@ function apply.bars(data, opts, report)
 		Flag(report, "warn")
 		return
 	end
+	-- Slots 73-144 are class bonus bars (stances, forms, stealth) and override/possess bars: another
+	-- class's setup has nothing valid there, so they are neither placed nor cleared.
+	local _, myClass = UnitClass("player")
+	local otherClass = setup and setup.class and myClass and setup.class ~= myClass
 	local placed, cleared, kept, skipped = 0, 0, 0, {}
 	for slot = 1, MAX_SLOTS do
 		local want = data[slot]
-		if Same(slot, want) then
+		if otherClass and slot >= 73 and slot <= 144 then
+			-- left alone
+		elseif Same(slot, want) then
 			-- already as the setup has it
 		elseif Unrestorable(slot) then
 			kept = kept + 1
@@ -443,6 +458,9 @@ function apply.bars(data, opts, report)
 		end
 	end
 	report.lines[#report.lines + 1] = ("Action Bars: %d placed, %d cleared, %d not available"):format(placed, cleared, #skipped)
+	if otherClass then
+		report.lines[#report.lines + 1] = "  - class bars (slots 73-144) left alone: the setup is from another class"
+	end
 	if kept > 0 then
 		report.lines[#report.lines + 1] = ("  - %d %s left alone: an equipment set or flyout button, which Undo could not put back"):format(kept, kept == 1 and "slot" or "slots")
 	end
@@ -486,14 +504,17 @@ function apply.bindings(data, opts, report)
 			end
 		end
 	end
-	SaveBindings(opts.perCharBinds and CHARACTER_BINDINGS or ACCOUNT_BINDINGS)
+	-- A character already on its own set stays there: saving to the account set would overwrite it.
+	-- (Undo says exactly which set to go back to.)
+	local perChar = opts.perCharBinds or (not opts.isUndo and GetCurrentBindingSet() == CHARACTER_BINDINGS)
+	SaveBindings(perChar and CHARACTER_BINDINGS or ACCOUNT_BINDINGS)
 	if failed > 0 then
 		Flag(report, "warn")
 	end
 	report.lines[#report.lines + 1] = ("Keybindings: %d keys bound%s, saved %s"):format(
 		bound,
 		failed > 0 and (", " .. failed .. " for commands not available (an addon not loaded?)") or "",
-		opts.perCharBinds and "for this character" or "for the account"
+		perChar and "for this character" or "for the account"
 	)
 end
 
@@ -538,7 +559,7 @@ local function UniqueLayoutName(layouts, name)
 	return candidate
 end
 
-function apply.editmode(data, _, report)
+function apply.editmode(data, opts, report)
 	if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
 		-- Its in-memory layouts (and any unsaved changes) would fight ours.
 		report.lines[#report.lines + 1] = "Edit Mode: close Edit Mode first, then apply again"
@@ -554,7 +575,8 @@ function apply.editmode(data, _, report)
 		report.lines[#report.lines + 1] = line
 		Flag(report, "fail")
 	end
-	if data.account then
+	-- Account-wide: shared already, so only Undo (which may reverse an older version's apply) sets it.
+	if data.account and opts.isUndo then
 		local changed = 0
 		local now = EditModeAccountSettings()
 		for setting, value in pairs(data.account) do
@@ -627,7 +649,8 @@ function apply.cvars(data, _, report)
 			want = c.default -- copying a setup also resets what it left at default
 		end
 		if c.value ~= want then
-			if pcall(C_CVar.SetCVar, c.name, want) then
+			local ok, accepted = pcall(C_CVar.SetCVar, c.name, want)
+			if ok and accepted == true then
 				set = set + 1
 			else
 				failed = failed + 1
@@ -641,7 +664,7 @@ function apply.cvars(data, _, report)
 end
 
 function apply.addons(data, _, report)
-	local me = UnitName("player")
+	local me = UnitGUID("player") -- Blizzard's AddonList passes the GUID
 	local changed, missing = 0, {}
 	local installed = {}
 	for i = 1, C_AddOns.GetNumAddOns() do
@@ -786,7 +809,7 @@ function ns.Apply(setup, which, opts)
 		if which[key] and data then
 			local first = #report.lines + 1
 			report.flag, report.needReload = nil, nil
-			local ok, err = pcall(apply[key], data, opts, report)
+			local ok, err = pcall(apply[key], data, opts, report, setup)
 			if not ok then
 				report.lines[#report.lines + 1] = ("%s: failed (%s)"):format(LABEL[key], tostring(err))
 				Flag(report, "fail")

@@ -49,18 +49,18 @@ Actions = {
 }
 Bound = { W = "MOVEFORWARD", S = "MOVEBACKWARD", SPACE = "JUMP", ["1"] = "ACTIONBUTTON1", ["2"] = "ACTIONBUTTON2", B = "TOGGLEBAG" }
 CVars = {
-	autoLootDefault = { "1", "0", true, false },
+	autoLootDefault = { "1", "0", false, true },
 	nameplateShowEnemies = { "1", "1", false, true }, -- server-stored but at default
-	chatStyle = { "classic", "im", true, false },
+	chatStyle = { "classic", "im", false, true },
 	gxWindow = { "1", "0", false, false }, -- local (Config.wtf): not part of a setup
-	secureThing = { "1", "0", true, false, false, true }, -- secure: never touched
-	lockedThing = { "1", "0", true, false, true }, -- locked from user
-	showTutorials = { "0", "1", true, false }, -- state by name: never copied or reset
-	eventReminders = { "x", "", true, false }, -- state by help text
-	nameplateShowNeutral = { "1", "0", true, false }, -- preference despite "shown" in "showneutral"
+	secureThing = { "1", "0", false, true, false, true }, -- secure: never touched
+	lockedThing = { "1", "0", false, true, true }, -- locked from user
+	showTutorials = { "0", "1", false, true }, -- state by name: never copied or reset
+	eventReminders = { "x", "", false, true }, -- state by help text
+	nameplateShowNeutral = { "1", "0", false, true }, -- preference despite "shown" in "showneutral"
 }
 CVarHelp.eventReminders = "Internal cvar for saving event reminders"
-AddonOn.Kaptain = { KroolWorldForever = true, Questie = true, Auctionator = false, BugSack = true }
+AddonOn["Player-1-Kaptain"] = { KroolWorldForever = true, Questie = true, Auctionator = false, BugSack = true }
 EditLayouts = { layouts = { { layoutName = "Krool", layoutType = 1 } }, activeLayout = 3 }
 
 -- Other features stay off in this suite.
@@ -223,8 +223,8 @@ check("state cvar not reset by apply", CVars.showTutorials[1], "0")
 check("help-text state cvar not reset by apply", CVars.eventReminders[1], "x")
 check("cvar left at default in the setup is reset", CVars.nameplateShowEnemies[1], "1")
 check("secure cvar untouched", CVars.secureThing[1], "1")
-check("addons: Auctionator turned off for Alt", AddonOn.Alt.Auctionator, false)
-check("addons: never disables itself", AddonOn.Alt.KroolWorldForever, true)
+check("addons: Auctionator turned off for Alt", AddonOn["Player-1-Alt"].Auctionator, false)
+check("addons: never disables itself", AddonOn["Player-1-Alt"].KroolWorldForever, true)
 local saved = SaveLayoutsCalls[1]
 check("edit mode saved once", #SaveLayoutsCalls, 1)
 check("edit mode save keeps built-in layouts first", saved and saved.layouts[1].layoutName, "Modern")
@@ -246,7 +246,7 @@ check("undo: macro slot cleared again", Actions[4], nil)
 check("undo: F jumps again", Bound.F, "JUMP")
 check("undo: account binding set restored", SavedBindingSet, 1)
 check("undo: cvar restored", CVars.autoLootDefault[1], "0")
-check("undo: addon restored", AddonOn.Alt.Auctionator, true)
+check("undo: addon restored", AddonOn["Player-1-Alt"].Auctionator, true)
 check("undo: edit mode switched back", EditLayouts.activeLayout, 1)
 check("undo is one level", ns.db.undo["Alt-Realm"], nil)
 check("polish: a toast says the undo finished", __ns.UI.ToastOf(F).text.text, "Undo finished")
@@ -422,8 +422,14 @@ check("feature slash says it is off", count_keys(ns.db.setups), before)
 SettingsSet("KroolWorldForever_setups_enabled", true)
 check("settings checkbox turns it back on", ns.enabled, true)
 SettingsSet("KroolWorldForever_setups_perCharBinds", false)
+BindingSet = 2 -- this character is on its own set
+r = ns.Apply({ name = "b", parts = { bindings = { { "JUMP", "SPACE" } } } }, { bindings = true }, ns.db)
+check("a character on its own set keeps it even with the option off", SavedBindingSet, 2)
+check("and the report says where it saved", has(r.lines, "saved for this character"), true)
+BindingSet, SavedBindingSet = 1, nil
 r = ns.Apply({ name = "b", parts = { bindings = { { "JUMP", "SPACE" } } } }, { bindings = true }, ns.db)
 check("account keybinding option takes effect", SavedBindingSet, 1)
+check("and the report says it saved for the account", has(r.lines, "saved for the account"), true)
 
 -- ---------------------------------------------------------------- review fixes (0.2.3)
 
@@ -554,12 +560,14 @@ EditLayouts = { layouts = {}, activeLayout = 1 }
 EditAccount = { [3] = 0, [7] = 1, [24] = 0 }
 r = ns.Apply(classic, { editmode = true }, ns.db)
 check("em: switched to Classic", EditLayouts.activeLayout, 2)
-check("em: target and focus shown again", EditAccount[3], 1)
-check("em: pet frame shown again", EditAccount[24], 1)
-check("em: options reported", has(r.lines, "2 options changed"), true)
+check("em: account options are shared, so apply leaves them", EditAccount[3], 0)
+check("em: pet frame left alone too", EditAccount[24], 0)
+check("em: no options reported", has(r.lines, "options changed"), false)
+EditAccount = { [3] = 1, [7] = 1, [24] = 1 } -- as an older version's apply would have left them
 ns.Undo()
 check("em undo: back to Modern", EditLayouts.activeLayout, 1)
-check("em undo: account options back", EditAccount[3], 0)
+check("em undo: account options put back", EditAccount[3], 0)
+check("em undo: pet frame put back", EditAccount[24], 0)
 ns.Open(false)
 for _, s in ipairs(ns.List()) do
 	if s.id == classic.id then
@@ -801,6 +809,89 @@ check("/kw again closes it", hub:IsShown(), false)
 KroolWorldForever_OnCompartmentClick()
 check("the minimap button opens the hub", hub:IsShown(), true)
 hub:Hide()
+
+-- ---------------------------------------------------------------- review fixes (account state)
+
+-- Account-wide CVars are shared already: never captured, never applied (even from an older setup).
+CVars.acctPref = { "2", "1", true, false }
+local capParts = ns.Capture({ cvars = true })
+check("account cvar not captured", capParts.cvars.acctPref, nil)
+check("per-character cvar still captured", capParts.cvars.nameplateShowNeutral, "1")
+r = ns.Apply({ name = "old", parts = { cvars = { acctPref = "9" } } }, { cvars = true }, ns.db)
+check("account cvar in an old setup is ignored on apply", CVars.acctPref[1], "2")
+CVars.acctPref = nil
+
+-- A refused SetCVar (false) is counted as refused, not changed.
+CVars.autoLootDefault[1] = "0"
+RefusedCVars = { autoLootDefault = true }
+r = ns.Apply({ name = "ref", parts = { cvars = { autoLootDefault = "1" } } }, { cvars = true }, ns.db)
+check("refused cvar left as it was", CVars.autoLootDefault[1], "0")
+check("refused cvar reported as refused", has(r.lines, "1 refused"), true)
+RefusedCVars = nil
+
+-- The soft-interact CVars One-Button Fishing holds are captured at their originals.
+local Fishing = __ns.features.fishing
+local realHeld = Fishing.HeldCVars
+CVars.nameplateShowNeutral[1] = "7" -- Fishing's temporary value
+Fishing.HeldCVars = function()
+	return { nameplateShowNeutral = "0", autoLootDefault = "5" }
+end
+capParts = ns.Capture({ cvars = true })
+check("held cvar at its default original is not recorded", capParts.cvars.nameplateShowNeutral, nil)
+check("held cvar recorded at its original", capParts.cvars.autoLootDefault, "5")
+Fishing.HeldCVars = function()
+	return nil
+end
+capParts = ns.Capture({ cvars = true })
+check("nothing held: the current value is captured", capParts.cvars.nameplateShowNeutral, "7")
+Fishing.HeldCVars = realHeld
+CVars.nameplateShowNeutral[1] = "1"
+
+-- Cross-class apply leaves the class bars (73-144) alone; the same class clears them as before.
+KnownSpells[133] = "Fireball"
+Player = { name = "Kaptain", realm = "Realm", class = "WARRIOR", level = 10 }
+local barSetup = {
+	name = "bars",
+	class = "MAGE",
+	parts = { bars = { [1] = { t = "spell", id = 133, name = "Fireball" }, [80] = { t = "spell", id = 133, name = "Fireball" } } },
+}
+Actions = { [85] = { "spell", 78 }, [5] = { "spell", 78 } }
+r = ns.Apply(barSetup, { bars = true }, { clearEmpty = true })
+check("other class: normal slot placed", Actions[1] ~= nil, true)
+check("other class: normal slot cleared as before", Actions[5], nil)
+check("other class: class bar slot not placed", Actions[80], nil)
+check("other class: class bar slot not cleared", Actions[85] ~= nil, true)
+check("other class: reported", has(r.lines, "class bars (slots 73-144) left alone"), true)
+Actions = { [85] = { "spell", 78 } }
+barSetup.class = "WARRIOR"
+r = ns.Apply(barSetup, { bars = true }, { clearEmpty = true })
+check("same class: class bar slot placed", Actions[80] ~= nil, true)
+check("same class: class bar slot cleared", Actions[85], nil)
+check("same class: no class bar note", has(r.lines, "class bars"), false)
+Actions = { [85] = { "spell", 78 } }
+barSetup.class = nil
+ns.Apply(barSetup, { bars = true }, { clearEmpty = true })
+check("class unknown: restores everything", Actions[85], nil)
+
+-- The automatic new-character apply skips the bundle's own settings (account-wide) and needs no money.
+local autoSetup = { id = ns.db.nextId + 1, name = "Auto kwf", parts = { kwf = { killvalue = { cut = 77 } }, editmode = { preset = 2 } } }
+ns.db.nextId = autoSetup.id
+ns.db.setups[autoSetup.id] = autoSetup
+ns.db.default, ns.db.autoDefault = autoSetup.id, true
+KV.db.cut = 15
+Player = { name = "Rich", realm = "Realm", class = "WARRIOR", level = 1, money = 500 }
+EditLayouts = { layouts = {}, activeLayout = 1 }
+ns.Settle(ns.Identify())
+check("level 1 with money: not a first login, default not applied", EditLayouts.activeLayout, 1)
+F:Hide()
+Player = { name = "Penniless", realm = "Realm", class = "WARRIOR", level = 1 }
+ns.Settle(ns.Identify())
+check("auto apply still applies the rest", EditLayouts.activeLayout, 2)
+check("auto apply skips the kwf part", KV.db.cut, 15)
+F:Hide()
+r = ns.Apply(autoSetup, { kwf = true }, ns.db)
+check("a manual apply still takes the kwf part", KV.db.cut, 77)
+KV.db.cut = 15
 
 check("no protected call was ever blocked", #BlockedCalls, 0)
 

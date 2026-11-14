@@ -160,6 +160,19 @@ local function HoldCVars()
 	end
 end
 
+-- The values we are holding the soft-interact CVars away from: { [cvar] = original } while the
+-- bobber is out, nil otherwise. Setups' snapshot reads it so it never records our temporary values.
+function ns.HeldCVars()
+	local out
+	for name, h in pairs(held) do
+		if h.mine ~= nil then
+			out = out or {}
+			out[name] = h.orig
+		end
+	end
+	return out
+end
+
 -- Puts back what we changed, unless the player has changed it since. Out of combat only.
 local function RestoreCVars()
 	if InCombat() then

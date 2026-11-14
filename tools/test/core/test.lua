@@ -200,6 +200,26 @@ out = capture(function()
 end)
 check("the settings page's Open button: the same", ok, true)
 
+-- The startup load and the settings registration are caught and logged too.
+local realBuild = root.BuildSettings
+root.BuildSettings = function()
+	error("panel broke")
+end
+out = capture(function()
+	ok = pcall(FireEvent, "ADDON_LOADED", "KroolWorldForever")
+end)
+root.BuildSettings = realBuild
+check("a settings registration error does not escape", ok, true)
+check("and is logged", sv.errors[#sv.errors].where, "settings panel")
+local features = sv.features
+sv.features = 5 -- unusable saved data: Load itself fails
+out = capture(function()
+	ok = pcall(FireEvent, "ADDON_LOADED", "KroolWorldForever")
+end)
+sv.features = features
+check("a startup error does not escape", ok, true)
+check("and is logged under startup", sv.errors[#sv.errors].where, "startup")
+
 local a, b, c = root.Try(nil, "a test", function(x)
 	return x, "two"
 end, "one")
