@@ -355,3 +355,5 @@ cd tools\test; npm install; npm test                                       # all
 Code: [MIT](LICENSE), by Krool. Kill Value's loot baseline and Quest Trash's repeatable quest list are
 extracted from [cmangos classic-db](https://github.com/cmangos/classic-db) (GPL-3.0); see LICENSE.
 Quest data is read at runtime from [QuestieDB](https://github.com/Questie/QuestieDB), which is not bundled.
+
+Ko-fi: [ko-fi.com/kroolworld](https://ko-fi.com/kroolworld)
