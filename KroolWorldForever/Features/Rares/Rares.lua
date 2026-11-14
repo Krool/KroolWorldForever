@@ -356,7 +356,7 @@ local function Build()
 	return b
 end
 
-local Expire -- forward
+local Expire, TokenFor -- forward
 
 -- Points the button (and the key) at the newest rare, or clears it. Combat locks the secure
 -- button, so there it only fades when it should go, and the rest waits for combat to end.
@@ -404,6 +404,14 @@ ns.UpdateButton = UpdateButton
 
 function Expire()
 	expiry = false
+	-- Still in view (its nameplate, your target or mouseover) and alive: that is a sighting too. A
+	-- plate that stays up fires no new NAME_PLATE_UNIT_ADDED to refresh it.
+	if current and current.guid ~= "" then
+		local t = TokenFor(current.guid)
+		if t and Read(UnitIsDead, t) == false then
+			current.at = Now()
+		end
+	end
 	if current and Now() - current.at <= SHOW_FOR then
 		expiry = true
 		C_Timer.After(SHOW_FOR + 1 - (Now() - current.at), Expire)
@@ -421,7 +429,7 @@ end
 -- -------------------------------------------------------------------- done with it
 
 -- A unit token for the rare, if any (its nameplate, your target or mouseover), or nil.
-local function TokenFor(guid)
+function TokenFor(guid)
 	if UnitTokenFromGUID then
 		local t = Read(UnitTokenFromGUID, guid)
 		if type(t) == "string" then

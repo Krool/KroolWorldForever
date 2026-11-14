@@ -185,7 +185,12 @@ end)
 check("another spawn within five minutes: quiet", #Sounds, 2)
 check("but the button points at it", b.shown, true)
 
+-- still on screen a minute later: a plate that stays up fires no new event, and that is a sighting
+Clock = Clock + 61
+RunTimers()
+check("still in view after a minute: the button stays", b.shown, true)
 -- the button goes away a minute after the last sighting
+Units.nameplate5 = nil -- its plate leaves
 Clock = Clock + 61
 RunTimers()
 check("button hides a minute after the last sighting", b.shown, false)

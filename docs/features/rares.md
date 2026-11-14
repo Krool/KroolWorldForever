@@ -47,7 +47,9 @@ gives you one button and one key that target it and put a raid marker on it.
     or mouseover, or a look at its token when combat ends (a kill usually leaves the corpse
     targeted). A plate that leaves alive (out of range) changes nothing.
   - **Hidden** by right-click: that spawn stays quiet; a new spawn shows again.
-  - **Timed out:** 1 minute after the last sighting (nameplate added, mouseover, target).
+  - **Timed out:** 1 minute after the last sighting (nameplate added, mouseover, target). A rare
+    still on screen and alive when the minute runs out counts as seen again (0.18.0), so its button
+    stays while its plate does.
   In combat the secure button cannot hide, so it fades (`SetAlpha`, not locked) and hides on
   `PLAYER_REGEN_ENABLED`.
 - **Ignore list** (`db.ignore`, npc id to name), seeded once with Sewer Beast (3581), the
