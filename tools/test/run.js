@@ -36,6 +36,17 @@ for (const f of files) {
 if (failed) process.exit(1);
 console.log(`syntax ok: ${files.length} files`);
 
+// Build-specific data must match the build the API allowlist was made from: when a new client
+// drops and the allowlist is rebuilt, this fails until the data is regenerated too.
+const apiBuild = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "forever-api", "forever-api.json"), "utf8")).version;
+const skillupBuild = (sources["Features/SkillUp/Data.lua"].match(/build = "([^"]+)"/) || [])[1];
+if (skillupBuild !== apiBuild) {
+  console.log(`DATA STALE: Features/SkillUp/Data.lua is build ${skillupBuild}, the API allowlist is ${apiBuild}.`);
+  console.log("  Regenerate it: see the header of tools/skillup-data/gen-skillup.js.");
+  process.exit(1);
+}
+console.log(`data ok: Skill-Up recipes match build ${apiBuild}`);
+
 const args = process.argv.slice(2);
 const verbose = args.includes("--verbose");
 const only = args.find((a) => !a.startsWith("--"));

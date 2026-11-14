@@ -111,6 +111,12 @@ Invoke-WebRequest "https://wago.tools/db2/SkillLineAbility/csv?build=<build>" -O
 node tools/skillup-data/gen-skillup.js sla.csv <build>
 ```
 
+`tools/test/run.js` fails while `Data.lua`'s build differs from the API allowlist's
+(`tools/forever-api/forever-api.json`), so rebuilding the allowlist for a new client forces this
+step too. Build 70938 (2026-11-13) changed 26 recipes: Coarse Grinding Stone went from 50/75 to
+50/90, and most camp objects and the Journeyman and Expert campfires now go grey at the skill
+they turn yellow.
+
 ## Unverified in-game (0.11.0)
 
 - Which API reads the skill on Forever, and that the skill-up has arrived by the next skill change

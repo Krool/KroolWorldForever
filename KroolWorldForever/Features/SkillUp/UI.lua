@@ -641,6 +641,15 @@ function ns.SetupProfessions()
 	end
 	hooked = true
 	ScrollUtil.AddInitializedFrameCallback(box, UI.Safe(DecorateRow, ns), ns, false)
+	-- Since 70938 a row's [n] craftable count can change without its setup running again (spending a
+	-- talent point with the window open): redraw a frame later so the name stays clear of the odds.
+	if type(EventRegistry) == "table" and type(EventRegistry.RegisterCallback) == "function" then
+		pcall(EventRegistry.RegisterCallback, EventRegistry, "ProfessionsRecipeListMixin.Event.RefreshCraftableCount", function()
+			C_Timer.After(0, function()
+				root.TryQuiet(ns, "recipe list", ns.RedecorateRows)
+			end)
+		end, ns)
+	end
 	ns.RedecorateRows()
 	return true
 end
