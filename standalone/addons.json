@@ -12,7 +12,7 @@
       "embedded": [],
       "optionalDeps": ["QuestieDB"],
       "relations": [{ "slug": "questiedb", "type": "requiredDependency" }],
-      "curseId": ""
+      "curseId": "1806515"
     },
     {
       "key": "killvalue",
@@ -25,7 +25,7 @@
       "embedded": [],
       "optionalDeps": ["Auctionator"],
       "relations": [{ "slug": "auctionator", "type": "optionalDependency" }],
-      "curseId": ""
+      "curseId": "1806526"
     },
     {
       "key": "setups",
@@ -38,7 +38,7 @@
       "embedded": [],
       "optionalDeps": [],
       "relations": [],
-      "curseId": ""
+      "curseId": "1806533"
     },
     {
       "key": "rares",
@@ -52,7 +52,7 @@
       "optionalDeps": ["Auctionator"],
       "relations": [{ "slug": "auctionator", "type": "optionalDependency" }],
       "bindings": ["RareButton"],
-      "curseId": ""
+      "curseId": "1806536"
     },
     {
       "key": "disenchant",
@@ -65,7 +65,7 @@
       "embedded": [],
       "optionalDeps": ["Auctionator"],
       "relations": [{ "slug": "auctionator", "type": "optionalDependency" }],
-      "curseId": ""
+      "curseId": "1806542"
     },
     {
       "key": "camp",
@@ -78,7 +78,7 @@
       "embedded": [],
       "optionalDeps": [],
       "relations": [],
-      "curseId": ""
+      "curseId": "1806547"
     },
     {
       "key": "skillup",
@@ -91,7 +91,7 @@
       "embedded": [],
       "optionalDeps": ["Auctionator"],
       "relations": [{ "slug": "auctionator", "type": "optionalDependency" }],
-      "curseId": ""
+      "curseId": "1806553"
     },
     {
       "key": "fortune",
@@ -104,7 +104,7 @@
       "embedded": [],
       "optionalDeps": [],
       "relations": [],
-      "curseId": ""
+      "curseId": "1806562"
     },
     {
       "key": "leastvaluable",
@@ -117,7 +117,7 @@
       "embedded": ["Disenchant"],
       "optionalDeps": ["Auctionator"],
       "relations": [{ "slug": "auctionator", "type": "optionalDependency" }],
-      "curseId": ""
+      "curseId": "1806571"
     },
     {
       "key": "rewardvalue",
@@ -131,7 +131,7 @@
       "optionalDeps": ["Auctionator"],
       "slash": ["/kwq", "/rewardvalue"],
       "relations": [{ "slug": "auctionator", "type": "optionalDependency" }],
-      "curseId": ""
+      "curseId": "1806572"
     },
     {
       "key": "fishing",
@@ -145,7 +145,7 @@
       "optionalDeps": [],
       "relations": [],
       "bindings": ["FishButton"],
-      "curseId": ""
+      "curseId": "1806577"
     },
     {
       "key": "reagents",
