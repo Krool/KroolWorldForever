@@ -146,6 +146,20 @@
       "relations": [],
       "bindings": ["FishButton"],
       "curseId": ""
+    },
+    {
+      "key": "reagents",
+      "folder": "ReagentUses",
+      "db": "ReagentUsesDB",
+      "title": "KW Reagent Uses",
+      "notes": "Hold Ctrl over a crafting material to see every recipe that uses it, colored by your skill, with where each recipe is learned and which of your characters know it.",
+      "iconTexture": "Interface\\Icons\\INV_Fabric_Silk_01",
+      "category": "Professions",
+      "features": ["ReagentUses"],
+      "embedded": [],
+      "optionalDeps": [],
+      "relations": [],
+      "curseId": "1804597"
     }
   ]
 }

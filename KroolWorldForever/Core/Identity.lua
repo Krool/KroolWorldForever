@@ -43,6 +43,7 @@ root.ID = {
 		"KW_LeastValuable",
 		"KW_QuestRewardValue",
 		"KW_OneButtonFishing",
+		"ReagentUses",
 	},
 	standalone = false,
 	embedded = {},

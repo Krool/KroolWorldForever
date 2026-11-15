@@ -357,29 +357,32 @@ lines = ShowTip(GameTooltip, SILK)
 Check(Plain((Find(lines, "Solid Dynamite") or {}).right) == "Bob", "records without a roster entry are not shown")
 db.known["Ghost-Forever"], db.skills["Ghost-Forever"] = nil, nil
 
--- Untracking this character stops its recording and its own marks; the records stay.
+-- Untracking this character only hides it from the other characters' tooltips (owner's call:
+-- untracking hides, it never stops your own marks). It is still recorded and still says Known.
 root.SetTracked(ME, false)
 local beforeLearn = Known()[129][HEAVY]
 Fire("NEW_RECIPE_LEARNED", HEAVY)
-Check(beforeLearn == nil and Known()[129][HEAVY] == nil, "an untracked character records no new recipe")
+Check(beforeLearn == nil and Known()[129][HEAVY] == true, "an untracked character still records a new recipe")
 RecipeInfo = { [BOLT] = { learned = true }, [3865] = { learned = true } }
 OpenWindow(150)
 Fire("TRADE_SKILL_SHOW")
 RunTimers()
-Check(Known()[197][3865] == nil, "...and no scan")
+Check(Known()[197][3865] == true, "...and its scans")
 Fire("TRADE_SKILL_CLOSE")
 Window = nil
 Skills[2948] = 160
 Fire("SKILL_LINES_CHANGED")
-Check(db.skills[ME][197] == 150, "...and no skill read")
+Check(db.skills[ME][197] == 160, "...and its skill")
 Skills[2948] = 150
+Fire("SKILL_LINES_CHANGED")
 lines = ShowTip(GameTooltip, SILK)
 bolt = Find(lines, "Bolt of Silk Cloth")
-Check(bolt and Plain(bolt.right) == "Trainer 100", "...and no Known mark on its own tooltip")
+Check(bolt and Plain(bolt.right) == "Known", "...and its own tooltip still says Known")
 root.SetTracked(ME, true)
+Known()[129][HEAVY], Known()[197][3865] = nil, nil
 lines = ShowTip(GameTooltip, SILK)
 bolt = Find(lines, "Bolt of Silk Cloth")
-Check(bolt and Plain(bolt.right) == "Known", "tracked again: Known is back")
+Check(bolt and Plain(bolt.right) == "Known", "tracked again: still Known")
 
 -- Forgetting a character drops what this feature saved for it.
 AddChar("Zed-Forever", "Zed", "Forever", "ROGUE", { [129] = 50 }, { [129] = { [BANDAGE] = true } })

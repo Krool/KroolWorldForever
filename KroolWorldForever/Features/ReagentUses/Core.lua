@@ -178,10 +178,12 @@ function ns.MyKey()
 	return key:sub(1, 2) ~= "?-" and key or nil
 end
 
--- The key to record this character under: nil unless it is on the roster and tracked.
+-- The key to record this character under: nil until it is on the roster. An untracked character
+-- is still recorded (untracking hides it from the other characters' tooltips, it never stops your
+-- own "Known" marks).
 function ns.Recording()
 	local key = ns.MyKey()
-	if key and root.Chars()[key] and root.Tracked(key) then
+	if key and root.Chars()[key] then
 		return key
 	end
 	return nil
@@ -195,10 +197,10 @@ local function Known(key)
 	return Table(ns.db.known, key)
 end
 
--- This character's known recipes as the tooltip reads them: nil when untracked.
+-- This character's known recipes as the tooltip reads them, tracked or not.
 function ns.MyRecords()
 	local key = ns.MyKey()
-	if key and root.Tracked(key) then
+	if key then
 		local known = ns.db.known[key]
 		return type(known) == "table" and known or nil
 	end
