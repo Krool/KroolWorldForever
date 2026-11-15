@@ -11,12 +11,12 @@ local SCROLLBAR = 24 -- extra width for UIPanelScrollFrameTemplate's bar, which 
 local hub -- built on first open
 
 -- How many cards fit a screen `screenHeight` UI units tall (768 at the default UI scale), leaving
--- the hub's own top and bottom (98) and a 40 unit margin. At least three.
+-- the hub's own top and bottom (128: two button rows) and a 40 unit margin. At least three.
 function root.HubRows(screenHeight)
 	if type(screenHeight) ~= "number" or screenHeight <= 0 then
 		screenHeight = 768
 	end
-	return math.max(3, math.floor((screenHeight - 40 - 98) / (CARD_H + GAP)))
+	return math.max(3, math.floor((screenHeight - 40 - 128) / (CARD_H + GAP)))
 end
 
 local Version = root.Version
@@ -191,7 +191,7 @@ local function Build()
 	for i, key in ipairs(root.featureOrder) do
 		hub.cards[i] = Card(content, root.features[key], i)
 	end
-	local bottom = -TOP + 30 + visible * (CARD_H + GAP) + 36
+	local bottom = -TOP + 30 + visible * (CARD_H + GAP) + 66 -- two button rows below the cards
 	hub:SetHeight(bottom)
 
 	hub.intro = UI.Text(hub, "GameFontHighlight")
@@ -219,12 +219,38 @@ local function Build()
 	UI.Tip(hub.settings, function()
 		return "All Settings", { "Every feature's options on one page (Options > AddOns > Krool World Forever)." }
 	end)
+
+	-- The character roster: its window, and the opt-out for the character you are playing.
+	hub.chars = UI.Button(hub, "Characters", 100, function()
+		UI.HandOff(hub)
+		root.OpenCharacters()
+	end)
+	hub.chars:SetPoint("BOTTOMLEFT", 8, 34)
+	UI.Tip(hub.chars, function()
+		return "Characters", { "Every character the addon has seen, and which ones the character lists include (/kw chars)." }
+	end)
+	hub.track = UI.Button(hub, "", 190, function()
+		local key = root.CharKey()
+		local on = not root.Tracked(key)
+		if root.SetTracked(key, on) then
+			UI.Toast(hub, on and "This character is tracked" or "This character is left out of character lists", on and "ok" or "warn")
+		end
+		Refresh()
+	end)
+	hub.track:SetPoint("LEFT", hub.chars, "RIGHT", 8, 0)
+	UI.Tip(hub.track, function()
+		return "Tracking", { "Untracked characters are left out of Reagent Uses, Sayge's Fortune and the Setups character list. Nothing is deleted." }
+	end)
+	root.OnCharsChanged(Refresh) -- the Characters window and the slash commands change it too
 end
 
 function Refresh()
 	if not hub then
 		return
 	end
+	local mine = root.CharKey()
+	UI.Enable(hub.track, type(root.Chars()[mine]) == "table") -- the roster adds this character at login
+	hub.track:SetText(root.Tracked(mine) and "Stop Tracking This Character" or "Track This Character")
 	for _, card in ipairs(hub.cards) do
 		local F = card.feature
 		local on = F.db.enabled and true or false

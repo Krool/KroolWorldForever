@@ -71,15 +71,10 @@ local function InInstance()
 	return not ok or Secret(inside) or inside == true
 end
 
+-- The roster's key (Core/Characters.lua), or nil when the client does not say who this is.
 local function CharKey()
-	local okN, name = pcall(UnitName, "player")
-	local okR, realm = pcall(GetRealmName)
-	name = okN and Plain(name, "string") or nil
-	realm = okR and Plain(realm, "string") or nil
-	if not name or name == "" then
-		return nil
-	end
-	return realm and realm ~= "" and (name .. "-" .. realm) or name
+	local key = root.CharKey()
+	return key:sub(1, 2) ~= "?-" and key or nil
 end
 
 local function Chars()
@@ -89,11 +84,56 @@ local function Chars()
 	return ns.db.chars
 end
 
+-- Records before 0.19 were keyed UnitName-GetRealmName, whose realm keeps its spaces ("Mirage
+-- Raceway"), where the roster's key drops them. Re-keys a record when the normalized key differs;
+-- when both exist the newer fortune (`got`) stays. Other characters' records move too when their
+-- key without spaces is this character's or one on the roster; the rest wait for their login.
+local function Rekey(from, to)
+	local chars = Chars()
+	local old, new = chars[from], chars[to]
+	if from == to or type(old) ~= "table" then
+		return
+	end
+	if type(new) ~= "table" or (tonumber(old.got) or 0) > (tonumber(new.got) or 0) then
+		chars[to] = old
+	end
+	chars[from] = nil
+end
+
+function ns.MigrateKeys()
+	local mine = CharKey()
+	local keys = {}
+	for key in pairs(Chars()) do
+		keys[#keys + 1] = key
+	end
+	for _, key in ipairs(keys) do
+		if type(key) == "string" then
+			local name, realm = key:match("^([^-]*)-(.+)$")
+			local plain = name and (name .. "-" .. realm:gsub("%s", "")) or key
+			if plain ~= key and (plain == mine or type(root.Chars()[plain]) == "table") then
+				Rekey(key, plain)
+			end
+		end
+	end
+	-- This character under its old key, when the realm's normalized name differs in more than spaces.
+	local okN, name = pcall(UnitName, "player")
+	local okR, realm = pcall(GetRealmName)
+	name, realm = okN and Plain(name, "string") or nil, okR and Plain(realm, "string") or nil
+	if mine and name and realm and realm ~= "" then
+		Rekey(name .. "-" .. realm, mine)
+	end
+end
+
+
 -- This character's record and key. A record: got (when the fortune was given, real clock), spell,
 -- kind, left and at (Sayge's wait left, as of at), lost, offered, refused (when Sayge said so),
 -- turnedAway (he refused after the count ran out: the count is off).
 function ns.Mine()
 	local key = CharKey()
+	if key and not ns.keysMigrated then
+		ns.keysMigrated = true -- once per session, when the character is first known (a test resets it)
+		root.TryQuiet(ns, "rekey", ns.MigrateKeys)
+	end
 	return key and Chars()[key] or nil, key
 end
 
@@ -581,7 +621,7 @@ local function PrintStatus()
 	local others = {}
 	for key, r in pairs(Chars()) do
 		-- this faire's, and any older one whose wait is not used up (it only runs while logged in)
-		if key ~= myKey and type(r) == "table" and r.got and now and (now - r.got < ns.KEEP or (ns.Left(r, now, false) or 0) > 0) then
+		if key ~= myKey and root.Tracked(key) and type(r) == "table" and r.got and now and (now - r.got < ns.KEEP or (ns.Left(r, now, false) or 0) > 0) then
 			others[#others + 1] = { key = key, rec = r }
 		end
 	end
@@ -658,6 +698,13 @@ end
 -- of our own (the bundle's events reach only enabled features).
 function ns.OnLoad()
 	Migrate()
+	if not ns.forgetHooked then
+		ns.forgetHooked = true -- OnLoad can run again (tests); one listener is enough
+		root.OnForgetChar(function(key)
+			local chars = Chars()
+			chars[key] = nil
+		end)
+	end
 	sessionStart = Now()
 	if not ns.logoutFrame then
 		local f = CreateFrame("Frame")

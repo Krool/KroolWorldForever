@@ -332,18 +332,18 @@ AuctionatorOn(true)
 
 -- ---------------------------------------------------------------- hub
 
-check("hub rows: the default screen fits nine", root.HubRows(768), 9)
+check("hub rows: the default screen fits eight", root.HubRows(768), 8)
 check("hub rows: a short screen fits fewer", root.HubRows(600), 6)
-check("hub rows: unknown height means the default", root.HubRows(nil), 9)
+check("hub rows: unknown height means the default", root.HubRows(nil), 8)
 check("hub rows: never fewer than three", root.HubRows(100), 3)
 
 local n = #root.featureOrder
-check("this suite has more features than fit one screen", n > 9, true)
+check("this suite has more features than fit one screen", n > 8, true)
 root.OpenHub()
 local hub = root.HubFrame()
 check("the hub opens", hub:IsShown(), true)
 check("one card per feature", #hub.cards, n)
-check("the hub shows a screen of cards and scrolls the rest", hub.visibleCards, 9)
+check("the hub shows a screen of cards and scrolls the rest", hub.visibleCards, 8)
 local card
 for _, c2 in ipairs(hub.cards) do
 	if c2.feature == probe then

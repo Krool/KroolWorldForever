@@ -21,6 +21,7 @@ local function Load()
 	sv.features = sv.features or {}
 	sv.session = (tonumber(sv.session) or 0) + 1 -- one per load, to tell this session's errors apart
 	root.session = sv.session
+	root.Try(nil, "character roster", root.InitChars, sv)
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
 		sv.features[key] = sv.features[key] or {}
@@ -55,10 +56,14 @@ local function MainSlash(msg)
 		root.OpenHub()
 	elseif key == "settings" or key == "options" then
 		root.OpenSettings()
+	elseif key == "chars" or key == "characters" then
+		root.OpenCharacters()
+	elseif key == "track" or key == "untrack" or key == "forget" then
+		root.CharsCommand(key, arg)
 	elseif key == "errors" then
 		root.PrintErrors(arg)
 	elseif key == "list" or key == "help" then
-		root.Print("/kw opens the hub; /kw settings; /kw errors; /kw <feature> [on|off]:")
+		root.Print("/kw opens the hub; /kw settings; /kw errors; /kw chars; /kw track|untrack [name]; /kw forget <name>; /kw <feature> [on|off]:")
 		for _, k in ipairs(root.featureOrder) do
 			local f = root.features[k]
 			print(("  %s - %s %s"):format(k, f.title or k, FeatureState(f)))
@@ -113,7 +118,12 @@ for _, key in ipairs(root.featureOrder) do
 end
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_LOGIN")
+frame:RegisterEvent("PLAYER_LEVEL_UP") -- the character roster (Characters.lua)
+frame:RegisterEvent("PLAYER_LOGOUT")
 frame:SetScript("OnEvent", function(self, event, ...)
+	if event == "PLAYER_LOGIN" or event == "PLAYER_LEVEL_UP" or event == "PLAYER_LOGOUT" then
+		root.Try(nil, "character roster", root.CharsOnEvent, event, ...)
+	end
 	if event == "ADDON_LOADED" then
 		if ... == addonName then
 			root.Try(nil, "startup", Load)
