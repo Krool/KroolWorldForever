@@ -467,7 +467,7 @@ end
 local function BuildTab()
 	local ok, t = pcall(CreateFrame, "Frame", nil, ProfessionsFrame, "LargeSideTabButtonTemplate")
 	if ok and type(t) == "table" and type(t.Icon) == "table" and type(t.SetCustomOnMouseUpHandler) == "function" then
-		t.Icon:SetTexture(ns.icon)
+		t.Icon:SetTexture(ns.tabIcon)
 		if type(t.SetFillToInterior) == "function" then
 			pcall(t.SetFillToInterior, t, true) -- as the profession tabs: the icon fills the tab
 		end
@@ -491,7 +491,7 @@ local function BuildTab()
 		end, ns))
 		return t
 	end
-	local b = UI.IconButton(ProfessionsFrame, 32, ns.icon, TogglePanel)
+	local b = UI.IconButton(ProfessionsFrame, 32, ns.tabIcon, TogglePanel)
 	UI.Tip(b, function()
 		return "Next Skill Point", TabLines()
 	end)
@@ -661,6 +661,10 @@ ns.description = "In the crafting window: the chance each recipe gives a skill p
 	.. "ranks your recipes by the gold a point costs. Blizzard never published the chance, so it is the common straight "
 	.. "line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters."
 ns.icon = "Interface\\Icons\\Trade_BlackSmithing"
+-- The Next Skill Point tab sits in the column of profession tabs, so it must not wear a profession's
+-- icon (the anvil read as a second Blacksmithing tab; owner, 2026-11-15). A plus: "+1 skill point".
+-- In the 1.60.1.70938 client (ManifestInterfaceData, fileID 135769).
+ns.tabIcon = "Interface\\Icons\\Spell_ChargePositive"
 ns.blurb = "Skill-up odds tuned by your crafts, and the cheapest next point"
 ns.options = {
 	{

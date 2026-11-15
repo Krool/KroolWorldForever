@@ -473,7 +473,7 @@ for _, f in ipairs(CreatedFrames) do
 	end
 end
 check("the toggle is a Blizzard side tab", tab and tab.template, "LargeSideTabButtonTemplate")
-check("with the feature's icon", tab.Icon.texture, ns.icon)
+check("with its own icon, not a profession's", tab.Icon.texture, "Interface\\Icons\\Spell_ChargePositive")
 check("filling the tab like the profession icons", tab.fillToInterior, true)
 check("not drawn as the selected profession", tab.SelectedTexture.shown, false)
 local at = tab.points and tab.points[#tab.points]
