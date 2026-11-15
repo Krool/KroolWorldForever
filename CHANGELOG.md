@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.1
+
+- **Skill-Up Odds: the Next Skill Point tab has its own icon,** a plus, so it no longer looks like
+  a second Blacksmithing tab in the crafting window's column of profession tabs.
+
 ## 0.19.0
 
 Reagent Uses joins the bundle, a character list you can trim, and every feature as its own addon.
