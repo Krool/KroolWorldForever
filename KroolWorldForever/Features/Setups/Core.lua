@@ -23,7 +23,10 @@ ns.RELOAD_PARTS = { editmode = true, addons = true } -- take effect after /reloa
 local unpack = unpack or table.unpack -- the client's Lua 5.1 global; table.unpack in the test runner
 local MAX_SLOTS = 180
 local ACCOUNT_BINDINGS, CHARACTER_BINDINGS = 1, 2
-local SELF = "KroolWorldForever"
+local SELF = {} -- every folder this code ships as: the bundle and each standalone
+for _, name in ipairs(root.ID.family) do
+	SELF[name] = true
+end
 
 -- -------------------------------------------------------------------- identity
 
@@ -300,7 +303,7 @@ function capture.kwf()
 		local F = root.features[key]
 		-- Not Setups itself: its options (auto default, auto reload...) say how setups behave, and an
 		-- old setup must never switch them back.
-		if F.db and key ~= "setups" then
+		if F.db and key ~= "setups" and not F.embedded then
 			local values = { enabled = F.db.enabled }
 			for _, opt in ipairs(F.options) do
 				values[opt.key] = F.db[opt.key]
@@ -671,7 +674,7 @@ function apply.addons(data, _, report)
 			if on then
 				missing[#missing + 1] = name
 			end
-		elseif name ~= SELF then
+		elseif not SELF[name] then
 			local now = (C_AddOns.GetAddOnEnableState(name, me) or 0) > 0
 			if now ~= on then
 				if on then
@@ -713,7 +716,7 @@ function apply.kwf(data, _, report)
 		local F = root.features[key]
 		if key == "setups" then
 			-- Saved by 0.3.0; Setups' own options are never applied (see capture.kwf).
-		elseif not F or not F.db then
+		elseif not F or not F.db or F.embedded then
 			unknown = unknown + 1
 		else
 			for _, opt in ipairs(F.options) do

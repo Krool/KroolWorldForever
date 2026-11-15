@@ -13,8 +13,8 @@
 local _, root = ...
 local ns = root.Feature("fishing")
 
-local BUTTON = "KroolWorldForeverFishButton"
-local REEL_OWNER = "KroolWorldForeverFishReel" -- owns the reel overrides
+local BUTTON = root.ID.prefix .. "FishButton"
+local REEL_OWNER = root.ID.prefix .. "FishReel" -- owns the reel overrides
 local BINDING = "CLICK " .. BUTTON .. ":LeftButton"
 -- Fishing ranks and variants; the highest one the character knows is cast (tried from the end).
 local CAST_IDS = { 7620, 7731, 7732, 18248, 33095, 51294, 88868, 110410, 131474, 158743 }
@@ -30,7 +30,7 @@ local CLICK_GRACE = 0.3 -- a double-click's cast override is cleared this long a
 local LOOT_WAIT = 0.3 -- after the line comes in, how long the reel keys wait for a loot window
 
 -- Key Bindings > AddOns (Bindings.xml). The header is set by Rare Alert too; same text.
-BINDING_HEADER_KROOLWORLDFOREVER = "Krool World"
+_G["BINDING_HEADER_" .. root.ID.slashId] = root.ID.standalone and root.ID.title or "Krool World"
 _G["BINDING_NAME_" .. BINDING] = "Fish: Cast Or Reel In"
 
 local button, reelOwner

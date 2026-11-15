@@ -3,7 +3,7 @@
 
 local _, root = ...
 
-local CALLER = "KroolWorldForever"
+local CALLER = root.ID.addon
 
 local function AuctionatorAPI()
 	local A = Auctionator

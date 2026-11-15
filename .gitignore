@@ -1,5 +1,6 @@
 # Build output (release zips go to GitHub Releases, not git)
 dist/
+build/
 .release/
 *.zip
 

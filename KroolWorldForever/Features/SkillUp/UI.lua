@@ -397,7 +397,7 @@ local function PanelHeight(rows)
 end
 
 local function BuildPanel()
-	local f = CreateFrame("Frame", "KroolWorldForeverSkillUpPanel", ProfessionsFrame, "ButtonFrameTemplate")
+	local f = CreateFrame("Frame", root.ID.prefix .. "SkillUpPanel", ProfessionsFrame, "ButtonFrameTemplate")
 	f:SetSize(300, PanelHeight(1))
 	f:SetClampedToScreen(true)
 	f:EnableMouse(true)

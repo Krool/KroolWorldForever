@@ -33,12 +33,16 @@ local addonName, root = ...
 root.features = {}
 root.featureOrder = {}
 root.public = {}
-KroolWorldForever = root.public -- public API: KroolWorldForever.QuestTrash, .KillValue, ...
+_G[root.ID.addon] = root.public -- public API: KroolWorldForever.QuestTrash, .KillValue, ... (a standalone: <Folder>.QuestTrash)
 
 -- Chat lines start with the addon's bag icon (border trimmed, sized to the chat font) and its name.
-local PREFIX = "|TInterface\\Icons\\INV_Misc_Bag_10:0:0:0:0:64:64:5:59:5:59|t |cff33ffccKrool|cffffffffWorld|r"
+local PREFIX = "|TInterface\\Icons\\INV_Misc_Bag_10:0:0:0:0:64:64:5:59:5:59|t " .. root.ID.chat
 
 local function Print(self, msg)
+	if root.ID.standalone and not self.embedded then
+		print(PREFIX .. ": " .. msg) -- the addon is the feature: its title is already the prefix
+		return
+	end
 	print(PREFIX .. " " .. (self.title or self.key) .. ": " .. msg)
 end
 
@@ -51,6 +55,9 @@ function root.Feature(key)
 	local F = root.features[key]
 	if not F then
 		F = { key = key, options = {}, events = {}, enabled = false, Print = Print, RegisterEvent = RegisterEvent }
+		for _, k in ipairs(root.ID.embedded) do
+			F.embedded = F.embedded or k == key -- a data provider only: loads, never enables, no UI
+		end
 		root.features[key] = F
 		root.featureOrder[#root.featureOrder + 1] = key
 	end
@@ -59,6 +66,25 @@ end
 
 function root.Print(msg)
 	print(PREFIX .. ": " .. msg)
+end
+
+-- The slash command players type for this addon ("/kw"; a standalone's own, set by Init), for help text.
+root.cmd = "/kw"
+
+-- The way in when there is no hub (a standalone, or Hub.lua not loaded): the feature's own window
+-- while it is on, else its settings. Hub.lua replaces this in the bundle.
+function root.OpenHub()
+	for _, key in ipairs(root.featureOrder) do
+		local F = root.features[key]
+		if not F.embedded then
+			if F.OnOpen and F.enabled then
+				root.Try(F, "opening", F.OnOpen)
+			elseif root.OpenSettings then
+				root.OpenSettings(F)
+			end
+			return
+		end
+	end
 end
 
 function root.Version()
@@ -100,7 +126,7 @@ function root.Report(F, where, err, quiet)
 	caught = nil
 	local key, msg = F and F.key or "core", Text(err, 500)
 	where = Text(where, 60)
-	local sv = KroolWorldForeverDB
+	local sv = _G[root.ID.db]
 	if type(sv) == "table" then
 		local log = type(sv.errors) == "table" and sv.errors or {}
 		sv.errors = log
@@ -126,7 +152,7 @@ function root.Report(F, where, err, quiet)
 		return
 	end
 	printed[id] = true
-	local line = "|cffff5555error|r in " .. where .. ": " .. msg .. " |cffaaaaaa(shown once; /kw errors)|r"
+	local line = "|cffff5555error|r in " .. where .. ": " .. msg .. " |cffaaaaaa(shown once; " .. root.cmd .. " errors)|r"
 	if F and F.Print then
 		F:Print(line)
 	else
@@ -152,7 +178,7 @@ end
 
 -- /kw errors: the log, newest first. arg "clear" empties it.
 function root.PrintErrors(arg)
-	local sv = KroolWorldForeverDB
+	local sv = _G[root.ID.db]
 	local log = type(sv) == "table" and type(sv.errors) == "table" and sv.errors or {}
 	if arg == "clear" then
 		if type(sv) == "table" then
@@ -168,7 +194,7 @@ function root.PrintErrors(arg)
 		root.Print("no errors caught")
 		return
 	end
-	root.Print(("%d error(s) caught, newest first (/kw errors clear empties the list):"):format(#log))
+	root.Print(("%d error(s) caught, newest first (" .. root.cmd .. " errors clear empties the list):"):format(#log))
 	for i = #log, 1, -1 do
 		local e = log[i]
 		if type(e) == "table" then
@@ -204,6 +230,9 @@ function root.WatchEvent(event)
 end
 
 function root.Dispatch(event, ...)
+	if root.yielded then
+		return
+	end
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
 		local fn = F.events[event]
@@ -246,6 +275,9 @@ end
 
 -- Turns a feature on or off after login. Persisted in its slice.
 function root.SetEnabled(F, on)
+	if F.embedded or root.yielded then
+		return -- an embedded provider never enables; a yielded standalone does nothing
+	end
 	on = on and true or false
 	F.db.enabled = on
 	if F.enabled == on or not root.loggedIn then

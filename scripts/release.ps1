@@ -17,6 +17,10 @@
     README), so whatever another session has staged stays out of it.
   - A failure before the commit puts the TOC back. A failed push leaves the commit and the tag in
     place and prints the commands that finish the release by hand.
+  - Every feature also ships as a standalone addon (standalone\addons.json): the same version, one
+    zip each, all attached to the GitHub release. With -Publish, a standalone with a curseId is
+    uploaded only when its files changed (publish.ps1 compares standalone\published.json); the
+    updated file is committed as "Record standalone uploads <version>" and pushed.
   - -Publish needs the project ids in the TOC (## X-Curse-Project-ID, ## X-Wago-ID) and the
     tokens as user environment variables CF_API_KEY and WAGO_API_TOKEN (set them with setx in
     your own terminal; this script never writes or prints them). A missing id or token skips
@@ -71,9 +75,10 @@ try {
 	$notes = $m.Groups[1].Value.Trim()
 
 	# What is tested must be what is committed, and what is committed is what gets zipped.
-	$dirty = @(git status --porcelain -- KroolWorldForever | Where-Object { $_ -and $_.Substring(3) -ne $tocRel })
+	# standalone\ and tools\standalone\ too: the standalone zips are generated from them.
+	$dirty = @(git status --porcelain -- KroolWorldForever standalone tools/standalone | Where-Object { $_ -and $_.Substring(3) -ne $tocRel })
 	if ($dirty.Count -gt 0) {
-		throw "KroolWorldForever\ has uncommitted changes (yours or another session's). Commit them first:`n$($dirty -join "`n")"
+		throw "KroolWorldForever\, standalone\ or tools\standalone\ has uncommitted changes (yours or another session's). Commit them first:`n$($dirty -join "`n")"
 	}
 
 	# Version sync: the TOC is the single source of truth. Put it back if the gate fails.
@@ -99,25 +104,28 @@ try {
 	}
 	Invoke-Git tag -a $tag -F $msgFile
 
-	$zip = & $build -Version $Version -Ref $tag | Select-Object -Last 1
+	# The standalone zips come first, the bundle's last.
+	$zips = @(& $build -Version $Version -Ref $tag | Where-Object { $_ -is [string] -and $_ -like "*.zip" })
+	$zip = $zips[-1]
+	$zipArgs = ($zips | ForEach-Object { "`"$_`"" }) -join " "
 
 	if ($hasRemote) {
 		try {
 			Invoke-Git push -q origin main
 			Invoke-Git push -q origin $tag
 		} catch {
-			throw "$_`nThe commit and tag $tag exist locally and the zip is built. Finish by hand:`n  git push origin main`n  git push origin $tag`n  gh release create $tag `"$zip`" --title $Version --notes-file `"$notesFile`""
+			throw "$_`nThe commit and tag $tag exist locally and the zip is built. Finish by hand:`n  git push origin main`n  git push origin $tag`n  gh release create $tag $zipArgs --title $Version --notes-file `"$notesFile`""
 		}
 		Write-Host "Pushed main and $tag"
 		if (Get-Command gh -ErrorAction SilentlyContinue) {
 			$prev = $ErrorActionPreference
 			$ErrorActionPreference = "Continue"
-			try { & gh release create $tag $zip --title $Version --notes-file $notesFile 2>&1 | ForEach-Object { "$_" } } finally { $ErrorActionPreference = $prev }
+			try { & gh release create $tag @zips --title $Version --notes-file $notesFile 2>&1 | ForEach-Object { "$_" } } finally { $ErrorActionPreference = $prev }
 			if ($LASTEXITCODE -ne 0) {
-				throw "gh release create failed (exit $LASTEXITCODE). The tag is pushed; retry:`n  gh release create $tag `"$zip`" --title $Version --notes-file `"$notesFile`""
+				throw "gh release create failed (exit $LASTEXITCODE). The tag is pushed; retry:`n  gh release create $tag $zipArgs --title $Version --notes-file `"$notesFile`""
 			}
 		} else {
-			Write-Host "gh not found: create the GitHub release by hand and attach $zip"
+			Write-Host "gh not found: create the GitHub release by hand and attach $($zips -join ', ')"
 		}
 	} else {
 		Write-Host "No git remote; committed and tagged locally only."
@@ -125,6 +133,15 @@ try {
 
 	if ($Publish) {
 		& (Join-Path $PSScriptRoot "publish.ps1") -Zip $zip -Version $Version -Notes $notes
+		# publish.ps1 records what it uploaded (hashes decide the next release's uploads): commit that.
+		$publishedRel = "standalone/published.json"
+		if (git status --porcelain -- $publishedRel) {
+			Invoke-Git add -- $publishedRel
+			$msgFile2 = Join-Path $env:TEMP "kwf-published-msg.txt"
+			[IO.File]::WriteAllText($msgFile2, "Record standalone uploads $Version`n", $utf8)
+			Invoke-Git commit -q -F $msgFile2 -- $publishedRel
+			if ($hasRemote) { Invoke-Git push -q origin main }
+		}
 	}
 	Write-Host "Released $Version -> $zip"
 } finally {
