@@ -100,12 +100,10 @@ local function StandaloneSlash(F)
 			root.OpenSettings(F)
 		elseif word == "errors" then
 			root.PrintErrors(arg)
-		elseif word == "chars" then
-			if root.OpenChars then
-				root.Try(nil, "characters", root.OpenChars)
-			else
-				root.Print("the character list is not available in this addon.")
-			end
+		elseif word == "chars" or word == "characters" then
+			root.Try(nil, "characters", root.OpenCharacters)
+		elseif word == "track" or word == "untrack" or word == "forget" then
+			root.Try(nil, "characters", root.CharsCommand, word, arg)
 		elseif not F.enabled then
 			F:Print("is off. " .. HowOn(F))
 		elseif F.OnSlash then
@@ -184,10 +182,9 @@ frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("PLAYER_LEVEL_UP") -- the character roster (Characters.lua)
 frame:RegisterEvent("PLAYER_LOGOUT")
 frame:SetScript("OnEvent", function(self, event, ...)
-	if event == "PLAYER_LOGIN" or event == "PLAYER_LEVEL_UP" or event == "PLAYER_LOGOUT" then
+	if event == "PLAYER_LEVEL_UP" or event == "PLAYER_LOGOUT" then
 		root.Try(nil, "character roster", root.CharsOnEvent, event, ...)
-	end
-	if event == "ADDON_LOADED" then
+	elseif event == "ADDON_LOADED" then
 		-- The bundle starts now; a standalone waits for login, when it can tell whether the bundle is loaded.
 		if ... == addonName and not ID.standalone then
 			root.Try(nil, "startup", Load)
@@ -203,6 +200,8 @@ frame:SetScript("OnEvent", function(self, event, ...)
 			root.Try(nil, "startup", Load)
 			RegisterSlash()
 		end
+		-- After Load: a standalone's roster only exists from here.
+		root.Try(nil, "character roster", root.CharsOnEvent, event, ...)
 		Login()
 	end
 	root.Dispatch(event, ...)

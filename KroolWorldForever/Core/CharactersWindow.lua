@@ -9,7 +9,11 @@ local W, H, ROW_H = 470, 400, 28
 local frame -- built on first open
 
 local function ClassText(classFile, text)
-	local ok, color = pcall(C_ClassColor.GetClassColor, classFile or "")
+	local get = C_ClassColor and C_ClassColor.GetClassColor
+	if not get then
+		return text
+	end
+	local ok, color = pcall(get, classFile or "")
 	if ok and color and color.WrapTextInColorCode then
 		return color:WrapTextInColorCode(text)
 	end
@@ -90,7 +94,7 @@ local function Refresh()
 end
 
 local function Build()
-	frame = UI.Window("KroolWorldForeverCharacters", "Characters", W, H)
+	frame = UI.Window(root.ID.prefix .. "Characters", "Characters", W, H)
 	frame.rows = {}
 	frame.intro = UI.Text(frame, "GameFontHighlightSmall")
 	frame.intro:SetPoint("TOPLEFT", 68, -32)

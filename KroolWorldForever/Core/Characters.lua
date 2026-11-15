@@ -221,7 +221,7 @@ function root.CharsCommand(cmd, arg)
 	local key, rec
 	if arg == "" then
 		if cmd == "forget" then
-			root.Print("/kw forget <name>: drops a character from the list. Nothing else is deleted.")
+			root.Print(root.cmd .. " forget <name>: drops a character from the list. Nothing else is deleted.")
 			return
 		end
 		key = root.CharKey()
@@ -240,7 +240,7 @@ function root.CharsCommand(cmd, arg)
 					print("  " .. k)
 				end
 			else
-				root.Print(("no character called '%s'. /kw chars lists them"):format(arg))
+				root.Print(("no character called '%s'. %s chars lists them"):format(arg, root.cmd))
 			end
 			return
 		end
@@ -248,7 +248,7 @@ function root.CharsCommand(cmd, arg)
 	end
 	if cmd == "forget" then
 		if key == root.CharKey() then
-			root.Print(key .. " is the character you are playing, and would be back at the next login. /kw untrack leaves it out of the lists instead")
+			root.Print(key .. " is the character you are playing, and would be back at the next login. " .. root.cmd .. " untrack leaves it out of the lists instead")
 			return
 		end
 		root.ForgetChar(key)
@@ -256,6 +256,6 @@ function root.CharsCommand(cmd, arg)
 	else
 		local on = cmd == "track"
 		root.SetTracked(key, on)
-		root.Print(("%s %s"):format(key, on and "is tracked" or "is left out of character lists (/kw track brings it back)"))
+		root.Print(("%s %s"):format(key, on and "is tracked" or ("is left out of character lists (" .. root.cmd .. " track brings it back)")))
 	end
 end

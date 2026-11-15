@@ -2,6 +2,24 @@
 -- see (settings categories, named frames, SlashCmdList and StaticPopupDialogs writes) and gives
 -- C_AddOns.IsAddOnLoaded a state the test sets.
 
+-- The character roster (Core/Characters.lua) runs in every standalone; fill what a feature suite's
+-- stubs may leave out, the way the client has it.
+time = time or function()
+	return 1800000000
+end
+UnitFullName = UnitFullName or function()
+	return "Tester", "TestRealm"
+end
+GetNormalizedRealmName = GetNormalizedRealmName or function()
+	return "TestRealm"
+end
+UnitClass = UnitClass or function()
+	return "Mage", "MAGE", 8
+end
+UnitLevel = UnitLevel or function()
+	return 20
+end
+
 LoadedAddons = {}
 C_AddOns = C_AddOns or {}
 C_AddOns.IsAddOnLoaded = function(name)

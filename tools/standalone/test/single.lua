@@ -121,13 +121,18 @@ lines = capture(function()
 	slash("errors")
 end)
 check("slash errors answers", has(lines, "no errors caught"), true)
-lines = capture(function()
-	slash("chars")
-end)
-check("slash chars answers", #lines > 0, true)
-if not root.OpenChars then
-	check("slash chars says it is not available", has(lines, "not available"), true)
+slash("chars")
+for _, e in ipairs(_G[ID.db].errors or {}) do
+	realPrint("  logged: " .. tostring(type(e) == "table" and (tostring(e.where) .. ": " .. tostring(e.message)) or e))
 end
+check("slash chars opens the character list", root.CharactersFrame() ~= nil and root.CharactersFrame():IsShown(), true)
+slash("chars")
+check("slash chars again closes it", root.CharactersFrame():IsShown(), false)
+local untrackLines = capture(function()
+	slash("untrack")
+end)
+check("slash untrack answers", has(untrackLines, "left out of character lists"), true)
+slash("track")
 local handedOn
 if F.OnSlash then
 	local original = F.OnSlash
