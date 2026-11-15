@@ -46,6 +46,16 @@ if (skillupBuild !== apiBuild) {
   process.exit(1);
 }
 console.log(`data ok: Skill-Up recipes match build ${apiBuild}`);
+// Reagent Uses' recipes are build data too. A bundle without that data file (a standalone TOC) skips it.
+if (sources["Features/ReagentUses/Data.lua"] !== undefined) {
+  const reagentsBuild = (sources["Features/ReagentUses/Data.lua"].match(/build = "([^"]+)"/) || [])[1];
+  if (reagentsBuild !== apiBuild) {
+    console.log(`DATA STALE: Features/ReagentUses/Data.lua is build ${reagentsBuild}, the API allowlist is ${apiBuild}.`);
+    console.log("  Regenerate it: node tools/reagents-data/gen-data.js <build>.");
+    process.exit(1);
+  }
+  console.log(`data ok: Reagent Uses recipes match build ${apiBuild}`);
+}
 
 const args = process.argv.slice(2);
 const verbose = args.includes("--verbose");
@@ -93,6 +103,17 @@ function runSuite(name) {
   });
   if (!exec("common.lua", fs.readFileSync(path.join(__dirname, "common.lua"), "utf8"))) return false;
   if (!exec(name + "/stubs.lua", fs.readFileSync(path.join(dir, "stubs.lua"), "utf8"))) return false;
+  // A "choice" option builds a dropdown; the older suites' Settings stubs predate it. Give them a
+  // no-op one (the reagents suite has its own, and checks the real thing).
+  exec(
+    "settings shim",
+    "if Settings and not Settings.CreateDropdown then\n" +
+      "  Settings.VarType = Settings.VarType or {}\n" +
+      "  Settings.VarType.String = Settings.VarType.String or 'string'\n" +
+      "  Settings.CreateDropdown = function() end\n" +
+      "  Settings.CreateControlTextContainer = function() return { Add = function() end, GetData = function() return {} end } end\n" +
+      "end"
+  );
   lua.lua_newtable(L);
   lua.lua_setglobal(L, to_luastring("__ns"));
   for (const f of files) if (!exec(f, sources[f], true)) return false;

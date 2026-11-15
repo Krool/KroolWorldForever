@@ -42,8 +42,18 @@ run(
     local F = __ns.features[key]
     out[#out + 1] = table.concat({ "F", key, s(F.title or key), s(F.description), s(table.concat(F.slash or {}, ", ")), s(F.defaultEnabled ~= false) }, "\\t")
     for _, o in ipairs(F.options) do
-      local range = o.type == "range" and (o.min .. " to " .. o.max) or ""
-      out[#out + 1] = table.concat({ "O", s(o.type), s(o.label), s(o.default), s(range), s(o.tooltip) }, "\\t")
+      local range, default = o.type == "range" and (o.min .. " to " .. o.max) or "", o.default
+      if o.type == "choice" then
+        local labels = {}
+        for _, c in ipairs(o.choices) do
+          labels[#labels + 1] = c.label
+          if c.value == o.default then
+            default = c.label
+          end
+        end
+        range = "one of " .. table.concat(labels, ", ")
+      end
+      out[#out + 1] = table.concat({ "O", s(o.type), s(o.label), s(default), s(range), s(o.tooltip) }, "\\t")
     end
   end
   return table.concat(out, "\\n")`

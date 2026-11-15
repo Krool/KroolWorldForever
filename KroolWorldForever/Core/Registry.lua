@@ -5,12 +5,17 @@
 --   local ns = root.Feature("questtrash")
 --   ns.title, ns.description          shown in the settings panel
 --   ns.defaultEnabled                 default on/off (true when nil)
---   ns.options = { {key=, type="toggle"|"range", label=, tooltip=, default=, min=, max=, step=}, ... }
+--   ns.options = { {key=, type="toggle"|"range"|"choice", label=, tooltip=, default=, min=, max=, step=,
+--                   choices=}, ... }
+--                                     a "choice" is a dropdown of string values:
+--                                     choices = { {value="CTRL", label="Ctrl"}, ... }, default one of them
 --   ns.slash = { "/fqt", "/questtrash" }; ns.OnSlash(msg)   (while the feature is off its commands
 --                                     only answer "is off" and how to turn it on)
 --   ns.OnLoad()                       saved variables ready (ns.db is the feature's slice)
 --   ns.OnEnable() / ns.OnDisable()    after login, whenever the feature turns on/off
 --   ns.OnOptionChanged(key, value)
+--   ns.MigrateSaved(sv)               optional: runs before the slices are made, with the whole saved
+--                                     table, to carry over what an older standalone build saved there
 --   ns:RegisterEvent(event, fn)       fn(event, ...) runs only while the feature is enabled
 --   ns.OnOpen()                       optional: the feature's own window; /kw <key> opens it, the
 --                                     hub card gets an Open button, and so does the settings page
@@ -206,6 +211,19 @@ function root.Dispatch(event, ...)
 			root.Try(F, event, fn, event, ...)
 		end
 	end
+end
+
+-- True when value is one of a "choice" option's declared values.
+function root.ChoiceHas(opt, value)
+	if type(value) ~= "string" then
+		return false
+	end
+	for _, c in ipairs(opt.choices or {}) do
+		if c.value == value then
+			return true
+		end
+	end
+	return false
 end
 
 -- Sets one declared option (or "enabled") the way the settings panel would: through the panel's

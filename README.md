@@ -250,6 +250,20 @@ On by default: yes. Toggle: `/kwf fishing on|off`. Commands: `/kwfish`.
 | Setting | Default | What it does |
 |---|---|---|
 | Double Right-Click To Fish | On | While a fishing pole is in your main hand, a quick double right-click casts, and reels in when the line is out. Not while moving, mounted, swimming, stealthed, in a vehicle or in combat. |
+
+### Reagent Uses
+
+Hold a key over a crafting material and its tooltip lists every recipe that uses it, grouped by profession and colored by your skill, with who knows each one or where it is learned.
+
+On by default: yes. Toggle: `/kwf reagents on|off`. Commands: `/ru, /reagentuses`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Show With | Ctrl (one of Ctrl, Alt, Shift, Always Show) | The key to hold over a crafting material to list the recipes that use it. Always Show lists them on every material's tooltip. |
+| Show Hint | On | While the key is up, one line on the tooltip says how many recipes use the material. |
+| Show Other Characters | On | Names your other tracked characters who know each recipe. A character is remembered after it opens its own profession window with this on. |
+| Hide Grey Recipes | Off | Leaves out recipes that can no longer give you a skill point. |
+| Recipes Shown | 15 (5 to 50) | How many recipes the tooltip lists. Past that, each profession only shows its count. |
 <!-- settings:end -->
 
 ## FAQ

@@ -701,6 +701,8 @@ local function Fit(opt, value)
 			return nil, false
 		end
 		return math.min(opt.max, math.max(opt.min, value)), true
+	elseif opt.type == "choice" then
+		return value, root.ChoiceHas(opt, value)
 	end
 	return value, true
 end

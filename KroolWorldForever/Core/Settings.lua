@@ -47,6 +47,24 @@ local function AddOption(category, F, opt)
 		end
 		Settings.CreateSlider(category, setting, options, opt.tooltip)
 		return setting
+	elseif opt.type == "choice" then
+		local setting = Settings.RegisterAddOnSetting(
+			category,
+			variable,
+			opt.key,
+			F.db,
+			Settings.VarType.String,
+			opt.label,
+			opt.default
+		)
+		Settings.CreateDropdown(category, setting, function()
+			local container = Settings.CreateControlTextContainer()
+			for _, c in ipairs(opt.choices) do
+				container:Add(c.value, c.label)
+			end
+			return container:GetData()
+		end, opt.tooltip)
+		return setting
 	end
 end
 

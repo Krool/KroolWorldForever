@@ -9,8 +9,8 @@ local function ApplyDefaults(F)
 		db.enabled = F.defaultEnabled ~= false
 	end
 	for _, opt in ipairs(F.options) do
-		if db[opt.key] == nil then
-			db[opt.key] = opt.default
+		if db[opt.key] == nil or (opt.type == "choice" and not root.ChoiceHas(opt, db[opt.key])) then
+			db[opt.key] = opt.default -- a saved choice that is no longer on offer falls back too
 		end
 	end
 end
@@ -19,6 +19,12 @@ local function Load()
 	KroolWorldForeverDB = KroolWorldForeverDB or {}
 	local sv = KroolWorldForeverDB
 	sv.features = sv.features or {}
+	for _, key in ipairs(root.featureOrder) do
+		local F = root.features[key]
+		if F.MigrateSaved then
+			root.Try(F, "migrating saved data", F.MigrateSaved, sv) -- before the roster and slices read it
+		end
+	end
 	sv.session = (tonumber(sv.session) or 0) + 1 -- one per load, to tell this session's errors apart
 	root.session = sv.session
 	root.Try(nil, "character roster", root.InitChars, sv)

@@ -707,6 +707,18 @@ check("kwf: range clamped to the slider", KV.db.cut, 100)
 check("kwf: wrong type skipped", KV.db.learn ~= "yes", true)
 check("kwf: unknown feature and bad value reported", has(r.lines, "2 not in this version"), true)
 check("kwf: never turns Setups off", ns.db.enabled, true)
+-- A choice option (Reagent Uses' Show With) applies only while the saved value is still on offer.
+local RU = __ns.features.reagents
+RU.db.modifier = "CTRL"
+r = ns.Apply({ name = "choice", parts = { kwf = { reagents = { modifier = "ALT" } } } }, { kwf = true }, ns.db)
+check("kwf: a choice that is on offer is applied", RU.db.modifier, "ALT")
+check("kwf: ...and counted as a change", has(r.lines, "Krool World Settings: 1 changed"), true)
+r = ns.Apply({ name = "choice", parts = { kwf = { reagents = { modifier = "META" } } } }, { kwf = true }, ns.db)
+check("kwf: a choice that is not on offer is skipped", RU.db.modifier, "ALT")
+check("kwf: ...and reported", has(r.lines, "1 not in this version"), true)
+r = ns.Apply({ name = "choice", parts = { kwf = { reagents = { modifier = 5 } } } }, { kwf = true }, ns.db)
+check("kwf: a choice of the wrong type is skipped", RU.db.modifier, "ALT")
+RU.db.modifier = "CTRL"
 -- A 0.3.0 setup that still holds Setups' options does not switch them back.
 ns.db.autoReload = true
 ns.Apply({ name = "old", parts = { kwf = { setups = { autoReload = false, picker = false } } } }, { kwf = true }, ns.db)
