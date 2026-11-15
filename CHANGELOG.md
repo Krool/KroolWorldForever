@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.19.0
+
+Reagent Uses joins the bundle, a character list you can trim, and every feature as its own addon.
+
+- **Reagent Uses joins the bundle.** Hold Ctrl over a crafting material and its tooltip lists every
+  recipe that uses it, grouped by profession, yours first. Recipes are colored by your skill, with
+  how many of the material each takes, how many more recipes use what it makes, and who knows it or
+  where it is learned. Settings: the key (Ctrl, Alt, Shift or always), the hint line, other
+  characters, hiding grey recipes, how many to list. `/ru`. It was a separate addon; it now also
+  ships as KW Reagent Uses, which updates the old one in place.
+- **Characters.** One list of your characters for the whole addon (`/kw chars`, or the hub's
+  Characters button). Everyone is included by default. Untick a bank or mule alt to leave it out of
+  Reagent Uses, Sayge's Fortune and the Setups character list; nothing is deleted, and ticking it
+  brings it back. `/kw untrack`, `/kw track`, `/kw forget <name>`.
+- **Setups: untracked characters.** No automatic snapshot for an untracked character, and its old
+  snapshots are hidden from the Characters list until it is tracked again.
+- **Sayge's Fortune: untracked characters** are left out of `/sayge`'s other characters. Realm
+  names with spaces now match across features.
+- **Every feature as its own addon.** Each feature also ships alone as "KW <feature>" (KW Quest
+  Trash, KW Kill Value, ...), attached to the GitHub release and on CurseForge. Next to the bundle
+  a single one switches itself off and says so in chat.
+
 ## 0.18.0
 
 More quest items Quest Trash can call deletable, and fixes from a review of every feature against

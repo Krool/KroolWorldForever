@@ -22,8 +22,20 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Least Valuable** | A copper coin on the corner of the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear, worthless items like the Hearthstone, or an unscanned green. `/kwl ignore` skips anything else you keep. When your bags are full and you try to loot, a card beside the loot window names that item and its value against the loot's, says whether the loot is worth making room for, and lets you browse the next cheapest or never mark one. It never deletes anything. | Nothing (Auctionator optional) |
 | **Quest Reward Value** | A coin on the quest reward worth the most when you pick one, at the best of its vendor price, auction price and disenchant value, and that value on each reward's tooltip. It never picks the reward for you. | Nothing (Auctionator optional) |
 | **One-Button Fishing** | One key casts your line and, while it is out, reels in the bite. Set it under Key Bindings > AddOns > Krool World. With a fishing pole in your main hand, a double right-click does the same. Every cast and reel is your own key press or click. | Nothing |
+| **Reagent Uses** | Hold Ctrl over a crafting material and its tooltip lists every recipe that uses it, grouped by profession, yours first. Each recipe is colored by your skill, with how many of the material it takes, how many more recipes use what it makes, and who knows it (you and your other characters) or where it is learned (Trainer 175, Vendor, Drop...). Built from Forever's own recipe data, including the recipes Forever added. | Nothing |
 
-All eleven are on by default.
+All twelve are on by default.
+
+**Your characters.** Reagent Uses, Sayge's Fortune and Setups list your other characters. Every
+character is included by default. To leave out bank or mule alts, untick them in `/kw chars` (or
+use the hub's Stop Tracking This Character button while on one). Nothing is deleted: tick a
+character again and it is back.
+
+**Only want one or two?** Every feature also comes as its own addon, named "KW" plus the feature
+(KW Quest Trash, KW Kill Value, ...). They are attached to each
+[release](https://github.com/Krool/KroolWorldForever/releases/latest) and listed on CurseForge.
+Install either the bundle or the single ones: next to the bundle, a single one switches itself
+off and says so.
 
 ![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
@@ -31,7 +43,7 @@ All eleven are on by default.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable and Quest Reward Value never delete, sell,
+- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value and Reagent Uses never delete, sell,
   loot, craft or click anything for you. Rare Alert's marker comes from your own click or key press: the game does not let an
   addon place one by itself. One-Button Fishing works the same way: it only points your key at the
   cast or the bobber, out of combat, and puts back the interact settings it borrows when the line is in. Setups is the one feature that changes your UI: only out of combat,
@@ -72,8 +84,11 @@ Optional companions:
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
 | `/kw errors` | List the errors the addon caught (`/kw errors clear` empties the list) |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`, `leastvaluable`, `rewardvalue`, `fishing`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`, `leastvaluable`, `rewardvalue`, `fishing`, `reagents`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
+| `/kw chars` | Your characters, with a Track box each (untracked ones are left out of every character list) |
+| `/kw untrack [name]` / `track [name]` | Leave a character out of the lists, or bring it back (no name: the one you are on) |
+| `/kw forget <name>` | Drop a character from the list and from Reagent Uses and Sayge's Fortune (saved setups are kept) |
 | `/fqt` | Open the Quest Trash window: your bags (and the bank while it is open), deletables first |
 | `/fqt print` / `status` | The same list in chat; whether the quest data is ready |
 | `/fkv` | Full value breakdown for your target |
@@ -98,11 +113,15 @@ Optional companions:
 | `/kwl ignore` / `ignore <item>` | Never mark the marked item, or any item (shift-click it into the chat line) |
 | `/kwl unignore <item>` / `ignored` | Mark it again (item, id or name); show the ignore list |
 | `/kwfish` | Your fishing key, and whether a pole is equipped for double right-click |
+| `/ru` | Reagent Uses' settings (`/ru chars` opens the character list) |
 
 The mark key and the fishing key are under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
 `/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide`,
-`/skillup`, `/kwsayge` and `/leastvaluable` are long forms of `/fqt`, `/fkv`, `/kws`, `/kwr`, `/kwd`,
-`/kwc`, `/kwu`, `/sayge` and `/kwl`.
+`/skillup`, `/kwsayge`, `/leastvaluable` and `/reagentuses` are long forms of `/fqt`, `/fkv`, `/kws`,
+`/kwr`, `/kwd`, `/kwc`, `/kwu`, `/sayge`, `/kwl` and `/ru`.
+
+A single KW addon answers its own command (for example `/fqt` in KW Quest Trash), and also takes
+`settings`, `errors`, `chars`, `track`, `untrack` and `forget` after it (`/fqt settings`).
 
 ## Settings
 
