@@ -31,7 +31,7 @@ before writing addon code.
   wow-ui-source `forever` at 70938 (it tracks `wowf` since Nov 2); 70840, 70862 and 70888 changed
   no function, event or enum; 70938 added `C_TradeSkillUI.HasNoReagentCost` and changed 26 recipe
   thresholds. Builds drop every few days: rebuilding the allowlist makes `run.js` fail until
-  Skill-Up's `Data.lua` is regenerated for the same build. Still no `WOW_PROJECT_FOREVER`.
+  Skill-Up's and Reagent Uses' `Data.lua` are regenerated for the same build. Still no `WOW_PROJECT_FOREVER`.
 - **Protected calls need a click.** `C_UI.Reload` (and anything else hardware-event restricted) is
   blocked with `ADDON_ACTION_BLOCKED` from a timer or event handler; the API docs carry no flag for
   it, so the lint cannot see it. The Setups test stubs model this (`HardwareDepth`, `BlockedCalls`).
@@ -63,7 +63,10 @@ before writing addon code.
   Setups saves and applies every declared option automatically ("Krool World Settings" part), so:
   keep player choices in `ns.options` and learned data or caches out of them; change an option
   in code with `root.SetOption(F, key, value)`, never by writing `F.db` directly (it keeps the panel
-  and `OnOptionChanged` in sync); a new option `type` needs a case in Setups' `Fit()`.
+  and `OnOptionChanged` in sync); a new option `type` needs a case in Setups' `Fit()`. Types:
+  `toggle`, `range`, and `choice` (a dropdown: `choices = {{value=, label=}, ...}`, string values,
+  checked with `root.ChoiceHas`). A feature that takes over another addon's saved data defines
+  `F.MigrateSaved(sv)`; Init runs it before the roster and the slices read the table.
 - **Tooltip hooks cannot be removed.** Register once in OnEnable and check `ns.enabled` inside.
 - **Advice only.** Features never delete, sell, loot or click for the player. Any action needs the
   owner's explicit OK. The one approved exception (2026-10-21) is **Setups**: it changes bars,
@@ -87,6 +90,18 @@ before writing addon code.
   dispatcher already wraps events).
 - Saved data: `KroolWorldForeverDB.features.<key>` is the feature's slice (`ns.db`). Option values
   live directly on it.
+- **Every feature also ships standalone** (owner, 2026-11-14), as "KW <Title>" in folder
+  `KW_<Name>`, generated from this source by `tools/standalone/build.js`. So **never hard-wire a
+  name**: globals, the saved-variable table, slash ids, frame and secure-button names, bindings,
+  popups and Settings variables all come from `root.ID` (`Core/Identity.lua`); help text uses
+  `root.cmd`. The collision suite fails on a name two copies would both write. A new feature needs
+  an entry in `standalone/addons.json` and its folder in Identity.lua's `family` list (a test
+  checks), a listing and logo, and a CurseForge project. Details: `standalone/CLAUDE.md`.
+- **Characters:** `Core/Characters.lua` is the only roster (`<db>.chars`, keyed by
+  `root.CharKey()`, normalized realm). Every character is tracked by default, level 1s included;
+  the owner opts bank and mule alts out (owner, 2026-11-14: `/kw chars`, `/kw untrack`, the hub
+  button). A feature that lists characters filters with `root.Tracked(key)` and registers
+  `root.OnForgetChar` to drop its own records. Untracking hides; it never deletes saved data.
 
 ## Tests and lint
 
@@ -129,7 +144,8 @@ before writing addon code.
   the gate fails), runs the tests, regenerates the README settings tables, commits only
   TOC/CHANGELOG/README by pathspec, tags `vx.y.z`, builds `dist\KroolWorldForever-x.y.z.zip` from
   the tag, pushes, and creates the GitHub release with the zip attached. Never ship two builds
-  under one version.
+  under one version. The same run builds every standalone from the tag
+  (`dist\<Folder>-x.y.z.zip`, attached too); versions are lockstep.
 - The public download is that GitHub release; the README links `releases/latest`. `dist/` is
   git-ignored. If the push or `gh release create` fails, the script prints the commands that
   finish the release by hand; do not rerun it for the same version.
@@ -140,7 +156,9 @@ before writing addon code.
   is id 17053). Its upload path is still untested: 0.18.0 went up by hand, and CurseForge's web
   uploader tagged it Retail 12.1.7 (fixed by hand to Forever 1.60.1). Check the game version on
   every file. Automatic Packaging stays off: release.ps1 uploads the tested zip itself. No Wago
-  project yet.
+  project yet. Standalones: publish uploads each manifest entry with a `curseId` only when its
+  files changed (ledger `standalone/published.json`, committed by release.ps1); `-DryRun` shows
+  the plan without the API.
 - Commit with `git commit -F <file>`: PowerShell 5.1 mangles embedded quotes in native arguments.
 - Stage only paths you touched (shared tree; never `git add -A`).
 
@@ -151,8 +169,13 @@ before writing addon code.
 - `tools/test/` test runner + suites; `tools/forever-api/` lint; `tools/killvalue-data/` the cmangos
   classic-db generators (`classicdb.js` reader; `gen-data.js` Kill Value loot, `gen-disenchant.js`
   Disenchant Value tables); `tools/skillup-data/gen-skillup.js` Skill-Up Odds recipe thresholds from
-  wago.tools `SkillLineAbility` (regenerate when a build changes recipes); `tools/settings-doc.js`
-  README settings tables.
+  wago.tools `SkillLineAbility` (regenerate when a build changes recipes);
+  `tools/reagents-data/gen-data.js <build>` Reagent Uses' recipe data (Forever's own tables from
+  wago.tools, trainer levels and recipe sources from killvalue-data's classic-db sqlcache; run.js
+  fails until it matches the allowlist's build, like Skill-Up's); `tools/settings-doc.js` README
+  settings tables; `tools/standalone/` the standalone generator and its tests.
+- Reagent Uses (feature `reagents`, 2026-11-14) came from the separate repo Krool/ReagentUses,
+  now archived; it keeps per-character `ns.db.known` / `ns.db.skills` keyed by the roster key.
 - Skill-up chances are server-side and unpublished. Skill-Up Odds uses the straight line (yellow 100%
   to grey 0%) scaled by the account's measured crafts (owner's call 2026-11-09: 174 crafts fit it);
   the per-range counts stay as the check. Change the model only on new data; see docs/features/skillup.md.
