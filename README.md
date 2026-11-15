@@ -37,9 +37,36 @@ character again and it is back.
 Install either the bundle or the single ones: next to the bundle, a single one switches itself
 off and says so.
 
-![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
+## Screenshots
 
-*Kill Value tooltip (earlier 1.12 version; a Forever screenshot is coming).*
+**Skill-Up Odds:** the chance per recipe in the crafting window, and the Next Skill Point panel
+ranking your recipes by what a point costs.
+
+<img src="docs/media/skillup/crafting-window.png" alt="Blacksmithing window with 83% and 97% skill-up chances beside the recipes" height="400"> <img src="docs/media/skillup/next-skill-point.png" alt="Next Skill Point panel: Rough Bronze Leggings 83%, 4s 51c a point, then seven more recipes by cost per point" height="400">
+
+**Setups:** your characters on the left, what to copy on the right.
+
+![Setups window: nine characters listed, Steel-God's auto snapshot going onto Steel, with Action Bars, Keybindings, Macros, Edit Mode Layout, Interface Settings, Addon List and Krool World Settings ticked](docs/media/setups/window.png)
+
+**Disenchant Value** (Vendor and Auction lines are Auctionator's):
+
+![Inscribed Leather Boots tooltip: Disenchant 3s 25c, Best: sell it to a vendor (disenchant 3s 25c, auction 4s 7c)](docs/media/disenchant/tooltip.png)
+
+**Least Valuable**, with the Reagent Uses hint at the bottom:
+
+![Minor Healing Potion tooltip: Least valuable in your bags 15c, 3 x 5c at a vendor, Hold Ctrl: 1 recipe uses this](docs/media/leastvaluable/tooltip-and-bags.png)
+
+**Camp Guide:**
+
+![Basic Campfire tooltip: holds 3 camp objects; Camp Tent rested experience, First Aid Kit +8 Stamina (not with your Power Word: Fortitude), Lodestone +20 melee attack power](docs/media/camp/campfire-tooltip.png)
+
+**Sayge's Fortune:**
+
+![Sayge tooltip: Fortune of Damage, 1h 59m left; the next one after 3h 59m more online (6:38 PM if you stay on), even if you die](docs/media/fortune/sayge-tooltip.png)
+
+**Kill Value** (an earlier 1.12 version; a Forever shot is coming):
+
+![Kill Value tooltip on a Sewer Beast: Kill value 6s 6c, Pointy Crocolisk Tooth x1.0 (vendor) 3s 16c, Reinforced Steel Lockbox 2% (opened) 2s 90c](docs/screenshots/killvalue-tooltip-1.12.png)
 
 ## How it behaves
 

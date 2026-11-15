@@ -9,7 +9,9 @@ one, works out which feature it shows, crops it to the part that matters, and sa
 useful is skipped, never published.
 
 **Tips:** one thing per shot. Hover the item or creature so its tooltip is open, and keep the mouse
-off the tooltip text. Full screen is fine: cropping is the agent's job.
+off the tooltip text. Full screen is fine: cropping is the agent's job. Take tooltip shots away
+from crowds: tooltips are see-through, and a player's floating name behind one cannot be cropped
+out (the first Copper Bar shot was skipped for that, 2026-11-15).
 
 Tick a line when its shot is in `docs/media/`.
 
@@ -26,29 +28,31 @@ Tick a line when its shot is in `docs/media/`.
 - [ ] `/fkv` breakdown in chat for a target.
 
 ## Setups
-- [ ] The Setups window with a setup selected.
+- [x] The Setups window with a setup selected.
 - [ ] The result after an apply (the check, warning and X per part).
 
 ## Rare Alert
 - [ ] The on-screen alert and the skull button next to a rare.
 
 ## Disenchant Value
-- [ ] A green weapon or armor tooltip with its disenchant lines.
+- [x] A green weapon or armor tooltip with its disenchant lines.
 - [ ] The same tooltip with Shift held (chances and prices).
 
 ## Camp Guide
-- [ ] A campfire tooltip.
+- [x] A campfire tooltip.
 - [ ] A camp object tooltip (the Lodestone) saying a class buff covers it.
 
 ## Skill-Up Odds
-- [ ] The crafting window with the odds beside each recipe.
-- [ ] The Next Skill Point panel.
+- [x] The crafting window with the odds beside each recipe.
+- [x] The Next Skill Point panel.
 
 ## Sayge's Fortune
-- [ ] Sayge's tooltip with the time left.
+- [x] Sayge's tooltip with the time left.
 - [ ] The fortune buff's tooltip.
 
 ## Least Valuable
+- [x] A bag item's tooltip saying it is the least valuable (the bundle page only: it also shows the
+  Reagent Uses hint).
 - [ ] Open bags with the copper coin on a slot.
 - [ ] The bags-full card beside a loot window.
 
@@ -60,4 +64,4 @@ Tick a line when its shot is in `docs/media/`.
 
 ## Reagent Uses
 - [ ] Ctrl held over Silk Cloth (or any cloth or ore) with the recipe list showing.
-- [ ] The same item without Ctrl (the one-line hint).
+- [x] The same item without Ctrl (the one-line hint).
