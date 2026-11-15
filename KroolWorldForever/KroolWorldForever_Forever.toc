@@ -15,6 +15,8 @@ Core\Registry.lua
 Core\Settings.lua
 Core\Widgets.lua
 Core\Prices.lua
+Core\Characters.lua
+Core\CharactersWindow.lua
 
 Features\QuestTrash\Repeatables.lua
 Features\QuestTrash\Core.lua

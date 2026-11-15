@@ -1,0 +1,63 @@
+# Shot list
+
+Screenshots for the README and the CurseForge pages (the bundle and each KW addon).
+
+**How:** press Print Screen in game. WoW saves the shot to
+`World of Warcraft\_forever_\Screenshots\`. Then tell the agent "new screenshots". It looks at each
+one, works out which feature it shows, crops it to the part that matters, and saves it here as
+`docs/media/<feature>/<name>.png`. Other players' names get cropped out. A shot that shows nothing
+useful is skipped, never published.
+
+**Tips:** one thing per shot. Hover the item or creature so its tooltip is open, and keep the mouse
+off the tooltip text. Full screen is fine: cropping is the agent's job.
+
+Tick a line when its shot is in `docs/media/`.
+
+## Krool World Forever (bundle)
+- [ ] The hub (`/kw`), all cards visible.
+- [ ] The Characters list (`/kw chars`).
+
+## Quest Trash
+- [ ] A quest item tooltip that reads Can be deleted, with its reason.
+- [ ] The `/fqt` window with items in Can Delete and Keep.
+
+## Kill Value
+- [ ] A creature tooltip with its kill value and drops.
+- [ ] `/fkv` breakdown in chat for a target.
+
+## Setups
+- [ ] The Setups window with a setup selected.
+- [ ] The result after an apply (the check, warning and X per part).
+
+## Rare Alert
+- [ ] The on-screen alert and the skull button next to a rare.
+
+## Disenchant Value
+- [ ] A green weapon or armor tooltip with its disenchant lines.
+- [ ] The same tooltip with Shift held (chances and prices).
+
+## Camp Guide
+- [ ] A campfire tooltip.
+- [ ] A camp object tooltip (the Lodestone) saying a class buff covers it.
+
+## Skill-Up Odds
+- [ ] The crafting window with the odds beside each recipe.
+- [ ] The Next Skill Point panel.
+
+## Sayge's Fortune
+- [ ] Sayge's tooltip with the time left.
+- [ ] The fortune buff's tooltip.
+
+## Least Valuable
+- [ ] Open bags with the copper coin on a slot.
+- [ ] The bags-full card beside a loot window.
+
+## Quest Reward Value
+- [ ] A quest's reward choices with the coin on the best one.
+
+## One-Button Fishing
+- [ ] Fishing with the line out (the key's tooltip or `/kwfish` in chat).
+
+## Reagent Uses
+- [ ] Ctrl held over Silk Cloth (or any cloth or ore) with the recipe list showing.
+- [ ] The same item without Ctrl (the one-line hint).

@@ -389,6 +389,15 @@ end
 function GetRealmName()
 	return RealmName
 end
+-- The roster's key (root.CharKey) uses the normalized realm: no spaces.
+function GetNormalizedRealmName()
+	return (RealmName:gsub("%s", ""))
+end
+function UnitFullName(unit)
+	if unit == "player" then
+		return PlayerName, GetNormalizedRealmName()
+	end
+end
 UnitGUIDs = {} -- token -> guid
 function UnitGUID(unit)
 	return UnitGUIDs[unit]

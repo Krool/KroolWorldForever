@@ -1,0 +1,26 @@
+# KW Sayge's Fortune
+
+- **Folder:** KW_SaygesFortune
+- **Main category:** Buffs & Debuffs. **More:** Miscellaneous.
+- **Relations:** none.
+- **Logo:** `standalone/logos/fortune.png`
+
+## Summary
+
+Shows when Sayge at the Darkmoon Faire can give you your next fortune. The game hides his 4-hour wait; this counts it on every character.
+
+## Description
+
+Sayge's wait is 4 hours from your last fortune, counted only while that character is logged in, and dying does not end it. The game shows none of that.
+
+- Sayge's tooltip and the fortune buff say when you can get the next one.
+- If you die with the buff, a chat line says when the next fortune is ready.
+- `/sayge` shows this character's wait and your other characters' from this faire.
+
+Settings: Esc > Options > AddOns > KW Sayge's Fortune.
+
+Part of Krool World Forever, which has every KW addon in one: https://www.curseforge.com/wow/addons/krool-world-ui. Install one or the other: next to the bundle, this copy switches itself off.
+
+Open source (MIT): https://github.com/Krool/KroolWorldForever
+
+[Donate](https://ko-fi.com/kroolworld)

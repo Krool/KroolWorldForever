@@ -30,11 +30,7 @@ end
 
 -- -------------------------------------------------------------------- identity
 
-function ns.CharKey()
-	local name, realm = UnitFullName("player")
-	realm = (realm and realm ~= "") and realm or (GetNormalizedRealmName and GetNormalizedRealmName()) or "?"
-	return (name or "?") .. "-" .. realm
-end
+ns.CharKey = root.CharKey -- the roster's key (Core/Characters.lua)
 
 local function Now()
 	return time()
@@ -830,10 +826,14 @@ end
 
 -- -------------------------------------------------------------------- storage
 
+-- Every setup worth listing: the auto snapshots of untracked characters stay saved but are hidden
+-- (they come back when the character is tracked again).
 function ns.List()
 	local list = {}
 	for _, s in pairs(ns.db.setups) do
-		list[#list + 1] = s
+		if not (s.auto and not root.Tracked(s.source)) then
+			list[#list + 1] = s
+		end
 	end
 	table.sort(list, function(a, b)
 		if (a.auto and true or false) ~= (b.auto and true or false) then
@@ -896,8 +896,12 @@ function ns.SetDefault(id)
 end
 
 -- The per-character auto snapshot: one entry per character, refreshed after login and after changes.
+-- An untracked character gets none (nil).
 function ns.AutoSnapshot()
 	local key = ns.CharKey()
+	if not root.Tracked(key) then
+		return nil
+	end
 	local c = ns.db.chars[key] or {}
 	ns.db.chars[key] = c
 	local s = ns.Get(c.auto)

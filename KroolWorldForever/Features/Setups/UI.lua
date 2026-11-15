@@ -1001,6 +1001,10 @@ function Refresh()
 	frame.banner:SetText(BannerText(s))
 end
 ns.Refresh = Refresh
+-- Tracking a character or not changes which snapshots are listed.
+root.OnCharsChanged(function()
+	Refresh()
+end)
 
 -- Opens the window. asOnboarding: new-character mode (offers setups, Not Now / Don't Ask Again).
 -- setupId and report: open on that setup showing the result of an apply that already ran.
@@ -1048,10 +1052,7 @@ ns.blurb = "Copy bars, keys and layouts between characters"
 
 -- The hub card: how many setups, and which one new characters get.
 function ns.HubStatus()
-	local n = 0
-	for _ in pairs((ns.db and ns.db.setups) or {}) do
-		n = n + 1
-	end
+	local n = ns.db and ns.db.setups and #ns.List() or 0 -- not the hidden snapshots of untracked characters
 	local text = ("%d %s"):format(n, n == 1 and "setup" or "setups")
 	local default = ns.Get(ns.db.default)
 	if default then
