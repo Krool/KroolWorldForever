@@ -8,6 +8,11 @@ one, works out which feature it shows, crops it to the part that matters, and sa
 `docs/media/<feature>/<name>.png`. Other players' names get cropped out. A shot that shows nothing
 useful is skipped, never published.
 
+**CurseForge:** each image also goes to the Media tab of the bundle (1804317) and of the KW
+project it shows, with a title and a one-line caption. A caption names any line that comes from
+another feature or from Auctionator ("The Hold Ctrl line is KW Reagent Uses' hint"), so a KW page
+never claims what the single addon does not do.
+
 **Tips:** one thing per shot. Hover the item or creature so its tooltip is open, and keep the mouse
 off the tooltip text. Full screen is fine: cropping is the agent's job. Take tooltip shots away
 from crowds: tooltips are see-through, and a player's floating name behind one cannot be cropped
