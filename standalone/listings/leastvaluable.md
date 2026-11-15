@@ -1,0 +1,26 @@
+# KW Least Valuable
+
+- **Folder:** KW_LeastValuable
+- **Main category:** Bags & Inventory. **More:** Auction & Economy.
+- **Relations:** Auctionator, optional.
+- **Logo:** `standalone/logos/leastvaluable.png`
+
+## Summary
+
+A copper coin on the bag slot worth the least, so you know what to sell or drop first. When your bags are full and you loot, it says whether the loot is worth making room for.
+
+## Description
+
+- A copper coin marks the bag slot worth the least: its whole stack, at the best of its vendor price, auction price and disenchant value.
+- It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear or worthless items like the Hearthstone. `/kwl ignore` skips anything else you keep.
+- When your bags are full and you try to loot, a card beside the loot window names that item and its value against the loot's, and says whether the loot is worth making room for.
+- It never deletes anything.
+- Auction prices come from Auctionator. Without it, it goes by vendor prices and leaves greens unmarked.
+
+`/kwl` lists the five least valuable slots. Settings: Esc > Options > AddOns > KW Least Valuable.
+
+Part of Krool World Forever, which has every KW addon in one: https://www.curseforge.com/wow/addons/krool-world-ui. Install one or the other: next to the bundle, this copy switches itself off.
+
+Open source (MIT): https://github.com/Krool/KroolWorldForever
+
+[Donate](https://ko-fi.com/kroolworld)
