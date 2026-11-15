@@ -135,8 +135,8 @@ before writing addon code.
   finish the release by hand; do not rerun it for the same version.
 - `scripts\publish.ps1` (CurseForge + Wago): ids go in the TOC (`X-Curse-Project-ID`, `X-Wago-ID`);
   tokens are the user env vars `CF_API_KEY` and `WAGO_API_TOKEN`. Never write them to a file or
-  echo them. CurseForge project 1804317 (slug `krool-world-ui`, created 2026-11-14, awaiting
-  moderation); `CF_API_KEY` is set and verified against `/api/game/wow/versions` (Forever 1.60.1
+  echo them. CurseForge project 1804317 (slug `krool-world-ui`, created and approved 2026-11-14,
+  public at https://www.curseforge.com/wow/addons/krool-world-ui); `CF_API_KEY` is set and verified against `/api/game/wow/versions` (Forever 1.60.1
   is id 17053). Its upload path is still untested: 0.18.0 went up by hand, and CurseForge's web
   uploader tagged it Retail 12.1.7 (fixed by hand to Forever 1.60.1). Check the game version on
   every file. Automatic Packaging stays off: release.ps1 uploads the tested zip itself. No Wago

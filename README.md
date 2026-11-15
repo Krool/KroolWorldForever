@@ -3,7 +3,8 @@
 Small quality-of-life features for **World of Warcraft: Forever**, in one addon. Each feature has its
 own on/off switch, so you keep what you want and turn off the rest.
 
-**[Download the latest release](https://github.com/Krool/KroolWorldForever/releases/latest)**
+**[Download the latest release](https://github.com/Krool/KroolWorldForever/releases/latest)**, or get it on
+[CurseForge](https://www.curseforge.com/wow/addons/krool-world-ui).
 
 `/kw` (or the addon button on the minimap) opens the **Krool World hub**: one card per feature with
 what it is doing right now, its on/off switch, and the way in (its window or its settings).

@@ -167,7 +167,8 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
 ## Before publishing anything
 
 - [x] Owner: create the CurseForge project (2026-11-14: id 1804317, `krool-world-ui`, MIT, GitHub
-      source, Ko-fi donation, default relations Auctionator + QuestieDB optional). Awaiting moderation.
+      source, Ko-fi donation, default relations Auctionator + QuestieDB optional). Approved the same
+      day with 0.18.0 (tagged Forever 1.60.1): https://www.curseforge.com/wow/addons/krool-world-ui
 - [ ] Wago project, and its id in the TOC (`X-Wago-ID`). The CurseForge id is in the TOC.
 - [x] CurseForge token saved as `CF_API_KEY` and verified (2026-11-14).
 - [ ] Owner: make a Wago API token and save it as the user environment variable `WAGO_API_TOKEN`
