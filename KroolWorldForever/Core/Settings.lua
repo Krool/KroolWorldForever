@@ -18,7 +18,7 @@ local function OnChange(setting, fn)
 end
 
 local function AddOption(category, F, opt)
-	local variable = "KroolWorldForever_" .. F.key .. "_" .. opt.key
+	local variable = root.ID.prefix .. "_" .. F.key .. "_" .. opt.key
 	if opt.type == "toggle" then
 		local setting = Settings.RegisterAddOnSetting(
 			category,
@@ -50,8 +50,70 @@ local function AddOption(category, F, opt)
 	end
 end
 
+-- One feature's page: its Enabled checkbox, window button, actions, then its declared options.
+local function FillCategory(category, F)
+	local key = F.key
+	local enabled = Settings.RegisterAddOnSetting(
+		category,
+		root.ID.prefix .. "_" .. key .. "_enabled",
+		"enabled",
+		F.db,
+		Settings.VarType.Boolean,
+		"Enabled",
+		F.defaultEnabled ~= false
+	)
+	Settings.CreateCheckbox(category, enabled, F.description)
+	OnChange(enabled, function(value)
+		root.SetEnabled(F, value)
+	end)
+	F.settingObjects = { enabled = enabled } -- root.SetOption goes through these
+	if F.OnOpen and CreateSettingsButtonInitializer and SettingsPanel then
+		local layout = SettingsPanel:GetLayout(category)
+		layout:AddInitializer(CreateSettingsButtonInitializer("", "Open " .. (F.title or key), function()
+			if F.enabled then
+				SettingsPanel:Hide()
+				root.Try(F, "opening", F.OnOpen)
+			end
+		end, F.description, true))
+	end
+	if F.actions and CreateSettingsButtonInitializer and SettingsPanel then
+		local layout = SettingsPanel:GetLayout(category)
+		for _, a in ipairs(F.actions) do
+			layout:AddInitializer(CreateSettingsButtonInitializer("", a.label, root.UI.Safe(a.fn, F), a.tooltip, true))
+		end
+	end
+	for _, opt in ipairs(F.options) do
+		local setting = AddOption(category, F, opt)
+		F.settingObjects[opt.key] = setting
+		if setting and F.OnOptionChanged then
+			OnChange(setting, function(value)
+				F.OnOptionChanged(opt.key, value)
+			end)
+		end
+	end
+end
+
+-- The bundle: a parent category with a hub button and one subcategory per feature. A standalone
+-- (one feature, plus embedded providers that have no page): a single top-level category named for
+-- the addon, holding that feature's page.
 function root.BuildSettings()
-	local parent = Settings.RegisterVerticalLayoutCategory("Krool World Forever")
+	if root.ID.standalone then
+		for _, key in ipairs(root.featureOrder) do
+			local F = root.features[key]
+			if not F.embedded then
+				root.Try(F, "settings", function()
+					local category = Settings.RegisterVerticalLayoutCategory(root.ID.title)
+					F.category = category
+					root.category = category
+					FillCategory(category, F)
+					Settings.RegisterAddOnCategory(category)
+				end)
+				return
+			end
+		end
+		return
+	end
+	local parent = Settings.RegisterVerticalLayoutCategory(root.ID.title)
 	root.category = parent
 	if CreateSettingsButtonInitializer and SettingsPanel then
 		pcall(function()
@@ -63,48 +125,13 @@ function root.BuildSettings()
 	end
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
-		root.Try(F, "settings", function()
-			local category = Settings.RegisterVerticalLayoutSubcategory(parent, F.title or key)
-			F.category = category
-			local enabled = Settings.RegisterAddOnSetting(
-				category,
-				"KroolWorldForever_" .. key .. "_enabled",
-				"enabled",
-				F.db,
-				Settings.VarType.Boolean,
-				"Enabled",
-				F.defaultEnabled ~= false
-			)
-			Settings.CreateCheckbox(category, enabled, F.description)
-			OnChange(enabled, function(value)
-				root.SetEnabled(F, value)
+		if not F.embedded then
+			root.Try(F, "settings", function()
+				local category = Settings.RegisterVerticalLayoutSubcategory(parent, F.title or key)
+				F.category = category
+				FillCategory(category, F)
 			end)
-			F.settingObjects = { enabled = enabled } -- root.SetOption goes through these
-			if F.OnOpen and CreateSettingsButtonInitializer and SettingsPanel then
-				local layout = SettingsPanel:GetLayout(category)
-				layout:AddInitializer(CreateSettingsButtonInitializer("", "Open " .. (F.title or key), function()
-					if F.enabled then
-						SettingsPanel:Hide()
-						root.Try(F, "opening", F.OnOpen)
-					end
-				end, F.description, true))
-			end
-			if F.actions and CreateSettingsButtonInitializer and SettingsPanel then
-				local layout = SettingsPanel:GetLayout(category)
-				for _, a in ipairs(F.actions) do
-					layout:AddInitializer(CreateSettingsButtonInitializer("", a.label, root.UI.Safe(a.fn, F), a.tooltip, true))
-				end
-			end
-			for _, opt in ipairs(F.options) do
-				local setting = AddOption(category, F, opt)
-				F.settingObjects[opt.key] = setting
-				if setting and F.OnOptionChanged then
-					OnChange(setting, function(value)
-						F.OnOptionChanged(opt.key, value)
-					end)
-				end
-			end
-		end)
+		end
 	end
 	Settings.RegisterAddOnCategory(parent)
 end

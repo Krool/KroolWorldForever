@@ -159,14 +159,17 @@ local Tip = UI.Tip
 
 -- -------------------------------------------------------------------- popups
 
+local POPUP = root.ID.popup .. "_SETUPS_"
+local NAME_POPUP, CONFIRM_POPUP = POPUP .. "NAME", POPUP .. "CONFIRM"
+
 local function Popups()
-	if StaticPopupDialogs.KWF_SETUPS_NAME then
+	if StaticPopupDialogs[NAME_POPUP] then
 		return
 	end
 	local function EditBox(dialog)
 		return (dialog.GetEditBox and dialog:GetEditBox()) or dialog.editBox
 	end
-	StaticPopupDialogs.KWF_SETUPS_NAME = {
+	StaticPopupDialogs[NAME_POPUP] = {
 		text = "%s",
 		button1 = ACCEPT,
 		button2 = CANCEL,
@@ -201,7 +204,7 @@ local function Popups()
 		whileDead = true,
 		hideOnEscape = true,
 	}
-	StaticPopupDialogs.KWF_SETUPS_CONFIRM = {
+	StaticPopupDialogs[CONFIRM_POPUP] = {
 		text = "%s",
 		button1 = YES,
 		button2 = NO,
@@ -218,12 +221,12 @@ end
 
 local function AskName(prompt, default, fn)
 	Popups()
-	StaticPopup_Show("KWF_SETUPS_NAME", prompt, nil, { default = default, fn = fn })
+	StaticPopup_Show(NAME_POPUP, prompt, nil, { default = default, fn = fn })
 end
 
 local function Confirm(text, fn)
 	Popups()
-	StaticPopup_Show("KWF_SETUPS_CONFIRM", text, nil, { fn = fn })
+	StaticPopup_Show(CONFIRM_POPUP, text, nil, { fn = fn })
 end
 
 -- -------------------------------------------------------------------- widgets
@@ -370,7 +373,7 @@ local function PartTip(cb)
 end
 
 local function Build()
-	frame = CreateFrame("Frame", "KroolWorldForeverSetupsFrame", UIParent, "ButtonFrameTemplate")
+	frame = CreateFrame("Frame", root.ID.prefix .. "SetupsFrame", UIParent, "ButtonFrameTemplate")
 	frame:SetSize(W, H)
 	frame:SetPoint("CENTER")
 	frame:SetFrameStrata("HIGH") -- under the confirm popups (DIALOG)

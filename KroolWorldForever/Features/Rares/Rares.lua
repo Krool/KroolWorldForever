@@ -19,7 +19,7 @@
 local _, root = ...
 local ns = root.Feature("rares")
 
-local BUTTON = "KroolWorldForeverRareButton"
+local BUTTON = root.ID.prefix .. "RareButton"
 local BINDING = "CLICK " .. BUTTON .. ":LeftButton"
 local SEEN_TTL = 300 -- seconds before another spawn of the same rare alerts
 local SHOW_FOR = 60 -- seconds the button stays up after the last sighting
@@ -31,7 +31,7 @@ local BADGE = { rare = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare-Star", rare
 local DEFAULT_IGNORE = { [3581] = "Sewer Beast" } -- the crocolisk in the Stormwind canals
 
 -- Key Bindings > AddOns (Bindings.xml)
-BINDING_HEADER_KROOLWORLDFOREVER = "Krool World"
+_G["BINDING_HEADER_" .. root.ID.slashId] = root.ID.standalone and root.ID.title or "Krool World"
 _G["BINDING_NAME_" .. BINDING] = "Target And Mark Rare"
 
 local current -- the newest sighting: { npcId, guid, name, level, elite, at, marked }
@@ -179,10 +179,10 @@ end
 
 -- -------------------------------------------------------------------- what it is worth
 
--- Kill Value's breakdown for the rare (nil when Kill Value is off or knows nothing).
+-- Kill Value's breakdown for the rare (nil when Kill Value is off and not embedded, or knows nothing).
 local function Worth(npcId)
 	local kv, FKV = root.features.killvalue, root.public.KillValue
-	if not (kv and kv.enabled and FKV and FKV.Compute) then
+	if not (kv and (kv.enabled or kv.embedded) and FKV and FKV.Compute) then
 		return nil
 	end
 	local ok, acc = pcall(FKV.Compute, npcId)
@@ -709,7 +709,7 @@ function ns.OnEnable()
 	if not ns.db.plateTip and ns.EnemyPlatesOn() == false then
 		ns.db.plateTip = true
 		ns:Print("enemy nameplates are off, so only rares you mouse over or target are noticed. "
-			.. "/kwr nameplates (or the button on the /kw hub) turns them on.")
+			.. (root.ID.standalone and "/kwr nameplates turns them on." or "/kwr nameplates (or the button on the /kw hub) turns them on."))
 	end
 	if pending then
 		UpdateButton() -- switched off in a fight and on again: finish what combat held up

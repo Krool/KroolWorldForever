@@ -101,7 +101,7 @@ local function ShowHeader(h, on)
 end
 
 local function Build()
-	frame = UI.Window("KroolWorldForeverQuestTrashFrame", "Quest Trash", W, H, ns.icon)
+	frame = UI.Window(root.ID.prefix .. "QuestTrashFrame", "Quest Trash", W, H, ns.icon)
 	frame.banner = UI.Text(frame, "GameFontHighlight")
 	frame.banner:SetPoint("TOPLEFT", 68, -35)
 	frame.banner:SetWidth(W - 84)

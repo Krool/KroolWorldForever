@@ -10,6 +10,7 @@
 ## OptionalDeps: QuestieDB, Auctionator
 ## SavedVariables: KroolWorldForeverDB
 
+Core\Identity.lua
 Core\Registry.lua
 Core\Settings.lua
 Core\Widgets.lua

@@ -165,7 +165,7 @@ local function Card(parent, F, i)
 end
 
 local function Build()
-	hub = UI.Window("KroolWorldForeverHub", "Krool World", W, 10)
+	hub = UI.Window(root.ID.prefix .. "Hub", "Krool World", W, 10)
 	if type(hub.Inset) == "table" then
 		hub.Inset:Hide() -- each card is its own inset
 	end

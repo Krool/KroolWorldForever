@@ -334,7 +334,7 @@ local function Help()
 	Print("  /fkv status | config | options | reset [learned] | help")
 	Print("  /fkv detail <0-10> | cut <pct> | rare <pct>")
 	Print("  /fkv learn | vendor | ah | gather | skin | friendly | hello    (on/off switches)")
-	Print("  turn the whole feature on or off with /kw killvalue on|off")
+	Print(root.ID.standalone and "  turn the whole feature on or off in Options > AddOns > " .. root.ID.title or "  turn the whole feature on or off with /kw killvalue on|off")
 end
 
 -- Through the settings panel's own objects, so an open panel and OnOptionChanged stay in sync.

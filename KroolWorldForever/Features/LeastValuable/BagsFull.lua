@@ -249,7 +249,7 @@ local function Dock()
 end
 
 local function Build()
-	local card = UI.Window("KroolWorldForeverBagsFullCard", "Bags Full", W, H, ns.icon)
+	local card = UI.Window(root.ID.prefix .. "BagsFullCard", "Bags Full", W, H, ns.icon)
 	ui = { card = card }
 	card:SetFrameStrata("DIALOG")
 

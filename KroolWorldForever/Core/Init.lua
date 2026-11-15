@@ -2,6 +2,7 @@
 -- declared itself before ADDON_LOADED.
 
 local addonName, root = ...
+local ID = root.ID
 
 local function ApplyDefaults(F)
 	local db = F.db
@@ -16,8 +17,8 @@ local function ApplyDefaults(F)
 end
 
 local function Load()
-	KroolWorldForeverDB = KroolWorldForeverDB or {}
-	local sv = KroolWorldForeverDB
+	_G[ID.db] = _G[ID.db] or {}
+	local sv = _G[ID.db]
 	sv.features = sv.features or {}
 	sv.session = (tonumber(sv.session) or 0) + 1 -- one per load, to tell this session's errors apart
 	root.session = sv.session
@@ -38,7 +39,9 @@ local function Login()
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
 		F.enabled = false
-		root.SetEnabled(F, F.db.enabled)
+		if not F.embedded then
+			root.SetEnabled(F, F.db.enabled)
+		end
 	end
 end
 
@@ -46,6 +49,14 @@ end
 
 local function FeatureState(F)
 	return F.db.enabled and "|cff33ff99on|r" or "|cffff5555off|r"
+end
+
+-- How to turn a feature on again, for the "is off" line.
+local function HowOn(F)
+	if ID.standalone then
+		return "Turn it on in Options > AddOns > " .. ID.title .. "."
+	end
+	return "Turn it on with /kw " .. F.key .. " on"
 end
 
 local function MainSlash(msg)
@@ -75,21 +86,63 @@ local function MainSlash(msg)
 	end
 end
 
+-- A standalone's one command (the feature's own words): settings, errors and chars are answered
+-- here, whether the feature is on or not; everything else is the feature's.
+local function StandaloneSlash(F)
+	return function(msg)
+		local word, arg = strtrim(msg or ""):lower():match("^(%S*)%s*(.-)$")
+		if word == "settings" then
+			root.OpenSettings(F)
+		elseif word == "errors" then
+			root.PrintErrors(arg)
+		elseif word == "chars" then
+			if root.OpenChars then
+				root.Try(nil, "characters", root.OpenChars)
+			else
+				root.Print("the character list is not available in this addon.")
+			end
+		elseif not F.enabled then
+			F:Print("is off. " .. HowOn(F))
+		elseif F.OnSlash then
+			root.Try(F, "slash command", F.OnSlash, msg)
+		elseif F.OnOpen then
+			root.Try(F, "opening", F.OnOpen)
+		else
+			root.OpenSettings(F)
+		end
+	end
+end
+
 local function RegisterSlash()
-	SLASH_KROOLWORLDFOREVER1 = "/kw"
-	SLASH_KROOLWORLDFOREVER2 = "/kwf"
-	SLASH_KROOLWORLDFOREVER3 = "/kroolworld"
-	SlashCmdList.KROOLWORLDFOREVER = MainSlash
+	if ID.standalone then
+		for _, key in ipairs(root.featureOrder) do
+			local F = root.features[key]
+			if not F.embedded then
+				local words = F.slash or ID.slash
+				for i, cmd in ipairs(words) do
+					_G["SLASH_" .. ID.slashId .. i] = cmd
+				end
+				root.cmd = words[1]
+				SlashCmdList[ID.slashId] = StandaloneSlash(F)
+				return
+			end
+		end
+		return
+	end
+	for i, cmd in ipairs(ID.mainSlash) do
+		_G["SLASH_" .. ID.slashId .. i] = cmd
+	end
+	SlashCmdList[ID.slashId] = MainSlash
 	for _, key in ipairs(root.featureOrder) do
 		local F = root.features[key]
-		if F.slash and F.OnSlash then
-			local id = "KROOLWORLDFOREVER_" .. key:upper()
+		if F.slash and F.OnSlash and not F.embedded then
+			local id = ID.slashId .. "_" .. key:upper()
 			for i, cmd in ipairs(F.slash) do
 				_G["SLASH_" .. id .. i] = cmd
 			end
 			SlashCmdList[id] = function(msg)
 				if not F.enabled then
-					F:Print("is off. Turn it on with /kw " .. key .. " on")
+					F:Print("is off. " .. HowOn(F))
 					return
 				end
 				root.Try(F, "slash command", F.OnSlash, msg)
@@ -98,11 +151,21 @@ local function RegisterSlash()
 	end
 end
 
-function KroolWorldForever_OnCompartmentClick()
-	root.OpenHub()
+_G[ID.addon .. "_OnCompartmentClick"] = function()
+	if not root.yielded then
+		root.OpenHub()
+	end
 end
 
 -- -------------------------------------------------------------------- frame
+
+-- A standalone next to the bundle: the bundle already has this feature, so stay fully off (no
+-- settings, slash, hooks or frames) and say why once.
+local function Yield()
+	root.yielded = true
+	root.frame:UnregisterAllEvents()
+	print(ID.chat .. " is off: Krool World Forever already includes it. Disable one of them in the AddOns list.")
+end
 
 local frame = CreateFrame("Frame")
 root.frame = frame
@@ -115,11 +178,21 @@ frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:SetScript("OnEvent", function(self, event, ...)
 	if event == "ADDON_LOADED" then
-		if ... == addonName then
+		-- The bundle starts now; a standalone waits for login, when it can tell whether the bundle is loaded.
+		if ... == addonName and not ID.standalone then
 			root.Try(nil, "startup", Load)
 			RegisterSlash()
 		end
 	elseif event == "PLAYER_LOGIN" then
+		if ID.standalone then
+			local ok, bundleLoaded = pcall(C_AddOns.IsAddOnLoaded, ID.bundle)
+			if ok and bundleLoaded then
+				Yield()
+				return
+			end
+			root.Try(nil, "startup", Load)
+			RegisterSlash()
+		end
 		Login()
 	end
 	root.Dispatch(event, ...)
