@@ -16,10 +16,11 @@ out (the first Copper Bar shot was skipped for that, 2026-11-15).
 Tick a line when its shot is in `docs/media/`.
 
 ## Krool World Forever (bundle)
-- [ ] The hub (`/kw`), all cards visible.
+- [x] The hub (`/kw`), all cards visible.
 - [ ] The Characters list (`/kw chars`).
 
 ## Quest Trash
+- [x] A quest item tooltip that reads Keep, with its quests (Copper Bar).
 - [ ] A quest item tooltip that reads Can be deleted, with its reason.
 - [ ] The `/fqt` window with items in Can Delete and Keep.
 
@@ -63,5 +64,5 @@ Tick a line when its shot is in `docs/media/`.
 - [ ] Fishing with the line out (the key's tooltip or `/kwfish` in chat).
 
 ## Reagent Uses
-- [ ] Ctrl held over Silk Cloth (or any cloth or ore) with the recipe list showing.
+- [x] Ctrl held over Silk Cloth (or any cloth or ore) with the recipe list showing.
 - [x] The same item without Ctrl (the one-line hint).

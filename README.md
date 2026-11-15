@@ -39,6 +39,15 @@ off and says so.
 
 ## Screenshots
 
+**The hub** (`/kw`): a card per feature with what it is doing now, its switch and its way in.
+
+<img src="docs/media/bundle/hub.png" alt="Krool World hub: cards for Quest Trash, Kill Value, Setups, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value and One-Button Fishing, each with its status and an On switch" width="420">
+
+**Reagent Uses** with Ctrl held, and without it (the one-line hint). The Keep lines above are
+Quest Trash's; Vendor and Auction are Auctionator's.
+
+<img src="docs/media/reagents/ctrl-list.png" alt="Copper Bar tooltip with Ctrl: Mining 91, Smelt Bronze Trainer 65; Blacksmithing 90, 50 recipes, Runed Copper Bracers x10 Known and more, Sterling Silver Breastplate Recipe 125, +37 more" width="420"> <img src="docs/media/questtrash/keep-tooltip.png" alt="Copper Bar tooltip without Ctrl: Keep, needed for an active quest, four quests listed, Hold Ctrl: 64 recipes use this" width="420">
+
 **Skill-Up Odds:** the chance per recipe in the crafting window, and the Next Skill Point panel
 ranking your recipes by what a point costs.
 
@@ -48,7 +57,7 @@ ranking your recipes by what a point costs.
 
 ![Setups window: nine characters listed, Steel-God's auto snapshot going onto Steel, with Action Bars, Keybindings, Macros, Edit Mode Layout, Interface Settings, Addon List and Krool World Settings ticked](docs/media/setups/window.png)
 
-**Disenchant Value** (Vendor and Auction lines are Auctionator's):
+**Disenchant Value** (the Vendor and Auction lines are Auctionator's):
 
 ![Inscribed Leather Boots tooltip: Disenchant 3s 25c, Best: sell it to a vendor (disenchant 3s 25c, auction 4s 7c)](docs/media/disenchant/tooltip.png)
 
