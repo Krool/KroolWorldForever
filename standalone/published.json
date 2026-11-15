@@ -1,1 +1,50 @@
-{}
+{
+    "camp":  {
+                 "hash":  "921aee78625036a02a12cb7f2cf615d01b3a3c2ea85bd0379eae064bbf3a97a7",
+                 "version":  "0.19.0"
+             },
+    "disenchant":  {
+                       "hash":  "6861bc7df310557b91e96109ab36d58d737691bb4635a20d17cd6d237c741086",
+                       "version":  "0.19.0"
+                   },
+    "fishing":  {
+                    "hash":  "87a5e82eca3d4da5a30b8456cfe1f1289826f13a88dbaa99f88f67e8bda3675f",
+                    "version":  "0.19.0"
+                },
+    "fortune":  {
+                    "hash":  "5ccdb78a3e2d1f4f8a0e31ae11acb44ea06520e310f77334ab514ed909949732",
+                    "version":  "0.19.0"
+                },
+    "killvalue":  {
+                      "hash":  "32571017398ba06453ce43b6bce772f06548b05d72445301f0eace4f749a3d6c",
+                      "version":  "0.19.0"
+                  },
+    "leastvaluable":  {
+                          "hash":  "53049c8c82510dc2f7e0f14687e8a201a4db199fa683b74e43723d836fd16602",
+                          "version":  "0.19.0"
+                      },
+    "questtrash":  {
+                       "hash":  "c2eedc2f03c4aa27914d2996b41c6fea13a5d480fdb1bb697b448e6d5d30c035",
+                       "version":  "0.19.0"
+                   },
+    "rares":  {
+                  "hash":  "93851f6170e076ef4b94aff56abd2931848ef51453575b7f545824854ff05a82",
+                  "version":  "0.19.0"
+              },
+    "reagents":  {
+                     "hash":  "4cf8bd0d104de019d0a416ff623da58968b45fe50e4255743fe6dfcb8bbdd1d0",
+                     "version":  "0.19.0"
+                 },
+    "rewardvalue":  {
+                        "hash":  "6d923055a2d18e6b444611d3e639111859171a4f8d25498fa32f143c1612a6ca",
+                        "version":  "0.19.0"
+                    },
+    "setups":  {
+                   "hash":  "6851b31c7ce7592435b7eb492f2cd20d6e9a70612526b8c8952fa74bca191622",
+                   "version":  "0.19.0"
+               },
+    "skillup":  {
+                    "hash":  "14afe68a3f9ab2bb9f5e61ac32189187353ac29bc56007d711e4a84c1067baed",
+                    "version":  "0.19.0"
+                }
+}
