@@ -153,9 +153,11 @@ before writing addon code.
   tokens are the user env vars `CF_API_KEY` and `WAGO_API_TOKEN`. Never write them to a file or
   echo them. CurseForge project 1804317 (slug `krool-world-ui`, created and approved 2026-11-14,
   public at https://www.curseforge.com/wow/addons/krool-world-ui); `CF_API_KEY` is set and verified against `/api/game/wow/versions` (Forever 1.60.1
-  is id 17053). Its upload path is still untested: 0.18.0 went up by hand, and CurseForge's web
-  uploader tagged it Retail 12.1.7 (fixed by hand to Forever 1.60.1). Check the game version on
-  every file. Automatic Packaging stays off: release.ps1 uploads the tested zip itself. No Wago
+  is id 17053). Uploads go through the API since 0.19.0 and come out tagged Forever 1.60.1; a new
+  file shows as Processing in the authors console until CurseForge approves it, and the public
+  page lists the older file until then. (0.18.0 went up by hand and the web uploader tagged it
+  Retail 12.1.7.) Check the game version on every file. The page text is not uploaded by
+  anything: see `standalone/CLAUDE.md`. Automatic Packaging stays off: release.ps1 uploads the tested zip itself. No Wago
   project yet. Standalones: publish uploads each manifest entry with a `curseId` only when its
   files changed (ledger `standalone/published.json`, committed by release.ps1); `-DryRun` shows
   the plan without the API. Wago Addons accepts Forever uploads now (checked 2026-11-16: its
