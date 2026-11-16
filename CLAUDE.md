@@ -158,7 +158,9 @@ before writing addon code.
   every file. Automatic Packaging stays off: release.ps1 uploads the tested zip itself. No Wago
   project yet. Standalones: publish uploads each manifest entry with a `curseId` only when its
   files changed (ledger `standalone/published.json`, committed by release.ps1); `-DryRun` shows
-  the plan without the API.
+  the plan without the API. Wago Addons accepts Forever uploads now (checked 2026-11-16: its
+  game list has `"forever":["1.60.1"]`, upload key `supported_forever_patches`; docs.wago.io
+  does not show it yet).
 - Commit with `git commit -F <file>`: PowerShell 5.1 mangles embedded quotes in native arguments.
 - Stage only paths you touched (shared tree; never `git add -A`).
 
