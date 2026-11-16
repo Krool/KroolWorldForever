@@ -2,19 +2,20 @@
 
 - **Folder:** KW_RareAlert
 - **Main category:** Map & Minimap. **More:** Combat.
-- **Relations:** none.
+- **Relations:** Auctionator, optional.
 - **Logo:** `standalone/logos/rares.png`
 
 ## Summary
 
-A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a button and a key that target it and mark it with a skull.
+Rare spawn alert: a sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops. A button and a key target it and mark it.
 
 ## Description
 
 - When a rare enemy shows up nearby: a sound, a message on screen and a line in chat, with what it is worth and its best drops. One alert per spawn.
-- A skull button and a key (Key Bindings > AddOns) target the rare and put a skull on it. The game only lets you do that with your own click or key press.
+- Rares are noticed through enemy nameplates, which this game starts with off: `/kwr nameplates` turns them on. Without them, only a rare you mouse over or target is noticed.
+- A marker button and a key (Key Bindings > AddOns > KW Rare Alert) target the rare and mark it: a skull by default, or any of the eight markers. The game only lets you do that with your own click or key press.
 - The button goes away once the rare has your marker or dies. Right-click hides it; shift-right-click ignores that rare.
-- Rares are noticed through enemy nameplates, which this game starts with off: `/kwr nameplates` turns them on.
+- Values use Auctionator's prices when you have it, else vendor prices.
 - `/kwr test` shows the button so you can place it (shift-drag) and try your key.
 
 Settings: Esc > Options > AddOns > KW Rare Alert.

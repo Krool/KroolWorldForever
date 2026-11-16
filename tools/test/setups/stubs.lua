@@ -530,6 +530,14 @@ end
 function FCF_SetChatWindowFontSize(_, frame, size)
 	ChatSizes[frame:GetID()] = size
 end
+-- Global-function form only: the hook runs after the original, like the client's.
+function hooksecurefunc(name, fn)
+	local original = _G[name]
+	_G[name] = function(...)
+		original(...)
+		fn(...)
+	end
+end
 C_Item = {
 	PickupItem = function(id)
 		if OwnedItems[id] then

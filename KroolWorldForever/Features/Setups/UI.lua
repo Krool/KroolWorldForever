@@ -411,7 +411,7 @@ local function Build()
 	-- Toasts sit over the right panel, between the warning line and the Reload Now bar.
 	UI.ToastAt(frame, (LIST_W + 12 + W - 14) / 2 - W / 2, 76)
 	if frame.SetTitle then
-		frame:SetTitle("Krool World Setups")
+		frame:SetTitle(root.ID.standalone and root.ID.title or "Krool World Setups")
 	end
 	if frame.SetPortraitToAsset then
 		pcall(frame.SetPortraitToAsset, frame, ART.addon)
@@ -1056,7 +1056,7 @@ end
 
 ns.title = "Setups"
 ns.description = "Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, "
-	.. "addon list and Krool World settings, and apply them to another character. /kws opens the window."
+	.. "chat text size, addon list and Krool World settings, and apply them to another character. /kws opens the window."
 ns.icon = "Interface\\Icons\\INV_Misc_Book_09"
 ns.blurb = "Copy bars, keys and layouts between characters"
 
@@ -1250,6 +1250,7 @@ ns.Settle = Settle -- test seam: what runs a few seconds after login
 -- loading" until a reload.
 local started, settling, wasNew = false, false, false
 function ns.OnEnable()
+	ns.HookChatSize()
 	if not started then
 		started = true
 		wasNew = ns.Identify()
@@ -1284,6 +1285,13 @@ local function SnapshotSoon()
 	end))
 end
 ns.SnapshotSoon = SnapshotSoon
+-- A chat text size change fires none of the events below, so the chat tab's Font Size menu is hooked.
+function ns.HookChatSize()
+	if ns.chatHooked or type(hooksecurefunc) ~= "function" or type(FCF_SetChatWindowFontSize) ~= "function" then
+		return
+	end
+	ns.chatHooked = pcall(hooksecurefunc, "FCF_SetChatWindowFontSize", SnapshotSoon)
+end
 for _, event in ipairs({ "ACTIONBAR_SLOT_CHANGED", "UPDATE_BINDINGS", "UPDATE_MACROS", "EDIT_MODE_LAYOUTS_UPDATED", "CVAR_UPDATE" }) do
 	ns:RegisterEvent(event, SnapshotSoon)
 end

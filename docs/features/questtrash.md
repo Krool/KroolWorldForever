@@ -26,7 +26,7 @@ changes while open. Advice only: it deletes nothing. `/fqt print` lists the same
 
 ## Requires
 
-**QuestieDB** (the database addon Questie uses; install Questie or QuestieDB on its own). Without it
+**QuestieDB** (the database addon Questie uses; the CurseForge app installs it with Questie, and by hand it is its own download). Without it
 the feature says so at login and `/fqt status` reports it; the rest of the bundle is unaffected.
 
 ## How it decides

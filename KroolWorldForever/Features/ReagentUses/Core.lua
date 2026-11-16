@@ -529,7 +529,7 @@ function ns.OnSlash(msg)
 	elseif msg == "chars" or msg == "characters" then
 		root.OpenCharacters()
 	else
-		ns:Print("/ru opens the settings; /ru chars lists your characters (/kw track, untrack and forget).")
+		ns:Print(("/ru opens the settings; /ru chars lists your characters (%s track, untrack and forget)."):format(root.cmd or "/ru"))
 	end
 end
 

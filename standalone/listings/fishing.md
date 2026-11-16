@@ -7,12 +7,12 @@
 
 ## Summary
 
-One key casts your line and, while it is out, reels in the bite. With a fishing pole in your main hand, a double right-click does the same.
+One-key fishing: one key casts your line and, while it is out, reels in the bite. With a fishing pole in your main hand, a double right-click does the same.
 
 ## Description
 
-- One key casts your line and, while the line is out, reels in the bite. Set it under Key Bindings > AddOns.
-- With a fishing pole in your main hand, a double right-click does the same.
+- One key casts your line and, while the line is out, reels in the bite. Bind it first, under Key Bindings > AddOns > KW One-Button Fishing: it has no default key.
+- With a fishing pole in your main hand, a double right-click does the same. Not while moving, mounted, swimming, stealthed, in a vehicle or in combat.
 - Every cast and reel is your own key press or click. The addon only points your key at the cast or the bobber, out of combat.
 - It turns on the game's soft-interact settings only while the line is out, and puts them back afterwards.
 - `/kwfish` shows your key and whether a pole is equipped for double right-click.

@@ -30,8 +30,11 @@ local BADGE = { rare = "UI-HUD-UnitFrame-Target-PortraitOn-Boss-Rare-Star", rare
 -- Always up, never worth a stop: ignored until you unignore them.
 local DEFAULT_IGNORE = { [3581] = "Sewer Beast" } -- the crocolisk in the Stormwind canals
 
--- Key Bindings > AddOns (Bindings.xml)
-_G["BINDING_HEADER_" .. root.ID.slashId] = root.ID.standalone and root.ID.title or "Krool World"
+-- Key Bindings > AddOns (Bindings.xml). A standalone's header is its own title, so every "where
+-- to bind" text is built from HEADER.
+local HEADER = root.ID.standalone and root.ID.title or "Krool World"
+local WHERE_TO_BIND = "Key Bindings > AddOns > " .. HEADER
+_G["BINDING_HEADER_" .. root.ID.slashId] = HEADER
 _G["BINDING_NAME_" .. BINDING] = "Target And Mark Rare"
 
 local current -- the newest sighting: { npcId, guid, name, level, elite, at, marked }
@@ -341,7 +344,7 @@ local function Build()
 		local key = BindingKey()
 		GameTooltip:AddLine(root.UI.InlineIcon(MARKER_ICON .. Marker(), 14, true) .. " Click" .. (key and (" or press " .. key) or "") .. ": target it and mark it.", 1, 1, 1, true)
 		if not key then
-			GameTooltip:AddLine("Bind a key: Key Bindings > AddOns > Krool World.", 0.7, 0.7, 0.7, true)
+			GameTooltip:AddLine("Bind a key: " .. WHERE_TO_BIND .. ".", 0.7, 0.7, 0.7, true)
 		end
 		GameTooltip:AddLine("Right-click: hide it.  Shift-right-click: ignore this rare.  Shift-drag: move.", 0.7, 0.7, 0.7, true)
 		GameTooltip:Show()
@@ -499,7 +502,11 @@ local function Alert(r)
 	end
 	if db.chat then
 		local key = BindingKey()
-		local how = key and ("press " .. key .. " to target and mark it") or (db.button and "click the skull to target and mark it" or nil)
+		local how = key and ("press " .. key .. " to target and mark it") or (db.button and "click the marker button to target and mark it" or nil)
+		if how and InCombat() then
+			-- The secure button cannot be re-pointed in combat: until then the key still has the last rare.
+			how = "after combat, " .. how
+		end
 		local badge = root.UI.InlineAtlas(BADGE[r.elite and "rareelite" or "rare"], 14)
 		ns:Print(badge .. " |cffffd100" .. Describe(r) .. "|r" .. (how and (" - " .. how) or ""))
 		local worth = WorthLine(r.npcId)
@@ -578,7 +585,7 @@ ns.blurb = "Alert and one-key skull for rare enemies"
 ns.options = {
 	{ key = "sound", type = "toggle", label = "Play A Sound", tooltip = "The raid warning sound when a rare shows up.", default = true },
 	{ key = "screen", type = "toggle", label = "Show A Screen Message", tooltip = "The rare's name in the middle of the screen, like a raid warning.", default = true },
-	{ key = "chat", type = "toggle", label = "Chat Message", tooltip = "One line in chat with the rare's name and level.", default = true },
+	{ key = "chat", type = "toggle", label = "Chat Message", tooltip = "A chat line with the rare's name and level, and how to target it. A second line says what it is worth and its best drops.", default = true },
 	{
 		key = "button",
 		type = "toggle",
@@ -648,7 +655,7 @@ local function Help()
 	print("  /kwr list             the ignore list")
 	print("  /kwr test             show the button with a test entry (to place it and try your key)")
 	print("  /kwr nameplates       turn enemy nameplates on (rares are seen as soon as theirs shows)")
-	print("  bind the key in Key Bindings > AddOns > Krool World")
+	print("  bind the key in " .. WHERE_TO_BIND)
 end
 
 function ns.OnSlash(msg)

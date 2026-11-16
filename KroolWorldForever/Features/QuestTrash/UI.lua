@@ -306,14 +306,14 @@ ns.options = {
 	{
 		key = "tooltip",
 		type = "toggle",
-		label = "Show Verdict on Tooltips",
+		label = "Show Verdict On Tooltips",
 		tooltip = "Adds a keep or delete line to quest item tooltips.",
 		default = true,
 	},
 	{
 		key = "questList",
 		type = "toggle",
-		label = "List the Quests Involved",
+		label = "List The Quests Involved",
 		tooltip = "Shows up to four quests and their status under the verdict.",
 		default = true,
 	},

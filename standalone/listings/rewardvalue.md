@@ -7,12 +7,13 @@
 
 ## Summary
 
-When you pick a quest reward, a coin marks the choice worth the most, at the best of its vendor price, auction price and disenchant value. It never picks for you.
+Quest reward helper: when a quest offers a choice, a coin marks the reward worth the most, at the best of its vendor price, auction price and disenchant value. It never picks for you.
 
 ## Description
 
 - When a quest offers a choice of rewards, a coin marks the one worth the most.
-- Each choice counts at the best of its vendor price, auction price and disenchant value, and each reward's tooltip shows that value.
+- Each choice counts at the best of its vendor price, auction price and, for an enchanter, its disenchant value. Each reward's tooltip shows that value.
+- A reward that binds when you pick it up has no auction price, so it counts at its vendor price (or what it disenchants into).
 - It never picks the reward for you.
 - Auction prices come from Auctionator. Without it, it goes by vendor prices.
 

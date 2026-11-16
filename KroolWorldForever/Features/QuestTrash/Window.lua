@@ -148,7 +148,7 @@ function ns.RefreshWindow(force)
 	if not ns.ready then
 		local ok, info = FQT.ProviderStatus()
 		frame.banner:SetText(ok and "Reading quest data..." or ("|cffff5555" .. tostring(info) .. "|r"))
-		frame.empty:SetText(ok and "Hover again in a moment." or "Install QuestieDB (a separate download from Questie) and reload.")
+		frame.empty:SetText(ok and "Hover again in a moment." or "Install QuestieDB and reload. The CurseForge app adds it with Questie; installed by hand, it is its own download.")
 		frame.empty.art:SetAtlas(ok and UI.ATLAS.search or UI.ATLAS.fail)
 		frame.empty:Show()
 		frame.empty.art:Show()

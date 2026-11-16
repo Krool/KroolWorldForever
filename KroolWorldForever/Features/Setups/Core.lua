@@ -344,9 +344,10 @@ function capture.kwf()
 	return out, n
 end
 
--- Captures the given parts (all when nil). Returns parts, counts.
+-- Captures the given parts (all when nil). Returns parts, counts, failed: failed[key] is true for
+-- a part whose capture threw (logged; /kw errors shows it).
 function ns.Capture(which)
-	local parts, counts = {}, {}
+	local parts, counts, failed = {}, {}, {}
 	for _, p in ipairs(ns.PARTS) do
 		if not which or which[p.key] then
 			local ok, data, n = pcall(capture[p.key])
@@ -354,11 +355,12 @@ function ns.Capture(which)
 				parts[p.key], counts[p.key] = data, n or 0
 			else
 				counts[p.key] = 0
-				ns.lastCaptureError = tostring(data)
+				failed[p.key] = true
+				root.Report(ns, "capture " .. p.key, data, true)
 			end
 		end
 	end
-	return parts, counts
+	return parts, counts, failed
 end
 
 -- -------------------------------------------------------------------- apply
@@ -432,11 +434,12 @@ local function SpellToPlace(want)
 	end
 end
 
--- Puts the action on the cursor. Returns true when something is on it.
-local function Pickup(want)
+-- Puts the action on the cursor. Returns true when something is on it. exact (Undo): the spell
+-- was on this character's own bar, so its saved id goes back without the known-spell check.
+local function Pickup(want, exact)
 	ClearCursor()
 	if want.t == "spell" then
-		local id = SpellToPlace(want)
+		local id = exact and type(want.id) == "number" and want.id or SpellToPlace(want)
 		if id then
 			C_Spell.PickupSpell(id)
 		end
@@ -501,7 +504,7 @@ function apply.bars(data, opts, report, setup)
 		elseif Unrestorable(slot) then
 			kept = kept + 1
 		elseif want then
-			if Pickup(want) then
+			if Pickup(want, opts.isUndo) then
 				PlaceAction(slot)
 				placed = placed + 1
 			else
@@ -646,8 +649,18 @@ function apply.editmode(data, opts, report)
 			Done(("Edit Mode: %d options changed (frames shown, snap, grid...)"):format(changed))
 		end
 	end
+	-- A layout that is already the active one changes nothing, so it asks for no reload.
+	local function Active(index)
+		local ok, info = pcall(C_EditMode.GetLayouts)
+		return ok and type(info) == "table" and info.activeLayout == index
+	end
 	if data.preset or data.restore then
-		C_EditMode.SetActiveLayout(data.preset or data.restore)
+		local target = data.preset or data.restore
+		if Active(target) then
+			report.lines[#report.lines + 1] = "Edit Mode: that layout is already active"
+			return
+		end
+		C_EditMode.SetActiveLayout(target)
 		Done(data.preset and "Edit Mode: switched to a built-in layout" or "Edit Mode: switched back to the previous layout")
 		return
 	end
@@ -667,6 +680,10 @@ function apply.editmode(data, opts, report)
 	for i, l in ipairs(saved) do
 		local ok, str = pcall(C_EditMode.ConvertLayoutInfoToString, l)
 		if ok and str == data.str then
+			if Active(#presets + i) then
+				report.lines[#report.lines + 1] = ('Edit Mode: your layout "%s" is already active'):format(l.layoutName)
+				return
+			end
 			C_EditMode.SetActiveLayout(#presets + i)
 			Done(('Edit Mode: switched to your existing layout "%s"'):format(l.layoutName))
 			return
@@ -861,8 +878,11 @@ function ns.Apply(setup, which, opts)
 	opts = opts or {}
 	-- Undo first: everything this apply may touch, as it is now. Macros are never changed (only
 	-- created), and Edit Mode is undone by switching back, not by re-adding the old layout.
+	local noUndo = {}
 	if not opts.isUndo then
-		local undoParts = ns.Capture(which)
+		local undoParts, _, failed = ns.Capture(which)
+		noUndo = failed
+		noUndo.macros = nil -- macros are only ever created, so they need no undo point
 		undoParts.macros = nil
 		if undoParts.editmode then
 			local info = C_EditMode.GetLayouts()
@@ -885,7 +905,14 @@ function ns.Apply(setup, which, opts)
 		if which[key] and data then
 			local first = #report.lines + 1
 			report.flag, report.needReload = nil, nil
-			local ok, err = pcall(apply[key], data, opts, report, setup)
+			local ok, err = true, nil
+			if noUndo[key] then
+				-- Never change what Undo could not put back.
+				report.lines[#report.lines + 1] = ("%s: not applied (could not save an undo point for it)"):format(LABEL[key])
+				Flag(report, "fail")
+			else
+				ok, err = pcall(apply[key], data, opts, report, setup)
+			end
 			if not ok then
 				report.lines[#report.lines + 1] = ("%s: failed (%s)"):format(LABEL[key], tostring(err))
 				Flag(report, "fail")

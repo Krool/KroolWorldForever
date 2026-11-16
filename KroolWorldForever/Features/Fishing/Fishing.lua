@@ -29,8 +29,11 @@ local DEBOUNCE = 0.5 -- after acting, ignore clicks this long
 local CLICK_GRACE = 0.3 -- a double-click's cast override is cleared this long after the mouse up
 local LOOT_WAIT = 0.3 -- after the line comes in, how long the reel keys wait for a loot window
 
--- Key Bindings > AddOns (Bindings.xml). The header is set by Rare Alert too; same text.
-_G["BINDING_HEADER_" .. root.ID.slashId] = root.ID.standalone and root.ID.title or "Krool World"
+-- Key Bindings > AddOns (Bindings.xml). The header is set by Rare Alert too; same text. A
+-- standalone's header is its own title, so every "where to bind" text is built from HEADER.
+local HEADER = root.ID.standalone and root.ID.title or "Krool World"
+local WHERE_TO_BIND = "Key Bindings > AddOns > " .. HEADER
+_G["BINDING_HEADER_" .. root.ID.slashId] = HEADER
 _G["BINDING_NAME_" .. BINDING] = "Fish: Cast Or Reel In"
 
 local button, reelOwner
@@ -147,8 +150,9 @@ local function GetCVarValue(name)
 end
 
 -- cvar -> { orig = value before us, mine = the value we set, as the client reads it back }. Kept in
--- the saved variables: a reload, crash or disconnect while the line is out (or in combat, when the
+-- the saved variables: a reload or disconnect while the line is out (or in combat, when the
 -- restore has to wait) leaves our values in Config.wtf, and the next load puts the originals back.
+-- A crash writes no saved variables, so nothing can be put back after one.
 local function Held()
 	if type(ns.db) ~= "table" then
 		return {}
@@ -438,7 +442,7 @@ end
 -- -------------------------------------------------------------------- definition
 
 ns.title = "One-Button Fishing"
-ns.description = "One key casts your line and reels in the bite: set it in Key Bindings > AddOns > Krool World. "
+ns.description = "One key casts your line and reels in the bite: set it in " .. WHERE_TO_BIND .. ". "
 	.. "With a fishing pole in your main hand a double right-click does the same. "
 	.. "Every cast and reel is your own key press or click; the addon only re-points keys, and only out of combat."
 ns.icon = "Interface\\Icons\\Trade_Fishing"
@@ -462,7 +466,7 @@ end
 
 function ns.OnSlash(msg)
 	local key = BindingKeys()
-	ns:Print(key and ("press " .. key .. " to cast, and again to reel in") or "no key yet: set one in Key Bindings > AddOns > Krool World")
+	ns:Print(key and ("press " .. key .. " to cast, and again to reel in") or ("no key yet: set one in " .. WHERE_TO_BIND))
 	print("  fishing pole: " .. (PoleEquipped() and "equipped" or "not equipped") .. "; double right-click " .. (ns.db.doubleClick and "on" or "off"))
 end
 
@@ -478,7 +482,7 @@ local function Retry()
 	end
 end
 
--- Values held when the last session ended (a reload or crash with the line out, or a logout in
+-- Values held when the last session ended (a reload with the line out, or a logout in
 -- combat): put the originals back, unless a line is out right now.
 local function RestoreLeftovers()
 	if next(Held()) == nil or reeling or IsFishing() then

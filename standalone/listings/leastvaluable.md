@@ -12,8 +12,9 @@ A copper coin on the bag slot worth the least, so you know what to sell or drop 
 ## Description
 
 - A copper coin marks the bag slot worth the least: its whole stack, at the best of its vendor price, auction price and disenchant value.
-- It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear or worthless items like the Hearthstone. `/kwl ignore` skips anything else you keep.
+- It never marks quest items, keys, ammunition, class reagents, profession tools, unopened containers (clams, lockboxes), equipment-set gear or worthless items like the Hearthstone. `/kwl ignore` skips anything else you keep.
 - When your bags are full and you try to loot, a card beside the loot window names that item and its value against the loot's, and says whether the loot is worth making room for.
+- The coin shows in the default bags. With a bag addon, the tooltip line and `/kwl` still work.
 - It never deletes anything.
 - Auction prices come from Auctionator. Without it, it goes by vendor prices and leaves greens unmarked.
 

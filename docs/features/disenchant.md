@@ -84,7 +84,7 @@ prints every material's price (which still need an auction scan); `/kwd seen` li
 
 ## To check in game
 
-- A green's tooltip shows Disenchant with a value after an Auctionator scan, and the Best line.
+- A green's tooltip shows Disenchant with a value after an Auctionator scan, and no Best line.
 - Shift lists the materials. A soulbound item shows no auction compare.
 - Auctionator shows no second Disenchant line (if it does, its Forever tables changed).
 - Disenchant a few greens and compare with the tables (dust 75% on armor, essence 75% on weapons):

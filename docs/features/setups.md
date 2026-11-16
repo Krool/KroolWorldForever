@@ -1,7 +1,7 @@
 # Setups (feature)
 
 **Copy one character's setup to another.** Saves action bars, keybindings, macros, the Edit Mode
-layout, interface settings and the addon list, and applies any of them to the character you are on.
+layout, interface settings, chat text size and the addon list, and applies any of them to the character you are on.
 
 `/kws` (or `/kw setups`, the hub card, or the button on the Setups settings page) opens the window (0.5.0 layout):
 
@@ -38,6 +38,15 @@ layout, interface settings and the addon list, and applies any of them to the ch
   report again after it (option **Reload Automatically After Apply**, on by default). The automatic
   apply on a new character cannot: it runs from a timer, and the client blocks `C_UI.Reload` outside
   a click (`ADDON_ACTION_BLOCKED`, seen on live 2026-11-04), so the window shows Reload Now instead.
+
+- **No reload for nothing (0.20.0):** an Edit Mode layout that is already the active one is reported
+  as "already active" and asks for no reload, like an addon list that already matches.
+- **No undo point, no change (0.20.0):** a part whose undo capture fails is not applied; the line
+  says so and the error is in the log (`/kw errors`). Macros are exempt: they are only created.
+- **Undo is exact (0.20.0):** Undo puts a spell's saved id back without the known-spell check,
+  since it was on this character's own bar.
+- **Auto snapshot triggers:** bar, binding, macro, Edit Mode and CVar events, plus a hook on
+  `FCF_SetChatWindowFontSize` (a chat text size change fires no event).
 
 Slash: `/kws save [name]`, `/kws list`, `/kws undo`.
 

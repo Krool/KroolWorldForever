@@ -14,15 +14,15 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` opens a window that sorts your bags (and bank) into Can Delete, Keep and Still Checking. | QuestieDB |
 | **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, chat text size, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
-| **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a skull button and a key that target it and mark it. One alert per spawn. The button goes once the rare has your marker or dies; right-click hides it, shift-right-click ignores that rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
+| **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a marker button and a key that target it and mark it (a skull by default). One alert per spawn. The button goes once the rare has your marker or dies; right-click hides it, shift-right-click ignores that rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
 | **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, and what that is worth at auction. Hold Shift for each material's chance and price. | Auctionator (for prices) |
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
 | **Skill-Up Odds** | In the crafting window: the chance each recipe gives a skill point, beside its arrow. It is the common straight line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters (hover for the numbers and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average, and only reorders when a recipe is clearly cheaper. | Nothing (Auctionator optional) |
 | **Sayge's Fortune** | When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune, counted only while that character is logged in, and dying does not end it, but the game hides it: this counts it on every character and shows what is left on the hub, on Sayge's tooltip and on the fortune buff. If you die with the buff, a chat line says when you can get the next one. | Nothing |
-| **Least Valuable** | A copper coin on the corner of the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened clams, equipment-set gear, worthless items like the Hearthstone, or an unscanned green. `/kwl ignore` skips anything else you keep. When your bags are full and you try to loot, a card beside the loot window names that item and its value against the loot's, says whether the loot is worth making room for, and lets you browse the next cheapest or never mark one. It never deletes anything. | Nothing (Auctionator optional) |
-| **Quest Reward Value** | A coin on the quest reward worth the most when you pick one, at the best of its vendor price, auction price and disenchant value, and that value on each reward's tooltip. It never picks the reward for you. | Nothing (Auctionator optional) |
+| **Least Valuable** | A copper coin on the corner of the bag slot worth the least, so you know what to sell or drop first: its whole stack at the best of its vendor price, auction price and disenchant value. It never marks quest items, keys, ammunition, class reagents, profession tools, unopened containers (clams, lockboxes), equipment-set gear, worthless items like the Hearthstone, or an unscanned green. The coin shows in the default bags. `/kwl ignore` skips anything else you keep. When your bags are full and you try to loot, a card beside the loot window names that item and its value against the loot's, says whether the loot is worth making room for, and lets you browse the next cheapest or never mark one. It never deletes anything. | Nothing (Auctionator optional) |
+| **Quest Reward Value** | A coin on the quest reward worth the most when you pick one, at the best of its vendor price, auction price and, for an enchanter, its disenchant value, and that value on each reward's tooltip. A reward that binds when picked up has no auction price. It never picks the reward for you. | Nothing (Auctionator optional) |
 | **One-Button Fishing** | One key casts your line and, while it is out, reels in the bite. Set it under Key Bindings > AddOns > Krool World. With a fishing pole in your main hand, a double right-click does the same. Every cast and reel is your own key press or click. | Nothing |
-| **Reagent Uses** | Hold Ctrl over a crafting material and its tooltip lists every recipe that uses it, grouped by profession, yours first. Each recipe is colored by your skill, with how many of the material it takes, how many more recipes use what it makes, and who knows it (you and your other characters) or where it is learned (Trainer 175, Vendor, Drop...). Built from Forever's own recipe data, including the recipes Forever added. | Nothing |
+| **Reagent Uses** | Hold Ctrl (or the key you choose) over a crafting material and its tooltip lists every recipe that uses it, grouped by profession, yours first. Each recipe is colored by your skill, with how many of the material it takes, how many more recipes use what it makes, and who knows it (you, and each other character once it has opened its profession window) or where it is learned (Trainer 175, Vendor, Drop...). Built from Forever's own recipe data, including the recipes Forever added. | Nothing |
 
 All twelve are on by default.
 
@@ -41,7 +41,7 @@ off and says so.
 
 **The hub** (`/kw`): a card per feature with what it is doing now, its switch and its way in.
 
-<img src="docs/media/bundle/hub.png" alt="Krool World hub: cards for Quest Trash, Kill Value, Setups, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value and One-Button Fishing, each with its status and an On switch" width="420">
+<img src="docs/media/bundle/hub.png" alt="Krool World hub: cards for Quest Trash, Kill Value, Setups, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value and One-Button Fishing, each with its status and an On switch (taken before Reagent Uses joined)" width="420">
 
 **Reagent Uses** with Ctrl held, and without it (the one-line hint). The Keep lines above are
 Quest Trash's; Vendor and Auction are Auctionator's.
@@ -103,7 +103,7 @@ ranking your recipes by what a point costs.
 
 Optional companions:
 
-- **QuestieDB** (comes with Questie): required for Quest Trash. Without it Quest Trash says so at login
+- **QuestieDB** (the CurseForge app installs it with Questie; by hand it is its own download): required for Quest Trash. Without it Quest Trash says so at login
   and the other features work normally.
 - **Auctionator**: auction house prices for Kill Value, Disenchant Value, Skill-Up Odds and Least
   Valuable. Without it Kill Value uses vendor prices, Disenchant Value names the materials without
@@ -151,7 +151,7 @@ Optional companions:
 | `/kwfish` | Your fishing key, and whether a pole is equipped for double right-click |
 | `/ru` | Reagent Uses' settings (`/ru chars` opens the character list) |
 
-The mark key and the fishing key are under **Key Bindings > AddOns > Krool World**. `/kwf` and `/kroolworld` work like
+The mark key and the fishing key are under **Key Bindings > AddOns > Krool World** (in a KW addon, under its own name). `/kwf` and `/kroolworld` work like
 `/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide`,
 `/skillup`, `/kwsayge`, `/leastvaluable` and `/reagentuses` are long forms of `/fqt`, `/fkv`, `/kws`,
 `/kwr`, `/kwd`, `/kwc`, `/kwu`, `/sayge`, `/kwl` and `/ru`.
@@ -174,8 +174,8 @@ On by default: yes. Toggle: `/kwf questtrash on|off`. Commands: `/fqt, /questtra
 
 | Setting | Default | What it does |
 |---|---|---|
-| Show Verdict on Tooltips | On | Adds a keep or delete line to quest item tooltips. |
-| List the Quests Involved | On | Shows up to four quests and their status under the verdict. |
+| Show Verdict On Tooltips | On | Adds a keep or delete line to quest item tooltips. |
+| List The Quests Involved | On | Shows up to four quests and their status under the verdict. |
 
 ### Kill Value
 
@@ -197,7 +197,7 @@ On by default: yes. Toggle: `/kwf killvalue on|off`. Commands: `/fkv, /killvalue
 
 ### Setups
 
-Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and Krool World settings, and apply them to another character. /kws opens the window.
+Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, chat text size, addon list and Krool World settings, and apply them to another character. /kws opens the window.
 
 On by default: yes. Toggle: `/kwf setups on|off`. Commands: `/kws, /kwsetups`.
 
@@ -220,7 +220,7 @@ On by default: yes. Toggle: `/kwf rares on|off`. Commands: `/kwr, /rarealert`.
 |---|---|---|
 | Play A Sound | On | The raid warning sound when a rare shows up. |
 | Show A Screen Message | On | The rare's name in the middle of the screen, like a raid warning. |
-| Chat Message | On | One line in chat with the rare's name and level. |
+| Chat Message | On | A chat line with the rare's name and level, and how to target it. A second line says what it is worth and its best drops. |
 | Show The Mark Button | On | A marker button near the top of the screen while a rare is near. Click it to target the rare and mark it. It goes once the rare has your marker or dies, or a minute after you last saw it. Right-click hides it; shift-right-click ignores that rare; shift-drag moves it. The key in Key Bindings > AddOns > Krool World works either way. |
 | Raid Marker | 8 (1 to 8) | Which marker the button puts on the rare: 8 skull, 7 cross, 6 square, 5 moon, 4 triangle, 3 diamond, 2 circle, 1 star. |
 
@@ -344,8 +344,8 @@ account-wide interface settings, Edit Mode's own checkboxes, and this addon's se
 classic-db): exact for classic items, and by quality, weapon or armor and item level for items new
 to Forever. Forever's disenchanting looks the same so far (same dust, essence and shard tiers);
 if you see it differ, please open an issue. Auctionator has a disenchant line too, but on Forever it loads its retail
-tables, so items of classic levels get none. "Best" compares after the 5% auction cut, and before
-any tip you give a disenchanter.
+tables, so items of classic levels get none. Least Valuable and Quest Reward Value compare after the 5% auction
+cut, and before any tip you give a disenchanter.
 
 **Where do Camp Guide's numbers come from?** The camp objects' own tooltips in the 1.60.1.70790
 client, level band by level band, as Endgame Tools lists them, and the camp spells in Forever's client

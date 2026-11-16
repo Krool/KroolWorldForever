@@ -16,6 +16,7 @@ Hover a campfire or a camp object for the buff it gives at your level, and wheth
 - The campfire explains how its buffs work and lists the objects you have hovered around it.
 - The Camp Benefits buff names any bonus in it that one of your class buffs overlaps.
 - `/kwc` lists every camp buff at your level and your Camp Benefits time.
+- The tooltip lines show while you are at a camp, with Campfire Nearby on you.
 
 Settings: Esc > Options > AddOns > KW Camp Guide.
 

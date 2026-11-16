@@ -19,8 +19,8 @@ only re-points bindings, and only out of combat.
   back, unless the player changed one meanwhile (then theirs stays). The value compared is the one
   the client reads back after the set. Combat defers the clearing to `PLAYER_REGEN_ENABLED`. Also
   restored on `PLAYER_LOGOUT` and when the feature is off. The held originals live in the saved
-  variables (`db.held`), so a reload, crash or logout in combat with the line out is put right at the
-  next load.
+  variables (`db.held`), so a reload or a logout in combat with the line out is put right at the
+  next load. (Not a crash: the client writes no saved variables then.)
 - **Double right-click** (option "Double Right-Click To Fish", default on), only with a fishing pole
   in the main hand (`GetInventoryItemID` + `C_Item.GetItemInfoInstant` subclass
   `Enum.ItemWeaponSubclass.Fishingpole`). A second right-button down 0.04 to 0.4 s after the first,

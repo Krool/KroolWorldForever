@@ -946,6 +946,71 @@ r = ns.Apply(chatSetup, { chat = true }, {})
 check("chat: a second apply changes nothing", has(r.lines, "Chat Text Size: 0 windows changed"), true)
 check("chat: a setup saved before 0.20.0 has no chat part, skipped", ns.Apply({ name = "old", parts = {} }, { chat = true }, {}).parts.chat, nil)
 
+-- The chat tab's Font Size menu fires no event, so it is hooked to refresh the auto snapshot.
+check("chat: the Font Size menu is hooked", ns.chatHooked, true)
+RunTimers()
+Timers = {}
+ns.db.autosave = true
+FCF_SetChatWindowFontSize(nil, ChatFrame1, 15)
+check("chat: the hook leaves the size change alone", ChatSizes[1], 15)
+check("chat: a size change queues a snapshot", #Timers, 1)
+RunTimers()
+
+-- A part whose undo point cannot be captured is not applied, and the error is logged.
+ChatSizes = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+local realChatInfo = GetChatWindowInfo
+GetChatWindowInfo = function()
+	error("chat boom")
+end
+r = ns.Apply(chatSetup, { chat = true }, {})
+GetChatWindowInfo = realChatInfo
+check("no undo point: the part is not applied", ChatSizes[1], 0)
+check("no undo point: said so", has(r.lines, "could not save an undo point"), true)
+check("no undo point: the part is marked failed", r.parts.chat and r.parts.chat.level, "fail")
+local logged = false
+for _, e in ipairs(_G[__ns.ID.db].errors or {}) do
+	logged = logged or (e.where == "capture chat" and tostring(e.message):find("chat boom", 1, true) ~= nil)
+end
+check("no undo point: the capture error is logged", logged, true)
+r = ns.Apply(chatSetup, { chat = true }, {})
+check("the next apply works again", ChatSizes[1], 16)
+
+-- Edit Mode: a layout that is already active changes nothing, so no reload is asked for.
+EditLayouts = { layouts = {}, activeLayout = 2 }
+r = ns.Apply({ name = "p", parts = { editmode = { preset = 2 } } }, { editmode = true }, {})
+check("active built-in layout: said so", has(r.lines, "already active"), true)
+check("active built-in layout: no reload", r.reload, false)
+r = ns.Apply({ name = "p", parts = { editmode = { preset = 1 } } }, { editmode = true }, {})
+check("another built-in layout: switched", EditLayouts.activeLayout, 1)
+check("another built-in layout: reload", r.reload, true)
+C_EditMode.ConvertLayoutInfoToString = function(layout)
+	return "LAYOUT:" .. layout.layoutName
+end
+EditLayouts = { layouts = { { layoutName = "Mine", layoutType = 2 } }, activeLayout = 3 }
+SaveLayoutsCalls = {}
+r = ns.Apply({ name = "own", parts = { editmode = { str = "LAYOUT:Mine" } } }, { editmode = true }, {})
+check("own layout already active: said so", has(r.lines, 'your layout "Mine" is already active'), true)
+check("own layout already active: no reload", r.reload, false)
+check("own layout already active: nothing saved", #SaveLayoutsCalls, 0)
+EditLayouts.activeLayout = 1
+r = ns.Apply({ name = "own", parts = { editmode = { str = "LAYOUT:Mine" } } }, { editmode = true }, {})
+check("own layout not active: switched", EditLayouts.activeLayout, 3)
+check("own layout not active: reload", r.reload, true)
+check("undo of that switch: back and reload", (ns.Undo() or {}).reload, true)
+check("undo of that switch: the old layout", EditLayouts.activeLayout, 1)
+
+-- Undo puts back exactly what was on the bar, even a spell the known-spell check rejects.
+Player = { name = "Brass", realm = "Realm", class = "PALADIN", level = 10 }
+KnownSpells = { [635] = "Holy Light" }
+SpellByName = { ["Holy Light"] = 635 }
+SpellNameOf = { [17364] = "Stormstrike" }
+Actions = { [61] = { "spell", 17364 } }
+r = ns.Apply({ name = "x", parts = { bars = { [61] = { t = "spell", id = 635, name = "Holy Light" } } } }, { bars = true }, {})
+check("apply over an unknown spell: replaced", Actions[61] and Actions[61][2], 635)
+ns.Undo()
+check("undo: the spell that was there is back", Actions[61] and Actions[61][2], 17364)
+KnownSpells, SpellByName, SpellNameOf = {}, {}, {}
+
 check("no protected call was ever blocked", #BlockedCalls, 0)
 
 print(("%d checks, %d failed"):format(count, failures))

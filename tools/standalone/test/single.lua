@@ -80,6 +80,20 @@ for variable in pairs(RegisteredSettings) do
 	check("setting " .. variable .. " belongs to this addon", variable:sub(1, #ID.prefix + 1), ID.prefix .. "_")
 end
 
+-- The key binding header is the addon's own title, and every "where to bind" text names it.
+if KEY == "fishing" or KEY == "rares" then
+	local where = "Key Bindings > AddOns > " .. ID.title
+	check("the binding header is the addon's title", _G["BINDING_HEADER_" .. ID.slashId], ID.title)
+	local said = capture(function()
+		F.OnSlash("")
+	end)
+	check("its slash help says where to bind the key", has(said, where), true)
+	check("nothing points at the bundle's header", has(said, "AddOns > Krool World"), false)
+	if KEY == "fishing" then
+		check("its description says where to bind the key", F.description:find(where, 1, true) ~= nil, true)
+	end
+end
+
 -- Embedded providers: loaded (data ready), never enabled, no page and no slash.
 for _, ekey in ipairs(ID.embedded) do
 	local E = root.features[ekey]

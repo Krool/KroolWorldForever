@@ -12,6 +12,24 @@
 - **Disenchant Value: no more "Best: ..." line,** and no icon on the Disenchant label. The value
   and the item's own Auctionator and vendor lines already show which pays most. The Say What Pays
   Best option is gone with it.
+- **Setups: no reload when nothing changed.** Applying a setup whose Edit Mode layout was already
+  the active one reloaded the UI anyway. It now says the layout is already active.
+- **Setups: a part with no undo point is not applied.** If saving the undo point for a part fails,
+  that part is skipped and reported, and the error is in the log.
+- **Setups: Undo puts back every spell that was on your bars,** including one the new known-spell
+  check would turn away.
+- **Setups: a chat text size change refreshes the auto snapshot.** The window title in KW Setups
+  reads KW Setups.
+- **Rare Alert: a rare seen in combat says "after combat".** The button and the key cannot be
+  pointed at a new rare until combat ends, and the chat line now says so. The Chat Message
+  tooltip mentions the value line.
+- **Rare Alert: the key binding path is right in KW Rare Alert.** The tooltip and `/kwr` sent
+  you to Key Bindings > AddOns > Krool World; a KW addon's heading is its own name.
+- **One-Button Fishing: the key binding path is right in KW One-Button Fishing,** as above.
+- **Reagent Uses: `/ru` help names the right command** for track, untrack and forget in KW
+  Reagent Uses.
+- **Quest Trash: clearer text when QuestieDB is missing.** The CurseForge app installs it with
+  Questie; installed by hand, it is its own download.
 
 ## 0.19.1
 
