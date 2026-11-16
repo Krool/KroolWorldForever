@@ -38,6 +38,7 @@ hand-copied code.
   - the collision suite: the bundle plus every standalone in one Lua state, in both load orders;
   - the API lint over `build/standalone`.
 - The `family` list in the bundle's `Core/Identity.lua` must equal the bundle plus every manifest folder (a test checks). Setups never toggles a family member.
+- Listings are the source for the live pages, which nothing uploads: after a listing changes, set each page's Description (Markdown editor) and General > Summary in the authors console and save. A summary is at most 256 characters.
 - CurseForge: every standalone is its own project under the same author, with Ko-fi as the donation method, GitHub source (this repo) and Automatic Packaging off. Check that each uploaded file is tagged Forever 1.60.1.
 
 ## Adding a feature

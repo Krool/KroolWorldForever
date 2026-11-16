@@ -9,7 +9,7 @@
 
 ## Summary
 
-Twelve small WoW Forever addons in one, each with its own on/off switch: which quest items to delete, kill and item values, disenchant value, cheapest skill-ups, rare spawn alerts, one-key fishing, copying bars between characters, camp buffs, Sayge's timer.
+Twelve small WoW Forever addons in one, each with an on/off switch: which quest items to delete, kill and item values, disenchant value, cheapest skill-ups, rare spawn alerts, one-key fishing, copying bars between characters, camp buffs, Sayge's timer.
 
 ## Description
 
