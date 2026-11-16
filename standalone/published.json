@@ -4,12 +4,12 @@
                  "version":  "0.19.0"
              },
     "disenchant":  {
-                       "hash":  "6861bc7df310557b91e96109ab36d58d737691bb4635a20d17cd6d237c741086",
-                       "version":  "0.19.0"
+                       "hash":  "6e7c855eda7c1160e09c4f84eb5ac15b9175a12181bf44c9e14012a2147c4a5d",
+                       "version":  "0.20.0"
                    },
     "fishing":  {
-                    "hash":  "87a5e82eca3d4da5a30b8456cfe1f1289826f13a88dbaa99f88f67e8bda3675f",
-                    "version":  "0.19.0"
+                    "hash":  "f4b7d49ec80c0246907b39197932e5a47c6e0fddee79bdff18b07d8c7a3bdb99",
+                    "version":  "0.20.0"
                 },
     "fortune":  {
                     "hash":  "5ccdb78a3e2d1f4f8a0e31ae11acb44ea06520e310f77334ab514ed909949732",
@@ -20,28 +20,28 @@
                       "version":  "0.19.0"
                   },
     "leastvaluable":  {
-                          "hash":  "53049c8c82510dc2f7e0f14687e8a201a4db199fa683b74e43723d836fd16602",
-                          "version":  "0.19.0"
+                          "hash":  "b8e6a72c705ecdafa46ed372d17d3da654b37aeab7aacde5138597533257a68d",
+                          "version":  "0.20.0"
                       },
     "questtrash":  {
-                       "hash":  "c2eedc2f03c4aa27914d2996b41c6fea13a5d480fdb1bb697b448e6d5d30c035",
-                       "version":  "0.19.0"
+                       "hash":  "362babb948a6d1daaff14b941b361c4845babfd9549e7ee93638cacbc2f0e3ec",
+                       "version":  "0.20.0"
                    },
     "rares":  {
-                  "hash":  "93851f6170e076ef4b94aff56abd2931848ef51453575b7f545824854ff05a82",
-                  "version":  "0.19.0"
+                  "hash":  "c92a97689f40174ba485255e974fe7fee0f5ceda73d103824c1654df1605b3ba",
+                  "version":  "0.20.0"
               },
     "reagents":  {
-                     "hash":  "4cf8bd0d104de019d0a416ff623da58968b45fe50e4255743fe6dfcb8bbdd1d0",
-                     "version":  "0.19.0"
+                     "hash":  "1c08211689fe83e06b3a1bcf1f0b1893efe46f544df9942b1d41d89045b499e0",
+                     "version":  "0.20.0"
                  },
     "rewardvalue":  {
-                        "hash":  "6d923055a2d18e6b444611d3e639111859171a4f8d25498fa32f143c1612a6ca",
-                        "version":  "0.19.0"
+                        "hash":  "14649751660cfdc3c0c065fc201bd1fa58016d174d376f58ae7c6eef6655313a",
+                        "version":  "0.20.0"
                     },
     "setups":  {
-                   "hash":  "6851b31c7ce7592435b7eb492f2cd20d6e9a70612526b8c8952fa74bca191622",
-                   "version":  "0.19.0"
+                   "hash":  "5af130df6035dbd6944c075292f7a08d9bf25174f98eb32f1494e281aaaa7893",
+                   "version":  "0.20.0"
                },
     "skillup":  {
                     "hash":  "2349633b4acb9f967bb592a28c8bc1328acf143b6794525a5fc024cbc748b781",
