@@ -1,6 +1,7 @@
--- Disenchant Value: on weapon and armor tooltips, what the item disenchants into, what that is
--- worth at Auctionator's prices, and whether disenchanting it (yourself or through a
--- disenchanter) pays more than auctioning or vendoring it.
+-- Disenchant Value: on weapon and armor tooltips, what the item disenchants into and what that is
+-- worth at Auctionator's prices. (A "Best: ..." line comparing it with the auction and vendor price
+-- was dropped in 0.20.0: the owner found it only restated the numbers. ns.Best stays for Least
+-- Valuable and Quest Reward Value.)
 --
 -- The tables are the 1.12 ones from the classic database (Data.lua): every classic item is
 -- listed with its own table, and anything the 1.12 data does not know (Forever's new items) goes
@@ -120,39 +121,7 @@ end
 
 -- -------------------------------------------------------------------- tooltip
 
-local BEST_TEXT = {
-	disenchant = "|cff33ff99Best: disenchant it|r",
-	auction = "|cffffcc00Best: sell it at auction|r",
-	vendor = "|cffaaaaaaBest: sell it to a vendor|r",
-}
-
 local OLD = "|cffff9955"
-
--- auctionAge: days since Auctionator last saw the item itself. An old price still competes; the
--- line says how old it is.
-local function BestLine(best, disenchant, auction, vendor, bound, auctionAge)
-	local old = auction and root.AuctionStale(auctionAge) and root.SeenText(auctionAge) or nil
-	local others = {}
-	if best ~= "disenchant" then
-		others[#others + 1] = "disenchant " .. root.Money(disenchant)
-	end
-	if best ~= "auction" then
-		if auction then
-			others[#others + 1] = "auction " .. root.Money(auction) .. (old and (" " .. OLD .. old .. "|cffaaaaaa") or "")
-		elseif not bound then
-			others[#others + 1] = "no auction price"
-		end
-	end
-	if best ~= "vendor" and vendor then
-		others[#others + 1] = "vendor " .. root.Money(vendor)
-	end
-	local head = BEST_TEXT[best]
-	if best == "auction" and old then
-		head = head .. " " .. OLD .. "(price " .. old .. ")|r"
-	end
-	local tail = #others > 0 and (" |cffaaaaaa(" .. table.concat(others, ", ") .. ")|r") or ""
-	return head .. tail
-end
 
 local function CountText(r)
 	if r.min == r.max then
@@ -178,27 +147,6 @@ local function CanDisenchant()
 end
 ns.CanDisenchant = CanDisenchant -- Least Valuable counts a bound item's disenchant only for you
 
--- A bag item that was equipped (or is account bound) says so on its tooltip; the item info only
--- knows the bind type.
-local function SaysBound(data)
-	local lines = type(data) == "table" and data.lines
-	if type(lines) ~= "table" then
-		return false
-	end
-	local marks = { ITEM_SOULBOUND, ITEM_ACCOUNTBOUND, ITEM_BNETACCOUNTBOUND }
-	for _, line in ipairs(lines) do
-		local text = type(line) == "table" and line.leftText or nil
-		if not Secret(text) and type(text) == "string" then
-			for _, mark in pairs(marks) do
-				if text == mark then
-					return true
-				end
-			end
-		end
-	end
-	return false
-end
-
 -- A classic item the client shows with another quality than its 1.12 table's (ns.db.changed,
 -- up to CHANGED_MAX): evidence of what Forever changed, for the generator and the docs.
 local CHANGED_MAX = 500
@@ -220,8 +168,7 @@ local function Annotate(tooltip, data)
 			link = l
 		end
 	end
-	local ok, name, _, quality, itemLevel, _, _, _, _, _, _, sellPrice, classID, _, bindType =
-		pcall(C_Item.GetItemInfo, link or itemId)
+	local ok, name, _, quality, itemLevel, _, _, _, _, _, _, _, classID = pcall(C_Item.GetItemInfo, link or itemId)
 	if not (ok and name) then
 		return
 	end
@@ -234,7 +181,7 @@ local function Annotate(tooltip, data)
 		return
 	end
 
-	local label = root.UI.InlineIcon(ns.icon, 14) .. " |cffb48cffDisenchant|r"
+	local label = "|cffb48cffDisenchant|r"
 	if e.unsure then
 		label = label .. " " .. OLD .. "(unconfirmed on Forever)|r"
 	end
@@ -244,19 +191,6 @@ local function Annotate(tooltip, data)
 		tooltip:AddDoubleLine(label, "|cffaaaaaaneeds Auctionator prices|r")
 	else
 		tooltip:AddDoubleLine(label, "|cffaaaaaano price for " .. e.missing .. "|r")
-	end
-
-	if ns.db.best and e.value then
-		local bound = bindType == 1 or SaysBound(data)
-		if not bound or CanDisenchant() then
-			local auction = not bound and root.AuctionPrice(link or itemId) or nil
-			local auctionAge = auction and root.AuctionAge(link or itemId) or nil
-			local vendor = type(sellPrice) == "number" and sellPrice > 0 and sellPrice or nil
-			local best = ns.Best(e.value, auction, vendor)
-			if best then
-				tooltip:AddLine(BestLine(best, e.value, auction, vendor, bound, auctionAge))
-			end
-		end
 	end
 
 	if ns.db.mats or (IsShiftKeyDown and IsShiftKeyDown()) then
@@ -421,8 +355,7 @@ end
 -- -------------------------------------------------------------------- definition
 
 ns.title = "Disenchant Value"
-ns.description = "On weapon and armor tooltips: what the item disenchants into, what that is worth at Auctionator's prices, "
-	.. "and whether disenchanting pays more than the auction house or a vendor."
+ns.description = "On weapon and armor tooltips: what the item disenchants into, and what that is worth at Auctionator's prices."
 ns.icon = "Interface\\Icons\\INV_Enchant_Disenchant"
 ns.blurb = "What a green is worth disenchanted"
 ns.options = {
@@ -431,14 +364,6 @@ ns.options = {
 		type = "toggle",
 		label = "Show On Item Tooltips",
 		tooltip = "Adds the disenchant value to weapon and armor tooltips (green, blue and purple).",
-		default = true,
-	},
-	{
-		key = "best",
-		type = "toggle",
-		label = "Say What Pays Best",
-		tooltip = "Compares disenchanting with the item's own auction price and its vendor price, after the 5% auction cut. "
-			.. "Bound items are compared only when you can disenchant them yourself.",
 		default = true,
 	},
 	{

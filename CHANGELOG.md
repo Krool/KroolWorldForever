@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.20.0
+
+- **Setups: another class's spells stay off your bars.** Applying a shaman's setup to a paladin or a
+  rogue put Stormstrike on their bars: Forever lets an addon pick up any spell, known or not. A
+  spell is now placed only when the character knows it, as the Action Bars tooltip always said; the
+  rest are listed as not available. A Stormstrike already there stays until you drag it off.
+- **Setups: chat text size is copied,** per chat window, as a new part, Chat Text Size. The game
+  keeps it per character, so new characters started at the default size. A setup saved before
+  this version gets the part the next time it is saved (auto snapshots refresh at each login).
+- **Disenchant Value: no more "Best: ..." line,** and no icon on the Disenchant label. The value
+  and the item's own Auctionator and vendor lines already show which pays most. The Say What Pays
+  Best option is gone with it.
+
 ## 0.19.1
 
 - **Skill-Up Odds: the Next Skill Point tab has its own icon,** a plus, so it no longer looks like

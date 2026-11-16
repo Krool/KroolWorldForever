@@ -1,6 +1,6 @@
 -- Setups: save a character's setup (action bars, keybindings, macros, Edit Mode layout, server-stored
--- interface settings, addon list) and apply it to another character. Storage is account-wide
--- (ns.db.setups), so every character on this PC sees every saved setup.
+-- interface settings, chat text size, addon list) and apply it to another character. Storage is
+-- account-wide (ns.db.setups), so every character on this PC sees every saved setup.
 --
 -- Apply is the one feature that changes the player's UI; the owner asked for it explicitly. It only
 -- runs out of combat, on a click, keeps an undo snapshot of the target first, and reports every slot
@@ -15,6 +15,7 @@ ns.PARTS = {
 	{ key = "macros", label = "Macros" },
 	{ key = "editmode", label = "Edit Mode Layout" },
 	{ key = "cvars", label = "Interface Settings" },
+	{ key = "chat", label = "Chat Text Size" },
 	{ key = "addons", label = "Addon List" },
 	{ key = "kwf", label = "Krool World Settings" },
 }
@@ -281,6 +282,34 @@ function capture.cvars()
 	return out, n
 end
 
+-- Chat text size, per chat window: what the chat tab's Font Size menu sets. The game keeps it per
+-- character (chat-cache.txt), so a new character starts at the default (owner, 2026-11-16).
+-- Every window is saved, 0 (the default) included, so Undo can put a default back.
+local function ChatWindows()
+	local c = Constants and Constants.ChatFrameConstants
+	return c and c.MaxChatWindows or NUM_CHAT_WINDOWS or 10
+end
+
+-- The size a window shows: 0 means the game's default.
+local function ChatSize(size)
+	if type(size) ~= "number" or size <= 0 then
+		return CHAT_FRAME_DEFAULT_FONT_SIZE or 14
+	end
+	return size
+end
+
+function capture.chat()
+	local out, n = {}, 0
+	for i = 1, ChatWindows() do
+		local _, size = GetChatWindowInfo(i)
+		if type(size) == "number" then
+			out[i] = size
+			n = n + (size > 0 and 1 or 0)
+		end
+	end
+	return out, n
+end
+
 function capture.addons()
 	local out, n = {}, 0
 	local me = UnitGUID("player") -- Blizzard's AddonList passes the GUID
@@ -373,13 +402,43 @@ local function MountIndex(mountID)
 	end
 end
 
+-- Forever's C_Spell.PickupSpell puts any spell id on the cursor, known or not: a shaman's setup put
+-- Stormstrike on a paladin's and a rogue's bars (owner, 2026-11-16). So a spell is placed only when
+-- this character knows it.
+local function KnownSpell(id)
+	if type(id) ~= "number" then
+		return false
+	end
+	local fn = C_SpellBook and C_SpellBook.IsSpellKnown
+	if not fn then
+		return false -- never place a spell that may not be known
+	end
+	local ok, known = pcall(fn, id)
+	return ok and known == true
+end
+
+-- The spell to place for a saved one: its own id when known, else the known spell of that name
+-- (another rank, or a renamed id). nil when this character knows neither.
+local function SpellToPlace(want)
+	if KnownSpell(want.id) then
+		return want.id
+	end
+	if want.name then
+		local ok, info = pcall(C_Spell.GetSpellInfo, want.name)
+		local id = ok and type(info) == "table" and info.spellID or nil
+		if KnownSpell(id) then
+			return id
+		end
+	end
+end
+
 -- Puts the action on the cursor. Returns true when something is on it.
 local function Pickup(want)
 	ClearCursor()
 	if want.t == "spell" then
-		C_Spell.PickupSpell(want.id)
-		if not GetCursorInfo() and want.name then
-			C_Spell.PickupSpell(want.name) -- another rank, or a renamed id
+		local id = SpellToPlace(want)
+		if id then
+			C_Spell.PickupSpell(id)
 		end
 	elseif want.t == "item" then
 		C_Item.PickupItem(want.id)
@@ -662,6 +721,22 @@ function apply.cvars(data, _, report)
 	report.lines[#report.lines + 1] = ("Interface Settings: %d changed%s"):format(set, failed > 0 and (", " .. failed .. " refused") or "")
 end
 
+function apply.chat(data, _, report)
+	local changed = 0
+	for i = 1, ChatWindows() do
+		local want = data[i]
+		local frame = _G["ChatFrame" .. i]
+		if type(want) == "number" and type(frame) == "table" then
+			local _, now = GetChatWindowInfo(i)
+			if ChatSize(now) ~= ChatSize(want) then
+				FCF_SetChatWindowFontSize(nil, frame, ChatSize(want))
+				changed = changed + 1
+			end
+		end
+	end
+	report.lines[#report.lines + 1] = ("Chat Text Size: %d %s changed"):format(changed, changed == 1 and "window" or "windows")
+end
+
 function apply.addons(data, _, report)
 	local me = UnitGUID("player") -- Blizzard's AddonList passes the GUID
 	local changed, missing = 0, {}
@@ -805,7 +880,7 @@ function ns.Apply(setup, which, opts)
 	end
 
 	-- Macros before bars, so macro buttons find their macro.
-	for _, key in ipairs({ "macros", "bars", "bindings", "cvars", "addons", "kwf", "editmode" }) do
+	for _, key in ipairs({ "macros", "bars", "bindings", "cvars", "chat", "addons", "kwf", "editmode" }) do
 		local data = setup.parts and setup.parts[key]
 		if which[key] and data then
 			local first = #report.lines + 1

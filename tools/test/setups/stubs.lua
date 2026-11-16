@@ -476,14 +476,60 @@ C_Spell = {
 	GetSpellName = function(id)
 		return KnownSpells[id] or SpellNameOf[id]
 	end,
+	-- Forever's PickupSpell takes any spell id, known or not: a shaman's Stormstrike went onto a
+	-- paladin's bar (2026-11-16). By name it finds only a spell the player knows.
 	PickupSpell = function(x)
-		local id = type(x) == "number" and (KnownSpells[x] and x) or SpellByName[x]
+		local id = type(x) == "number" and x or SpellByName[x]
 		if id then
 			Cursor = { "spell", id }
 		end
 	end,
+	-- By name, modeled at its worst: it also resolves a spell the player does not know.
+	GetSpellInfo = function(x)
+		local id = type(x) == "number" and x or SpellByName[x]
+		if not id then
+			for sid, name in pairs(SpellNameOf) do
+				if name == x then
+					id = sid
+				end
+			end
+		end
+		if id then
+			return { spellID = id, name = KnownSpells[id] or SpellNameOf[id] }
+		end
+	end,
+}
+C_SpellBook = {
+	IsSpellKnown = function(id)
+		return KnownSpells[id] ~= nil
+	end,
 }
 SpellNameOf = {} -- names of spells the player does not know (for capture)
+
+-- ---------------------------------------------------------------- chat windows
+
+-- Each chat window's text size as the game stores it per character: 0 is the default.
+CHAT_FRAME_DEFAULT_FONT_SIZE = 14
+NUM_CHAT_WINDOWS = 10
+ChatSizes = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+for i = 1, NUM_CHAT_WINDOWS do
+	_G["ChatFrame" .. i] = setmetatable({ chatId = i }, {
+		__index = function(t, k)
+			if k == "GetID" then
+				return function()
+					return t.chatId
+				end
+			end
+			return function() end
+		end,
+	})
+end
+function GetChatWindowInfo(i)
+	return "Window " .. i, ChatSizes[i] or 0
+end
+function FCF_SetChatWindowFontSize(_, frame, size)
+	ChatSizes[frame:GetID()] = size
+end
 C_Item = {
 	PickupItem = function(id)
 		if OwnedItems[id] then

@@ -45,11 +45,12 @@ Slash: `/kws save [name]`, `/kws list`, `/kws undo`.
 
 | Part | Saved | Applied |
 |---|---|---|
-| Action Bars | Every slot 1-180: spell (id and name), item, macro (by name), mount; and which of Action Bars 2-8 are switched on | Spells by id, then by name (another rank). A slot whose action this character cannot use keeps what it has. Slots the setup leaves empty are cleared (option). A setup from another class leaves slots 73-144 (stance, form and override bars) alone. Flyouts and other types are reported, not placed. |
+| Action Bars | Every slot 1-180: spell (id and name), item, macro (by name), mount; and which of Action Bars 2-8 are switched on | Spells by id, then by name (another rank), and only spells this character knows (`C_SpellBook.IsSpellKnown`): Forever's `C_Spell.PickupSpell` puts any spell on the cursor, known or not, so before 0.20.0 a shaman's setup put Stormstrike on a paladin's bar. A slot whose action this character cannot use keeps what it has. Slots the setup leaves empty are cleared (option). A setup from another class leaves slots 73-144 (stance, form and override bars) alone. Flyouts and other types are reported, not placed. |
 | Keybindings | Every bound command, both keys | Full replace, saved per character (option) or for the account. A character already on its own set always saves there, and the report says which. |
 | Macros | Account and character macros | Missing ones are created; one with the same name is kept as is; full macro slots are reported |
 | Edit Mode Layout | The active layout (or which built-in one: Modern or Classic), including unit frame options such as the player portrait; and Edit Mode's own checkboxes (show target and focus, cast bar, party frames, pet frame, grid, snap...) | Added as a new character layout with a unique name and made active; refused when the character has 5 layouts. Finishes after a UI reload. The account-wide checkboxes are only put back by Undo, never copied. |
 | Interface Settings | Per-character server-stored CVars changed from default (account-wide ones are shared already, so they are not copied); never secure, locked or read-only ones | Set (one the client refuses is counted as refused), and server-stored ones the setup left at default are reset. Graphics and sound are local (Config.wtf) and not touched. |
+| Chat Text Size | Each chat window's text size (the chat tab's Font Size menu), 0 meaning the game's default. The game keeps it per character, so a new character starts at the default. (0.20.0) | Set with Blizzard's own `FCF_SetChatWindowFontSize` on each window whose size differs. Window sizes and positions are not part of it: the main chat window's size is in the Edit Mode layout. |
 | Addon List | Which addons are on for the character | Turned on/off for this character; never turns itself off; missing addons listed. Finishes after a reload. |
 | Krool World Settings | Every bundle feature's Enabled switch and declared options (Kill Value, Quest Trash, Setups...). A feature's new options are included automatically. Learned data is not. | Set through the settings panel's own setting objects, so the panel and each feature react at once. Slider values are clamped to the current range; options this version does not have are skipped and counted. Never turns Setups itself off. These settings are account-wide today, so this part is a backup/restore until some become per character. |
 
@@ -83,7 +84,10 @@ says it is internal, serialized or "stores the last". Checked against Forever's 
 
 - **Other addons' per-character settings** (Questie, Auctionator profiles) are out of reach: the game
   only loads an addon's per-character data for that addon. Use their own profile options.
-- **Chat windows** are not copied yet.
+- **Chat windows** beyond their text size (tabs, channels, colors) are not copied yet.
+- **Other addons' per-character settings** include Spoken's window size and subtitle size: Spoken
+  keeps a profile per character. Its own settings (Esc > Options > AddOns > Spoken > Profiles) can
+  put every character on one profile, and set the Profile for New Characters.
 - **Classic or HD character models** (part of Forever's first-login experience preset) are not part
   of a setup. The client can read the choice (`C_GameRules.AccountHasSDEnabled`, account-wide by its
   name) and set it (`C_GameRules.SetSDHDToggleValue`), so this could be added; it is not yet. The

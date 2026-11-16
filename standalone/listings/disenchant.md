@@ -7,12 +7,12 @@
 
 ## Summary
 
-On weapon and armor tooltips, green and up: what the item disenchants into, what that is worth at auction, and whether disenchanting pays more than auctioning or vendoring it.
+On weapon and armor tooltips, green and up: what the item disenchants into, and what that is worth at auction.
 
 ## Description
 
 - Weapon and armor tooltips (green and up) list what the item disenchants into.
-- With Auctionator, it adds what those materials are worth and says whether disenchanting pays more than selling the item at auction or to a vendor.
+- With Auctionator, it adds what those materials are worth.
 - Hold Shift for each material's chance and price.
 - `/kwd` lists the disenchanting material prices and which ones are still missing. `/kwd seen` checks your own disenchants against the tables.
 

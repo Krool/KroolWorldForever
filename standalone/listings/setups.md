@@ -7,13 +7,14 @@
 
 ## Summary
 
-Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings and addon list, then apply them to another character. A new character can start from a saved setup.
+Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, chat text size and addon list, then apply them to another character. A new character can start from a saved setup.
 
 ## Description
 
 Setting up a new character's bars and keys by hand takes a while. KW Setups saves them once and puts them on any other character.
 
-- Saves action bars, keybindings, macros, the Edit Mode layout, per-character interface settings and the addon list.
+- Saves action bars, keybindings, macros, the Edit Mode layout, per-character interface settings, chat text size and the addon list.
+- Places only spells the character knows, so another class's setup never puts its spells on your bars.
 - A window shows which setup goes onto which character, then a check, warning or X for each part after you apply it.
 - Applies only out of combat, only when you click Apply, and always takes an undo snapshot first (`/kws undo`).
 - Mark a setup Use For New Characters and a brand-new level 1 character gets it on its first login. A character with any experience is never changed without a click.

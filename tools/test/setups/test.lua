@@ -905,6 +905,47 @@ r = ns.Apply(autoSetup, { kwf = true }, ns.db)
 check("a manual apply still takes the kwf part", KV.db.cut, 77)
 KV.db.cut = 15
 
+-- Another class's spells: Forever's PickupSpell takes any spell id, so a spell is placed only when
+-- the character knows it (a shaman's Stormstrike landed on a paladin's bar, 2026-11-16).
+Player = { name = "Brass", realm = "Realm", class = "PALADIN", level = 1 }
+KnownSpells = { [635] = "Holy Light" }
+SpellByName = { ["Holy Light"] = 635 }
+SpellNameOf = { [17364] = "Stormstrike" }
+Actions = {}
+local shaman = {
+	name = "Stone",
+	class = "SHAMAN",
+	parts = { bars = { [61] = { t = "spell", id = 17364, name = "Stormstrike" }, [2] = { t = "spell", id = 635, name = "Holy Light" } } },
+}
+r = ns.Apply(shaman, { bars = true }, { clearEmpty = false })
+check("unknown spell: not placed", Actions[61], nil)
+check("unknown spell: reported as not available", has(r.lines, "slot 61: Stormstrike"), true)
+check("known spell: placed", Actions[2] and Actions[2][2], 635)
+r = ns.Apply({ name = "byname", parts = { bars = { [63] = { t = "spell", id = 999999, name = "Stormstrike" } } } }, { bars = true }, {})
+check("a name that finds an unknown spell: not placed", Actions[63], nil)
+KnownSpells, SpellByName, SpellNameOf = {}, {}, {}
+
+-- Chat text size: per window, as the game keeps it per character; 0 is the default.
+ChatSizes = { 16, 0, 12, 0, 0, 0, 0, 0, 0, 0 }
+local chatParts, chatCounts = ns.Capture({ chat = true })
+check("chat: every window captured", #chatParts.chat, 10)
+check("chat: the main window's size", chatParts.chat[1], 16)
+check("chat: counts the windows not at the default", chatCounts.chat, 2)
+ChatSizes = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+Player = { name = "Fresh", realm = "Realm", class = "PALADIN", level = 1 }
+local chatSetup = { name = "chat", parts = { chat = chatParts.chat } }
+r = ns.Apply(chatSetup, { chat = true }, {})
+check("chat: main window set", ChatSizes[1], 16)
+check("chat: third window set", ChatSizes[3], 12)
+check("chat: a default window left alone", ChatSizes[2], 0)
+check("chat: reported", has(r.lines, "Chat Text Size: 2 windows changed"), true)
+check("chat: undo works", (ns.Undo() or {}).ok, true)
+check("chat: undo puts the default size back", ChatSizes[1], CHAT_FRAME_DEFAULT_FONT_SIZE)
+ns.Apply(chatSetup, { chat = true }, {})
+r = ns.Apply(chatSetup, { chat = true }, {})
+check("chat: a second apply changes nothing", has(r.lines, "Chat Text Size: 0 windows changed"), true)
+check("chat: a setup saved before 0.20.0 has no chat part, skipped", ns.Apply({ name = "old", parts = {} }, { chat = true }, {}).parts.chat, nil)
+
 check("no protected call was ever blocked", #BlockedCalls, 0)
 
 print(("%d checks, %d failed"):format(count, failures))

@@ -17,9 +17,9 @@ Krool World Forever is a bundle of twelve small features for WoW Forever. Each o
 
 - [Quest Trash](https://www.curseforge.com/wow/addons/kw-quest-trash): shows which quest items you can delete. /fqt sorts your bags and bank into Can Delete, Keep and Still Checking. Needs QuestieDB, which comes with Questie.
 - [Kill Value](https://www.curseforge.com/wow/addons/kw-kill-value): expected gold per kill on enemy tooltips, counting coin, drops and skinning. It learns real drop rates from what you loot.
-- [Setups](https://www.curseforge.com/wow/addons/kw-setups): copy action bars, keybindings, macros, Edit Mode layout and per-character settings from one character to another, with Undo.
+- [Setups](https://www.curseforge.com/wow/addons/kw-setups): copy action bars, keybindings, macros, Edit Mode layout, chat text size and per-character settings from one character to another, with Undo.
 - [Rare Alert](https://www.curseforge.com/wow/addons/kw-rare-alert): a sound and a message when a rare is near, with its value and best drops. A button or key targets and marks it.
-- [Disenchant Value](https://www.curseforge.com/wow/addons/kw-disenchant-value): what a green or better item disenchants into, and whether that beats selling it.
+- [Disenchant Value](https://www.curseforge.com/wow/addons/kw-disenchant-value): what a green or better item disenchants into, and what that is worth.
 - [Camp Guide](https://www.curseforge.com/wow/addons/kw-camp-guide): the buff each camp object gives at your level, and whether one of your class buffs already covers it.
 - [Skill-Up Odds](https://www.curseforge.com/wow/addons/kw-skill-up-odds): each recipe's chance to give a skill point, and which recipe gives the cheapest next point.
 - [Sayge's Fortune](https://www.curseforge.com/wow/addons/kw-sayges-fortune): tracks Sayge's hidden 4-hour fortune timer on every character.

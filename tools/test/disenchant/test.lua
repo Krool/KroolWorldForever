@@ -94,7 +94,7 @@ local db = KroolWorldForeverDB.features.disenchant
 check("feature slice created", type(db), "table")
 check("on by default", db.enabled, true)
 check("tooltip on by default", db.tooltip, true)
-check("best on by default", db.best, true)
+check("no Say What Pays Best option (dropped in 0.20.0)", db.best, nil)
 check("materials on Shift by default", db.mats, false)
 capture(function()
 	FireEvent("PLAYER_LOGIN")
@@ -209,18 +209,18 @@ LinkPrices["item:" .. CHEST] = 2000
 local tt = ShowItem(CHEST)
 check("tooltip: disenchant line", RightOf(tt, "Disenchant") ~= nil, true)
 check("tooltip: worth", tostring(RightOf(tt, "Disenchant")):find("27s", 1, true) ~= nil, true)
-local best = BestLine(tt)
-check("tooltip: best is disenchant", best and best:find("disenchant it", 1, true) ~= nil, true)
-check("tooltip: names the auction price", best and best:find("auction", 1, true) ~= nil, true)
-check("tooltip: names the vendor price", best and best:find("vendor", 1, true) ~= nil, true)
+check("tooltip: no Best line (owner, 2026-11-16)", BestLine(tt), nil)
+local function LabelOf(t)
+	for _, l in ipairs(t.left) do
+		if tostring(l):find("Disenchant", 1, true) then
+			return tostring(l)
+		end
+	end
+end
+check("tooltip: the label has no icon", LabelOf(tt) and LabelOf(tt):find("|T", 1, true), nil)
 check("tooltip: materials hidden without Shift", has(tt.left, "Soul Dust"), false)
-
 LinkPrices["item:" .. CHEST] = 9000
-best = BestLine(ShowItem(CHEST))
-check("tooltip: a pricey green says auction", best and best:find("sell it at auction", 1, true) ~= nil, true)
-LinkPrices["item:" .. CHEST] = nil
-best = BestLine(ShowItem(CHEST))
-check("tooltip: no auction price for the item says so", best and best:find("no auction price", 1, true) ~= nil, true)
+check("tooltip: a pricey green still has no Best line", BestLine(ShowItem(CHEST)), nil)
 LinkPrices["item:" .. CHEST] = 2000
 
 ShiftDown = true
@@ -233,10 +233,7 @@ check("and the shard chance", has(tt.left, "Large Glimmering Shard, 5%"), true)
 root.SetOption(ns, "mats", true)
 check("option: materials always", has(ShowItem(CHEST).left, "Soul Dust"), true)
 root.SetOption(ns, "mats", false)
-root.SetOption(ns, "best", false)
-check("option: no best line", BestLine(ShowItem(CHEST)), nil)
-check("option: value still shown", RightOf(ShowItem(CHEST), "Disenchant") ~= nil, true)
-root.SetOption(ns, "best", true)
+check("option: value shown", RightOf(ShowItem(CHEST), "Disenchant") ~= nil, true)
 root.SetOption(ns, "tooltip", false)
 check("option: tooltip off", #Lines(ShowItem(CHEST)), 0)
 root.SetOption(ns, "tooltip", true)
@@ -250,27 +247,20 @@ Items[CHEST].bind = 1
 CanDisenchant = false
 tt = ShowItem(CHEST)
 check("bind on pickup: value shown", RightOf(tt, "Disenchant") ~= nil, true)
-check("bind on pickup, no enchanting: no best line", BestLine(tt), nil)
 CanDisenchant = true
-best = BestLine(ShowItem(CHEST))
-check("bound, you enchant: best line", best ~= nil, true)
-check("bound: no auction in the compare", best and best:find("auction", 1, true) == nil, true)
+check("bound, you enchant: value shown", RightOf(ShowItem(CHEST), "Disenchant") ~= nil, true)
 CanDisenchant = false
 Items[CHEST].bind = 2
-check("soulbound line counts as bound", BestLine(ShowItem(CHEST, { lines = { { leftText = "Soulbound" } } })), nil)
-check("account bound too", BestLine(ShowItem(CHEST, { lines = { { leftText = "Account Bound" } } })), nil)
-check("a secret line is skipped", BestLine(ShowItem(CHEST, { lines = { { leftText = Secret() } } })) ~= nil, true)
+check("a secret line does not break it", RightOf(ShowItem(CHEST, { lines = { { leftText = Secret() } } }), "Disenchant") ~= nil, true)
 
 -- unknown and missing data
 Prices[SOUL] = nil
 tt = ShowItem(CHEST)
 check("missing main price: says which", tostring(RightOf(tt, "Disenchant")):find("no price for Soul Dust", 1, true) ~= nil, true)
-check("missing main price: no best line", BestLine(tt), nil)
 SetPrices()
 AuctionatorOn(false)
 tt = ShowItem(CHEST)
 check("no Auctionator: says so", tostring(RightOf(tt, "Disenchant")):find("needs Auctionator", 1, true) ~= nil, true)
-check("no Auctionator: no best line", BestLine(tt), nil)
 ShiftDown = true
 check("no Auctionator: Shift still lists materials", has(ShowItem(CHEST).left, "Soul Dust"), true)
 ShiftDown = false
@@ -327,21 +317,6 @@ ShiftDown = false
 check("age: Shift list dates the old material", has(tt.right, "seen 5 days ago"), true)
 check("age: and only old ones", has(tt.right, "seen today"), false)
 Ages[SOUL], Ages[ASTRAL], Ages[GLIMMER] = 0, 0, 0
-
--- the item's own auction price
-LinkAges["item:" .. CHEST] = 6
-best = BestLine(ShowItem(CHEST))
-check("old item price: disenchant still best", best and best:find("disenchant it", 1, true) ~= nil, true)
-check("old item price: the auction price is dated", best and best:find("seen 6 days ago", 1, true) ~= nil, true)
-LinkPrices["item:" .. CHEST] = 9000
-best = BestLine(ShowItem(CHEST))
-check("old item price still wins when higher", best and best:find("sell it at auction", 1, true) ~= nil, true)
-check("and the call says how old", best and best:find("(price seen 6 days ago)", 1, true) ~= nil, true)
-LinkAges["item:" .. CHEST] = 2
-best = BestLine(ShowItem(CHEST))
-check("a recent item price is not dated", best and best:find("seen", 1, true), nil)
-LinkAges["item:" .. CHEST] = nil
-LinkPrices["item:" .. CHEST] = 2000
 
 -- /kwd and the hub
 Ages[ASTRAL] = 5

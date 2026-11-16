@@ -13,9 +13,9 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 |---|---|---|
 | **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` opens a window that sorts your bags (and bank) into Can Delete, Keep and Still Checking. | QuestieDB |
 | **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
-| **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
+| **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, chat text size, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
 | **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a skull button and a key that target it and mark it. One alert per spawn. The button goes once the rare has your marker or dies; right-click hides it, shift-right-click ignores that rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
-| **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, what that is worth at auction, and whether disenchanting it pays more than auctioning or vendoring it. Hold Shift for each material's chance and price. | Auctionator (for prices) |
+| **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, and what that is worth at auction. Hold Shift for each material's chance and price. | Auctionator (for prices) |
 | **Camp Guide** | Hover a campfire or a camp object (the chair, the lodestone and the rest) for the buff it gives at your level, and whether a class buff you already have covers it (the Lodestone does not stack with Blessing of Might). The campfire says how its buffs work and lists the objects you have hovered around it. The Camp Benefits buff names any bonus in it that one of your class buffs overlaps. | Nothing |
 | **Skill-Up Odds** | In the crafting window: the chance each recipe gives a skill point, beside its arrow. It is the common straight line from 100% at yellow to 0% at grey, tuned by every yellow or green craft on your characters (hover for the numbers and what a point costs). A Next Skill Point panel ranks your learned recipes by the gold a point costs on average, and only reorders when a recipe is clearly cheaper. | Nothing (Auctionator optional) |
 | **Sayge's Fortune** | When Sayge at the Darkmoon Faire can give you your next fortune. His wait is 4 hours from your last fortune, counted only while that character is logged in, and dying does not end it, but the game hides it: this counts it on every character and shows what is left on the hub, on Sayge's tooltip and on the fortune buff. If you die with the buff, a chat line says when you can get the next one. | Nothing |
@@ -59,7 +59,7 @@ ranking your recipes by what a point costs.
 
 **Disenchant Value** (the Vendor and Auction lines are Auctionator's):
 
-![Inscribed Leather Boots tooltip: Disenchant 3s 25c, Best: sell it to a vendor (disenchant 3s 25c, auction 4s 7c)](docs/media/disenchant/tooltip.png)
+![Inscribed Leather Boots tooltip: Vendor 4s 8c, Auction 4s 7c, Disenchant 3s 25c](docs/media/disenchant/tooltip.png)
 
 **Least Valuable**, with the Reagent Uses hint at the bottom:
 
@@ -226,14 +226,13 @@ On by default: yes. Toggle: `/kwf rares on|off`. Commands: `/kwr, /rarealert`.
 
 ### Disenchant Value
 
-On weapon and armor tooltips: what the item disenchants into, what that is worth at Auctionator's prices, and whether disenchanting pays more than the auction house or a vendor.
+On weapon and armor tooltips: what the item disenchants into, and what that is worth at Auctionator's prices.
 
 On by default: yes. Toggle: `/kwf disenchant on|off`. Commands: `/kwd, /disenchantvalue`.
 
 | Setting | Default | What it does |
 |---|---|---|
 | Show On Item Tooltips | On | Adds the disenchant value to weapon and armor tooltips (green, blue and purple). |
-| Say What Pays Best | On | Compares disenchanting with the item's own auction price and its vendor price, after the 5% auction cut. Bound items are compared only when you can disenchant them yourself. |
 | Always List The Materials | Off | Lists each material with its chance and price. Off: hold Shift over the item to see them. |
 
 ### Camp Guide

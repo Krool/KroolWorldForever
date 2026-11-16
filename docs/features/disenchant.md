@@ -1,13 +1,16 @@
 # Disenchant Value
 
-On weapon and armor tooltips (green, blue and purple): what the item disenchants into, what that
-is worth at Auctionator's prices, and whether disenchanting it pays more than auctioning or
-vendoring it. The question it answers: should this BoE green go to a disenchanter, onto the
-auction house, or to a vendor?
+On weapon and armor tooltips (green, blue and purple): what the item disenchants into, and what
+that is worth at Auctionator's prices. Next to the item's own Auctionator and vendor lines, that
+answers whether this BoE green should go to a disenchanter, onto the auction house, or to a vendor.
+
+Until 0.20.0 a "Best: ..." line under the value said which of the three paid most. The owner
+dropped it (2026-11-16): it only restated the numbers beside it. The plain Disenchant label also
+lost its icon then. `ns.Best` (the compare, after the 5% auction cut) stays: Least Valuable and
+Quest Reward Value price items with it.
 
 ```
 Disenchant                                   27s 75c
-Best: disenchant it (auction 20s, vendor 5s)
   Soul Dust 1-2, 75%                          10s each      <- with Shift, or the option
   Greater Astral Essence 1-2, 20%             50s each
   Large Glimmering Shard, 5%                  30s each
@@ -55,19 +58,14 @@ Best: disenchant it (auction 20s, vendor 5s)
 - **Value:** sum over the table of chance x average count x Auctionator price. A material at 10%
   or more without a price leaves the value unknown ("no price for Soul Dust"); rarer ones (shards
   at 5%) count as 0.
-- **Best:** the highest of disenchant, the item's own auction price (by link, so random suffixes
-  and item levels are told apart) and its vendor price, with the 5% auction cut taken off the
-  first two. Ties go to the less work (vendor, then auction). A disenchanter's tip is not counted.
-- **Bound items** (bind on pickup, or a tooltip that says Soulbound or Account Bound) skip the
-  auction price, and get the Best line only when you can disenchant yourself
-  (`C_SpellBook.ContainsAnyDisenchantSpell`).
+- **`ns.Best`** (for Least Valuable and Quest Reward Value): the highest of disenchant, the item's
+  own auction price and its vendor price, with the 5% auction cut taken off the first two. Ties go
+  to the less work (vendor, then auction).
 - **Old prices (0.13.1):** `root.AuctionAge` gives the days since Auctionator last saw an item.
   Over 3 days (`root.STALE_DAYS`) is old. Materials are listed all the time, so they go old only
   without a scan; the item's own price is the weak spot (a given green may be listed once a week,
   and Auctionator keeps its last price).
   - A main material (10% or more) with an old price marks the value "(old prices)".
-  - An old price for the item itself still competes for Best, and the line dates it: "Best: sell it
-    at auction (price seen 6 days ago)" or "(disenchant 27s 75c, auction 20s seen 6 days ago)".
   - Shift dates old materials; `/kwd` dates every one; the hub counts the old ones.
   - No refresh hook: the tooltip is built fresh on every hover.
 
@@ -81,7 +79,7 @@ duplicates it.
 
 ## Settings and commands
 
-Show On Item Tooltips, Say What Pays Best, Always List The Materials (else hold Shift). `/kwd`
+Show On Item Tooltips, Always List The Materials (else hold Shift). `/kwd`
 prints every material's price (which still need an auction scan); `/kwd seen` lists your disenchants against the tables; `/kwd options`.
 
 ## To check in game

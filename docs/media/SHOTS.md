@@ -41,7 +41,8 @@ Tick a line when its shot is in `docs/media/`.
 - [ ] The on-screen alert and the skull button next to a rare.
 
 ## Disenchant Value
-- [x] A green weapon or armor tooltip with its disenchant lines.
+- [ ] A green weapon or armor tooltip with its disenchant lines. Retake after 0.20.0: the current one
+  (Best line cropped off) still has the icon the label lost.
 - [ ] The same tooltip with Shift held (chances and prices).
 
 ## Camp Guide

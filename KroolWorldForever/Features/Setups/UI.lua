@@ -41,6 +41,7 @@ local PART_ICON = {
 	macros = "Interface\\Icons\\INV_Misc_QuestionMark",
 	editmode = "Interface\\Icons\\INV_Misc_Map_01",
 	cvars = "Interface\\Icons\\INV_Misc_Gear_01",
+	chat = "Interface\\Icons\\INV_Misc_Note_01", -- in the 1.60.1.70938 client (ManifestInterfaceData, fileID 134327)
 	addons = "Interface\\Icons\\INV_Box_01",
 	kwf = ART.addon,
 }
@@ -51,6 +52,7 @@ local PART_TIP = {
 	macros = "Creates the setup's macros this character does not have. Never changes or deletes yours.",
 	editmode = "Where your HUD sits. Added as a new layout for this character.",
 	cvars = "Interface options Blizzard saves on its servers. Not graphics or sound.",
+	chat = "The text size of each chat window (the chat tab's Font Size menu). The game keeps it per character.",
 	addons = "Which addons are on for this character.",
 	kwf = "This addon's own switches and options. These are account-wide.",
 }
@@ -112,6 +114,14 @@ local function PartCount(s, key)
 		addons = "addons",
 		kwf = "features",
 	}
+	if key == "chat" then
+		local c = s.parts and s.parts.chat
+		if not c then
+			return "not saved"
+		end
+		local main = c[1]
+		return (type(main) == "number" and main > 0) and ("size " .. main) or "default size"
+	end
 	if key == "editmode" then
 		local e = s.parts and s.parts.editmode
 		if not e then
