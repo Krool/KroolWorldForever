@@ -14,6 +14,7 @@ hand-copied code.
   - Optional fields: `db` (default `<folder>DB`), `slash` (fallback words when the feature declares none, e.g. Quest Reward Value's `/kwq`) and `bindings` (secure button suffixes for Bindings.xml).
 - `published.json` is the upload ledger: key -> {hash, version}. `release.ps1` commits it after a `-Publish`.
 - `listings/<key>.md`: the CurseForge name, categories, relations, summary and description. Each description ends with `[Donate](https://ko-fi.com/kroolworld)`: labeled Donate, never the platform name.
+- `listings/bundle.md`: the bundle's own CurseForge page (project 1804317). Each feature name in its list links that feature's KW addon, and every KW description links back to the bundle. No CurseForge relations between the bundle and the KW addons (2026-11-15): every relation type (required, optional, embedded library, tool, incompatible) misdescribes "the same feature, packaged alone", and the CurseForge app installs required ones.
 - `logos/<key>.png`: 512px placeholder logos, the same style as Reagent Uses' logo. The owner may swap them.
 
 ## How a standalone behaves
@@ -43,5 +44,5 @@ hand-copied code.
 
 1. Feature folder, TOC entries and a test suite, as for any bundle feature.
 2. A manifest entry, and its folder in `Identity.lua`'s `family`.
-3. `listings/<key>.md` and `logos/<key>.png`; create the CurseForge project and put its id in `curseId`.
+3. `listings/<key>.md` and `logos/<key>.png`; create the CurseForge project and put its id in `curseId`. Add the feature, linked to its KW page, to `listings/bundle.md` and paste that description into the bundle's CurseForge page.
 4. Release: the bundle and the new standalone ship together.
