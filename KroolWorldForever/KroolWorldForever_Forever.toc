@@ -55,6 +55,10 @@ Features\ReagentUses\Data.lua
 Features\ReagentUses\Core.lua
 Features\ReagentUses\Tooltip.lua
 
+Features\MarketMovers\Core.lua
+Features\MarketMovers\Window.lua
+Features\MarketMovers\UI.lua
+
 # Bindings.xml (Rare Alert's key) loads by itself; it is not listed here.
 # Hub, then Init last: every feature has declared itself before ADDON_LOADED.
 Core\Hub.lua

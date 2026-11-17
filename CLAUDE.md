@@ -146,6 +146,19 @@ before writing addon code.
   the tag, pushes, and creates the GitHub release with the zip attached. Never ship two builds
   under one version. The same run builds every standalone from the tag
   (`dist\<Folder>-x.y.z.zip`, attached too); versions are lockstep.
+- **Held features ship to nobody.** An `addons.json` entry with `"held": true` is on the owner's
+  game only, through the dev junction to this tree. Market Movers (`movers`) has been held since
+  2026-11-17, when the owner said "dont deploy to anyone else yet".
+  - **What the hold does:** `build.ps1` drops held feature folders and their TOC lines from the
+    bundle zip, `build.js --release` skips the standalone, `publish.ps1` never uploads it, and
+    `settings-doc.js` keeps it out of the README.
+  - **Other releases still run.** Leave the hold alone, and write no CHANGELOG bullet, TOC
+    `## Notes` text, README feature line or `listings/bundle.md` line for a held feature.
+  - **Lifting it is the owner's call:** remove `held`, add those lines, create the CurseForge
+    project, then release.
+  - **Local test builds:** `build.ps1` without `-Ref` writes `dist\*-<TOC version>.zip` and
+    replaces the released zips of that version. Rebuild them with `build.ps1 -Ref v<version>`
+    afterwards.
 - The public download is that GitHub release; the README links `releases/latest`. `dist/` is
   git-ignored. If the push or `gh release create` fails, the script prints the commands that
   finish the release by hand; do not rerun it for the same version.

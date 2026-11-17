@@ -135,6 +135,19 @@ for (const a of manifest.addons) {
 }
 if (allOk) console.log(`generated ok: ${manifest.addons.length} standalones in ${path.relative(repo, outDir)}`);
 
+// A release build leaves out every "held" entry (on the owner's install only) and nothing else.
+{
+  const releaseDir = path.join(repo, "build", "standalone-release");
+  const shipped = build({ src: repo, out: releaseDir, version: null, only: null, release: true });
+  const want = manifest.addons.filter((a) => !a.held).map((a) => a.folder);
+  if (JSON.stringify(shipped) !== JSON.stringify(want)) fail(`release build made ${shipped.join(", ")}; want ${want.join(", ")}`);
+  for (const a of manifest.addons.filter((x) => x.held)) {
+    if (fs.existsSync(path.join(releaseDir, a.folder))) fail(`release build wrote held ${a.folder}`);
+  }
+  fs.rmSync(releaseDir, { recursive: true, force: true });
+  console.log(`release build ok: ${shipped.length} shipped, held: ${manifest.addons.filter((a) => a.held).map((a) => a.folder).join(", ") || "none"}`);
+}
+
 // ---------------------------------------------------------------------- each alone
 for (const a of manifest.addons) {
   const dir = path.join(outDir, a.folder);

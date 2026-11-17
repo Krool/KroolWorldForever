@@ -60,9 +60,19 @@ run(
 );
 const lines = lua.lua_tojsstring(L, -1).split("\n");
 
+// Features marked "held" in standalone/addons.json are not shipped yet: no README section.
+const held = new Set(
+  JSON.parse(fs.readFileSync(path.join(repo, "standalone", "addons.json"), "utf8"))
+    .addons.filter((a) => a.held)
+    .map((a) => a.key)
+);
+
 const md = [];
+let skipping = false;
 for (const line of lines) {
   const p = line.split("\t");
+  if (p[0] === "F") skipping = held.has(p[1]);
+  if (skipping) continue;
   if (p[0] === "F") {
     md.push("", `### ${p[2]}`, "", p[3], "");
     md.push(`On by default: ${p[5] === "true" ? "yes" : "no"}. Toggle: \`/kwf ${p[1]} on|off\`.${p[4] ? ` Commands: \`${p[4]}\`.` : ""}`, "");

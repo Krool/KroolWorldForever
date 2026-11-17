@@ -174,7 +174,7 @@ if ($DryRun) {
 
 # ---------------------------------------------------------------- CurseForge: the standalones
 $entries = @()
-if (Test-Path $Manifest) { $entries = @((Get-Content -Raw $Manifest | ConvertFrom-Json).addons | Where-Object { $_.curseId }) }
+if (Test-Path $Manifest) { $entries = @((Get-Content -Raw $Manifest | ConvertFrom-Json).addons | Where-Object { $_.curseId -and -not $_.held }) }
 $old = @{}
 if (Test-Path $Published) {
 	$raw = Get-Content -Raw $Published | ConvertFrom-Json

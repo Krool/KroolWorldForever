@@ -1,6 +1,7 @@
 // Builds each feature of the Krool World Forever bundle as its own standalone addon, from the
 // same source files, into <out>/<Folder>/.
-//   node tools/standalone/build.js [--src <repo root>] [--out <dir>] [--version x.y.z] [--only <key>]
+//   node tools/standalone/build.js [--src <repo root>] [--out <dir>] [--version x.y.z] [--only <key>] [--release]
+// --release skips manifest entries marked "held": true (on the owner's install only, not shipped yet).
 // Reads <src>/KroolWorldForever/KroolWorldForever_Forever.toc (file order, Interface, Version) and
 // <src>/standalone/addons.json. Per addon it writes:
 //   - the bundle's Core files in TOC order, minus Hub.lua, with Core/Identity.lua generated
@@ -14,10 +15,11 @@ const path = require("path");
 const BUNDLE = "KroolWorldForever";
 
 function parseArgs(argv) {
-  const o = { src: path.join(__dirname, "..", ".."), out: null, version: null, only: null };
+  const o = { src: path.join(__dirname, "..", ".."), out: null, version: null, only: null, release: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--src") o.src = path.resolve(argv[++i]);
+    if (a === "--release") o.release = true;
+    else if (a === "--src") o.src = path.resolve(argv[++i]);
     else if (a === "--out") o.out = path.resolve(argv[++i]);
     else if (a === "--version") o.version = argv[++i];
     else if (a === "--only") o.only = argv[++i];
@@ -128,6 +130,7 @@ function build(opts) {
     if (seen.has(a.folder)) throw new Error("folder " + a.folder + " is listed twice");
     seen.add(a.folder);
     if (opts.only && a.key !== opts.only) continue;
+    if (opts.release && a.held) continue; // not shipped yet
 
     const e = Object.assign({ embedded: [], optionalDeps: [], bindings: [], relations: [], curseId: "" }, a);
     e.db = a.db || a.folder + "DB";

@@ -577,7 +577,8 @@ do
 	local d = SettingsLog.dropdown[VAR .. "modifier"]
 	Check(d and #d == 4 and d[1].value == "CTRL" and d[1].label == "Ctrl" and d[2].value == "ALT" and d[3].value == "SHIFT", "the dropdown offers Ctrl, Alt, Shift")
 	Check(d and d[4].value == "NONE" and d[4].label == "Always Show", "...and Always Show")
-	Check(SettingsLog.slider and SettingsLog.slider.min == 5 and SettingsLog.slider.max == 50, "the slider runs from 5 to 50")
+	local slider = SettingsLog.sliders[VAR .. "maxRecipes"]
+	Check(slider and slider.min == 5 and slider.max == 50, "the slider runs from 5 to 50")
 end
 do
 	local setting = RegisteredSettings[VAR .. "modifier"]

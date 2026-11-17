@@ -204,8 +204,9 @@ end
 
 -- ---------------------------------------------------------------- settings
 
--- What the settings panel was given: the dropdowns' choices and the controls made, by option key.
-SettingsLog = { dropdown = {}, controls = {} }
+-- What the settings panel was given: the dropdowns' choices, the sliders' ranges and the controls
+-- made, by setting variable (every feature registers its settings, so look ours up by name).
+SettingsLog = { dropdown = {}, controls = {}, sliders = {} }
 Settings.VarType.String = "string"
 do
 	local register = Settings.RegisterAddOnSetting
@@ -220,7 +221,7 @@ Settings.CreateCheckbox = function(_, setting)
 end
 Settings.CreateSlider = function(_, setting, options)
 	SettingsLog.controls[setting.variable] = "slider"
-	SettingsLog.slider = options
+	SettingsLog.sliders[setting.variable] = options
 end
 Settings.CreateDropdown = function(_, setting, options, tooltip)
 	SettingsLog.controls[setting.variable] = "dropdown"

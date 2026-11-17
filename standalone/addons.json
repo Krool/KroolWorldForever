@@ -1,5 +1,5 @@
 {
-  "comment": "One entry per standalone addon built from the bundle's source by tools/standalone/build.js. key = the feature's registry key. Optional per entry: db (default <folder>DB), slash (fallback slash words when the feature declares none), bindings (secure button name suffixes, e.g. RareButton). features = folders under KroolWorldForever/Features; embedded = provider folders loaded for their data only, never enabled. curseId stays empty until the CurseForge project exists. relations = CurseForge project slugs.",
+  "comment": "One entry per standalone addon built from the bundle's source by tools/standalone/build.js. key = the feature's registry key. Optional per entry: db (default <folder>DB), slash (fallback slash words when the feature declares none), bindings (secure button name suffixes, e.g. RareButton). features = folders under KroolWorldForever/Features; embedded = provider folders loaded for their data only, never enabled. curseId stays empty until the CurseForge project exists. relations = CurseForge project slugs. held = true keeps a feature out of every release (the owner's own install only): build.ps1 drops it from the bundle zip, build.js --release skips its standalone, publish.ps1 never uploads it and settings-doc leaves it out of the README.",
   "addons": [
     {
       "key": "questtrash",
@@ -160,6 +160,20 @@
       "optionalDeps": [],
       "relations": [],
       "curseId": "1804597"
+    },
+    {
+      "key": "movers",
+      "folder": "KW_MarketMovers",
+      "title": "KW Market Movers",
+      "notes": "After Auctionator scans the auction house: the items whose price moved most since the day before, trade materials first. Gear is left out.",
+      "iconTexture": "Interface\\Icons\\INV_Ore_Copper_01",
+      "category": "Interface Enhancements",
+      "features": ["MarketMovers"],
+      "embedded": [],
+      "optionalDeps": ["Auctionator"],
+      "relations": [{ "slug": "auctionator", "type": "requiredDependency" }],
+      "curseId": "",
+      "held": true
     }
   ]
 }

@@ -94,6 +94,25 @@ if ($Version -ne $inside) {
 	throw "Asked for version $Version but the TOC being packaged says $inside."
 }
 
+# Features marked "held" in the manifest are on the owner's install only (the junction to this
+# tree) and must not ship: drop their folders and TOC lines from the bundle being packaged. The
+# standalone generator skips them too (--release).
+$manifestPath = Join-Path $srcStage "standalone\addons.json"
+if (Test-Path $manifestPath) {
+	$held = @((Get-Content -Raw $manifestPath | ConvertFrom-Json).addons | Where-Object { $_.held } | ForEach-Object { $_.features } | Where-Object { $_ })
+	if ($held.Count) {
+		$stagedToc = Join-Path $stage "KroolWorldForever\KroolWorldForever_Forever.toc"
+		$text = [IO.File]::ReadAllText($stagedToc)
+		foreach ($f in $held) {
+			$dir = Join-Path $stage "KroolWorldForever\Features\$f"
+			if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
+			$text = [regex]::Replace($text, "(?m)^Features\\$([regex]::Escape($f))\\[^\r\n]*\r?\n", "")
+		}
+		[IO.File]::WriteAllText($stagedToc, $text, (New-Object Text.UTF8Encoding($false)))
+		Write-Host "Held back (not packaged): $($held -join ', ')"
+	}
+}
+
 # Not Compress-Archive: on PowerShell 5.1 it writes backslash entry names, which the zip spec
 # forbids and some extractors and upload sites mishandle. The folder sits at the zip's root.
 Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
@@ -113,7 +132,11 @@ function New-AddonZip([string] $parent, [string] $folder, [string] $zip) {
 
 # The standalones, generated from the same source and version (tools\standalone\build.js).
 $generator = Join-Path $srcStage "tools\standalone\build.js"
-Native $repo { node $generator --src $srcStage --out $standaloneStage --version $Version } "standalone build" | Out-Host
+if ((Get-Content -Raw $generator) -match '--release') {
+	Native $repo { node $generator --src $srcStage --out $standaloneStage --version $Version --release } "standalone build" | Out-Host
+} else {
+	Native $repo { node $generator --src $srcStage --out $standaloneStage --version $Version } "standalone build" | Out-Host
+}
 $zips = @()
 foreach ($folder in (Get-ChildItem -Directory $standaloneStage | Sort-Object Name | ForEach-Object { $_.Name })) {
 	$standaloneZip = Join-Path $dist "$folder-$Version.zip"

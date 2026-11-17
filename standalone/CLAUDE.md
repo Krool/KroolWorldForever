@@ -11,6 +11,7 @@ hand-copied code.
   - `features` lists folders under `KroolWorldForever/Features`. `embedded` lists provider folders carried for their data only: Disenchant for Least Valuable and Quest Reward Value, Kill Value for Rare Alert.
   - `optionalDeps` go in the TOC. `relations` are CurseForge slugs and types.
   - `curseId` stays empty until the project exists.
+  - `held: true`: on the owner's install only, left out of every release. See "Held features" in the repo CLAUDE.md. Market Movers is held.
   - Optional fields: `db` (default `<folder>DB`), `slash` (fallback words when the feature declares none, e.g. Quest Reward Value's `/kwq`) and `bindings` (secure button suffixes for Bindings.xml).
 - `published.json` is the upload ledger: key -> {hash, version}. `release.ps1` commits it after a `-Publish`.
 - `listings/<key>.md`: the CurseForge name, categories, relations, summary and description. Each description ends with `[Donate](https://ko-fi.com/kroolworld)`: labeled Donate, never the platform name.
