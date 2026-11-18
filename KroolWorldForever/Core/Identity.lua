@@ -45,6 +45,7 @@ root.ID = {
 		"KW_OneButtonFishing",
 		"ReagentUses",
 		"KW_MarketMovers",
+		"KW_BoatsAndZeppelins",
 	},
 	standalone = false,
 	embedded = {},

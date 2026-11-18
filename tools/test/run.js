@@ -56,6 +56,16 @@ if (sources["Features/ReagentUses/Data.lua"] !== undefined) {
   }
   console.log(`data ok: Reagent Uses recipes match build ${apiBuild}`);
 }
+// So are the boat and zeppelin routes: a new build can add one.
+if (sources["Features/Transports/Data.lua"] !== undefined) {
+  const transportsBuild = (sources["Features/Transports/Data.lua"].match(/build = "([^"]+)"/) || [])[1];
+  if (transportsBuild !== apiBuild) {
+    console.log(`DATA STALE: Features/Transports/Data.lua is build ${transportsBuild}, the API allowlist is ${apiBuild}.`);
+    console.log("  Regenerate it: see the header of tools/transports-data/gen-data.js.");
+    process.exit(1);
+  }
+  console.log(`data ok: Boats And Zeppelins routes match build ${apiBuild}`);
+}
 
 const args = process.argv.slice(2);
 const verbose = args.includes("--verbose");

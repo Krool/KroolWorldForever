@@ -59,6 +59,9 @@ Features\MarketMovers\Core.lua
 Features\MarketMovers\Window.lua
 Features\MarketMovers\UI.lua
 
+Features\Transports\Data.lua
+Features\Transports\Transports.lua
+
 # Bindings.xml (Rare Alert's key) loads by itself; it is not listed here.
 # Hub, then Init last: every feature has declared itself before ADDON_LOADED.
 Core\Hub.lua

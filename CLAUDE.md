@@ -148,7 +148,9 @@ before writing addon code.
   (`dist\<Folder>-x.y.z.zip`, attached too); versions are lockstep.
 - **Held features ship to nobody.** An `addons.json` entry with `"held": true` is on the owner's
   game only, through the dev junction to this tree. Market Movers (`movers`) has been held since
-  2026-11-17, when the owner said "dont deploy to anyone else yet".
+  2026-11-17, when the owner said "dont deploy to anyone else yet". Boats And Zeppelins
+  (`transports`) has been held since 2026-11-18: built without an explicit go and not seen in the
+  game (docs/features/transports.md lists what to check).
   - **What the hold does:** `build.ps1` drops held feature folders and their TOC lines from the
     bundle zip, `build.js --release` skips the standalone, `publish.ps1` never uploads it, and
     `settings-doc.js` keeps it out of the README.
@@ -189,7 +191,9 @@ before writing addon code.
   wago.tools `SkillLineAbility` (regenerate when a build changes recipes);
   `tools/reagents-data/gen-data.js <build>` Reagent Uses' recipe data (Forever's own tables from
   wago.tools, trainer levels and recipe sources from killvalue-data's classic-db sqlcache; run.js
-  fails until it matches the allowlist's build, like Skill-Up's); `tools/settings-doc.js` README
+  fails until it matches the allowlist's build, like Skill-Up's);
+  `tools/transports-data/gen-data.js <TaxiPathNode.csv> <build>` the boat and zeppelin stops (same
+  build check); `tools/settings-doc.js` README
   settings tables; `tools/standalone/` the standalone generator and its tests.
 - Reagent Uses (feature `reagents`, 2026-11-14) came from the separate repo Krool/ReagentUses,
   now archived; it keeps per-character `ns.db.known` / `ns.db.skills` keyed by the roster key.
