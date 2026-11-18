@@ -109,6 +109,11 @@ if (Test-Path $manifestPath) {
 			$text = [regex]::Replace($text, "(?m)^Features\\$([regex]::Escape($f))\\[^\r\n]*\r?\n", "")
 		}
 		[IO.File]::WriteAllText($stagedToc, $text, (New-Object Text.UTF8Encoding($false)))
+		# Check the result, not the steps: a held feature that is still in the staged bundle stops the build.
+		foreach ($f in $held) {
+			if (Test-Path (Join-Path $stage "KroolWorldForever\Features\$f")) { throw "Held feature $f is still in the staged bundle." }
+			if ([IO.File]::ReadAllText($stagedToc) -match "(?m)^[^#\r\n]*\\$([regex]::Escape($f))\\") { throw "Held feature $f is still in the staged TOC." }
+		}
 		Write-Host "Held back (not packaged): $($held -join ', ')"
 	}
 }

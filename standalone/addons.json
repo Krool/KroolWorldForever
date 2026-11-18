@@ -165,7 +165,7 @@
       "key": "movers",
       "folder": "KW_MarketMovers",
       "title": "KW Market Movers",
-      "notes": "After Auctionator scans the auction house: the items whose price moved most since the day before, trade materials first. Gear is left out.",
+      "notes": "After Auctionator scans the auction house: what rose or fell against its usual price, bargains under the vendor price, and how your bags stand. Gear is left out.",
       "iconTexture": "Interface\\Icons\\INV_Ore_Copper_01",
       "category": "Interface Enhancements",
       "features": ["MarketMovers"],

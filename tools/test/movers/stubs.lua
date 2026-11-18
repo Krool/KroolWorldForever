@@ -60,7 +60,11 @@ end
 Browse, BrowseExtra = {}, {}
 FullBrowse = true
 BrowseCalls = 0
+Queries = {} -- every browse query sent
 C_AuctionHouse = {
+	SendBrowseQuery = function(q)
+		Queries[#Queries + 1] = q
+	end,
 	GetBrowseResults = function()
 		BrowseCalls = BrowseCalls + 1
 		local out = {}
