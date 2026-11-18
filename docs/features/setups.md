@@ -91,8 +91,13 @@ says it is internal, serialized or "stores the last". Checked against Forever's 
 - **Keybindings are a full replace**, including keys for addon commands the setup does not have
   (Undo restores them).
 
-- **Other addons' per-character settings** (Questie, Auctionator profiles) are out of reach: the game
+- **Other addons' per-character settings** (Auctionator profiles) are out of reach: the game
   only loads an addon's per-character data for that addon. Use their own profile options.
+- **Questie's settings are a profile, shared already** (checked 2026-11-18, Questie 12.9.0): its
+  options and its map pin ticks (`Questie.db.profile.townsfolkConfig`) are in the account-wide
+  `QuestieConfig`, and every character starts on the profile "Default". Characters differ only when
+  one is on another profile (`/questie` > Profiles). Setups does not record which profile a
+  character uses; `Questie.db:SetProfile(name)` could set it, and it is not built.
 - **Chat windows** beyond their text size (tabs, channels, colors) are not copied yet.
 - **Other addons' per-character settings** include Spoken's window size and subtitle size: Spoken
   keeps a profile per character. Its own settings (Esc > Options > AddOns > Spoken > Profiles) can
