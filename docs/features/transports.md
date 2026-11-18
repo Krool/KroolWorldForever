@@ -1,6 +1,6 @@
 # Boats And Zeppelins (feature)
 
-**Held (2026-11-18): on the owner's install only, not released, not seen in the game yet.**
+**Held (2026-11-18): on the owner's install only, not released.** First seen in the game the same day (the owner's two screenshots).
 
 **A pin on the world map at every boat dock and zeppelin tower.** Hover a pin for where it goes.
 
@@ -55,8 +55,8 @@ Uses' data, so a new build's routes are picked up when the allowlist is rebuilt.
 - **The Deeprun Tram is not a taxi path** and has no pin.
 - **Icons:** `flightmasterferry` for a boat and `vehicle-air-occupied` for a zeppelin, both on the
   object icons sheet that holds `flightmaster` (which Forever's own transport rows use). Chosen
-  from the atlas table, not seen in the game: a green square means the art is missing, and
-  `ns.ATLAS` in `Transports.lua` is the one place to change.
+  from the atlas table; the boat is seen in the game, the zeppelin not yet. `ns.ATLAS` in
+  `Transports.lua` is the one place to change.
 
 ## How the pins are drawn
 
@@ -70,9 +70,13 @@ addon code taints. The feature hooks `WorldMapFrame`'s `OnMapChanged`, `OnCanvas
 being looked at. What it answers for a map of another continent is not known, so the feature
 compares continents itself (`C_Map.GetWorldPosFromMapPos`) before asking.
 
-## Not checked in the game
+## Seen in the game (2026-11-18, the owner's screenshots)
 
-Everything above is from the data and Blizzard's map code, verified by 89 checks against a stubbed
-client. To check after a full client restart: the pins sit on the docks (Auberdine has three,
-Menethil two), the two icons draw, the tooltip reads right, a click on a pin still moves the map,
-and `/kwb all` lists routes that exist.
+- The pins draw on the Hillsbrad zone map and the Eastern Kingdoms continent map, on the coast
+  where the docks are: Hillsbrad's, Menethil, Stormwind, Booty Bay and the far east one.
+- The boat icon draws (a boat in a ring).
+- The tooltip on Hillsbrad's dock reads Boat, To Wetlands, To Darkshore, Hillsbrad Foothills.
+
+Still to check: the zeppelin icon (the screenshot has other small icons beside it, so it could
+not be told apart), that a click on a pin still moves the map, and which of the new routes the
+server runs (`/kwb all`).

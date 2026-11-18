@@ -149,8 +149,8 @@ before writing addon code.
 - **Held features ship to nobody.** An `addons.json` entry with `"held": true` is on the owner's
   game only, through the dev junction to this tree. Market Movers (`movers`) has been held since
   2026-11-17, when the owner said "dont deploy to anyone else yet". Boats And Zeppelins
-  (`transports`) has been held since 2026-11-18: built without an explicit go and not seen in the
-  game (docs/features/transports.md lists what to check).
+  (`transports`) has been held since 2026-11-18: built without an explicit go; the owner has seen the
+  boat pins working (docs/features/transports.md lists what is still to check).
   - **What the hold does:** `build.ps1` drops held feature folders and their TOC lines from the
     bundle zip, `build.js --release` skips the standalone, `publish.ps1` never uploads it, and
     `settings-doc.js` keeps it out of the README.
