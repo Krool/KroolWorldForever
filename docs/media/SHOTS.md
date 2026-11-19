@@ -72,3 +72,9 @@ Tick a line when its shot is in `docs/media/`.
 ## Reagent Uses
 - [x] Ctrl held over Silk Cloth (or any cloth or ore) with the recipe list showing.
 - [x] The same item without Ctrl (the one-line hint).
+
+## Boats And Zeppelins
+- [x] A dock's pin with its tooltip (Hillsbrad; the owner's own crop, 2026-11-18).
+- [x] The continent map with its docks (Eastern Kingdoms; the small grey icons and quest marks are
+  Questie's, and the caption says so).
+- [ ] A zeppelin tower's tooltip (Orgrimmar: one pin, two destinations).

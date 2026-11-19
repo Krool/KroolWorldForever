@@ -1,6 +1,8 @@
 # Boats And Zeppelins (feature)
 
-**Held (2026-11-18): on the owner's install only, not released.** First seen in the game the same day (the owner's two screenshots).
+**Released in 0.22.0 (2026-11-18)** on the owner's go, as a bundle feature and as KW Boats And
+Zeppelins (CurseForge project 1815725). It was held for a few hours first; the owner's two
+screenshots from that day are the media in `docs/media/transports/`.
 
 **A pin on the world map at every boat dock and zeppelin tower.** Hover a pin for where it goes.
 
@@ -55,7 +57,7 @@ Uses' data, so a new build's routes are picked up when the allowlist is rebuilt.
 - **The Deeprun Tram is not a taxi path** and has no pin.
 - **Icons:** `flightmasterferry` for a boat and `vehicle-air-occupied` for a zeppelin, both on the
   object icons sheet that holds `flightmaster` (which Forever's own transport rows use). Chosen
-  from the atlas table; the boat is seen in the game, the zeppelin not yet. `ns.ATLAS` in
+  from the atlas table; both are seen in the game. `ns.ATLAS` in
   `Transports.lua` is the one place to change.
 
 ## How the pins are drawn
@@ -77,6 +79,9 @@ compares continents itself (`C_Map.GetWorldPosFromMapPos`) before asking.
 - The boat icon draws (a boat in a ring).
 - The tooltip on Hillsbrad's dock reads Boat, To Wetlands, To Darkshore, Hillsbrad Foothills.
 
-Still to check: the zeppelin icon (the screenshot has other small icons beside it, so it could
-not be told apart), that a click on a pin still moves the map, and which of the new routes the
+- The zeppelin icon draws (a small winged airship, seen head-on, with no ring): at Undercity, at
+  the stop near Dalaran and at Grom'gol in the game's own screenshot of the same map
+  (`WoWScrnShot_111826_115743.jpg`, zoomed).
+
+Still to check: that a click on a pin still moves the map, and which of the new routes the
 server runs (`/kwb all`).

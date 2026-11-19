@@ -1,6 +1,7 @@
 # KW Boats And Zeppelins
 
 - **Folder:** KW_BoatsAndZeppelins
+- **CurseForge:** project 1815725, https://www.curseforge.com/wow/addons/kw-boats-and-zeppelins (created 2026-11-18)
 - **Main category:** Map & Minimap.
 - **Relations:** none.
 - **Logo:** `standalone/logos/transports.png`

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.22.0
+
+- **Boats And Zeppelins: new feature.** A pin on the world map at every boat dock and zeppelin
+  tower. Hover it for where the boat or zeppelin goes. The routes are read from Forever's own
+  data, so the new ones, such as Stormwind to Darkshore, are there with the classic ones.
+- **Boats And Zeppelins: zone maps always show their docks.** Continent maps and the world map
+  show them too (Show On Continent Maps, on by default). Two boats or zeppelins that leave from
+  one place share a pin, which lists both destinations.
+- **Boats And Zeppelins: `/kwb` lists the boats and zeppelins of your zone,** `/kwb all` every
+  dock. A Pin Size setting, 12 to 36.
+- **Boats And Zeppelins: it shows every route in the game's data.** It cannot tell when the next
+  boat arrives, or whether a route is running yet.
+
 ## 0.21.0
 
 - **Market Movers: new feature.** After Auctionator finishes a full scan of the auction house, a
