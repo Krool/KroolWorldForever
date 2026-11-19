@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.22.2
+
+- **Disenchant Value: steps aside when Auctionator shows its own Disenchant line.** Auctionator 348
+  and later can show one on Forever (an option in its Tooltips settings). When its line is on the
+  tooltip, this addon adds nothing. A new option, Hide When Auctionator Shows Its Own, turns that
+  off if you want both.
+- **Setups: a new character's automatic setup creates character macros only.** An account-wide
+  macro you deleted on purpose no longer comes back when a new character starts from an older
+  setup. The report says how many were left out; applying the setup yourself still adds them.
+
 ## 0.22.1
 
 - **Setups: a new character's automatic setup always saves keybindings for that character only.**
