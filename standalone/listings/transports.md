@@ -3,8 +3,11 @@
 - **Folder:** KW_BoatsAndZeppelins
 - **Main category:** Map & Minimap.
 - **Relations:** none.
-- **Logo:** none yet (`standalone/logos/transports.png` is owed before the project is created).
-- **Status:** held (2026-11-18): on the owner's install only, not released, not seen in the game yet. No CurseForge project yet.
+- **Logo:** `standalone/logos/transports.png`
+- **Status:** released with 0.22.0 (2026-11-18).
+- **Media:** `docs/media/transports/dock-tooltip.png` ("A dock's pin and its tooltip") and
+  `continent-map.png` ("Docks on the continent map"; its caption says the small grey icons and the
+  quest marks are Questie's).
 
 ## Summary
 
@@ -17,7 +20,7 @@ A pin on the world map at every boat dock and zeppelin tower in WoW Forever, say
 - Zone maps show their docks. Continent maps and the world map can show them too, or not.
 - Two boats or zeppelins that leave from one place share a pin, which lists both destinations.
 - `/kwb` lists the boats and zeppelins of the zone you are in. `/kwb all` lists every dock.
-- It does not know when the next one arrives.
+- It shows every route in the game's data. It cannot tell when the next boat arrives, or whether a route is running yet.
 - Settings: show on continent maps, and the pin size.
 
 Settings: Esc > Options > AddOns > KW Boats And Zeppelins.
