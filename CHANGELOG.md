@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.23.0
+
+- **Least Valuable: the Bags Full card keeps off your open bags.** When its place would cover a
+  bag, it goes beside them, and it moves when you open your bags under it. Drag it and it stays
+  where you put it until it closes. Opening your bags now puts the coin on the card's item at
+  once.
+- **Least Valuable: a Delete button on the Bags Full card.** It deletes the item the card shows,
+  to make room, and only when you click it. It asks first; a new option, Confirm Before
+  Deleting, turns the question off, and a rare or better item always asks. A deleted item
+  cannot be brought back. Another new option, Delete Button On The Card, takes the button away.
+- **Least Valuable: nothing is ever deleted by itself.** The delete happens only on your own
+  click, one item per click. It reads the slot again first, and leaves it alone when the item
+  changed, is locked, or your cursor already holds something.
+
 ## 0.22.2
 
 - **Disenchant Value: steps aside when Auctionator shows its own Disenchant line.** Auctionator 348
