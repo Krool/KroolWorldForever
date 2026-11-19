@@ -4,8 +4,8 @@
                  "version":  "0.21.0"
              },
     "disenchant":  {
-                       "hash":  "9782413398d15919b4692938fb64f1d5bd2c85b9bebd26d5f7b8d5e582b4a39d",
-                       "version":  "0.21.0"
+                       "hash":  "97bb823c10f78d415fa00c5c6eeee36e6176cfa94821e59b5521bb61e9f57165",
+                       "version":  "0.22.2"
                    },
     "fishing":  {
                     "hash":  "99415b1c50ef10c3663f80ca9bbb5c2269c109521eb6a7efa4dba026c6961998",
@@ -20,8 +20,8 @@
                       "version":  "0.21.0"
                   },
     "leastvaluable":  {
-                          "hash":  "637868997153092913dfffaf50563de5c476504d9bd9e9495967217f39d70643",
-                          "version":  "0.21.0"
+                          "hash":  "7ccab6e46181494db67dc2c975800b7c48cabc5bb69d85e6fefee67da69214a7",
+                          "version":  "0.22.2"
                       },
     "movers":  {
                    "hash":  "a8b1fda1ee8305e8d0950de1ba91151e8d7e32925f176fed6a732d4d921f6cb8",
@@ -40,12 +40,12 @@
                      "version":  "0.22.1"
                  },
     "rewardvalue":  {
-                        "hash":  "ae7f0067546eadf1950f00225d711e7579b7fe90adaafe5aed8a12d16c540096",
-                        "version":  "0.21.0"
+                        "hash":  "aa52845e9fbbe61058e4082ea7c55491664a1a1773e881fdeaee4d253b14a8ba",
+                        "version":  "0.22.2"
                     },
     "setups":  {
-                   "hash":  "f934e2550a62e64ec0b113b698dd9c42c3b776ad7f750c3bcf00f3e3dc71a6c2",
-                   "version":  "0.22.1"
+                   "hash":  "af115fa4ee60ba9e997cce30cbf48522d6310ff7f609e1a52db2a9614cfe54ad",
+                   "version":  "0.22.2"
                },
     "skillup":  {
                     "hash":  "52f8eb299ea1275ce6e98a217d6ce35e1b73ecaad50a0fdbb3f78305aeca3624",
