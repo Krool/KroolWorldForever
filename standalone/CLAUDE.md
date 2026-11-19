@@ -41,6 +41,7 @@ hand-copied code.
 - The `family` list in the bundle's `Core/Identity.lua` must equal the bundle plus every manifest folder (a test checks). Setups never toggles a family member.
 - Listings are the source for the live pages, which nothing uploads: after a listing changes, set each page's Description (Markdown editor) and General > Summary in the authors console and save. A summary is at most 256 characters.
 - CurseForge: every standalone is its own project under the same author, with Ko-fi as the donation method, GitHub source (this repo) and Automatic Packaging off. Check that each uploaded file is tagged Forever 1.60.1.
+- A project created minutes ago can refuse its first API upload: 403, errorCode 1006, "You do not have permission to manage files for this project" (KW Boats And Zeppelins, 2026-11-18, about 15 minutes after it was created; a retry a few minutes later went through). By then the bundle is already up, so finish with `scripts\publish.ps1 -Zip dist\KroolWorldForever-<v>.zip -Version <v> -Notes <the CHANGELOG section> -SkipBundle`, which uploads only the standalones still owed, then commit `published.json` as "Record standalone uploads <v>".
 
 ## Adding a feature
 

@@ -9,7 +9,9 @@
   TOC's "## Version:" line left out, is compared with standalone\published.json (key -> hash and
   version). After the uploads the file is rewritten; release.ps1 commits it. -Force uploads every
   standalone anyway. -DryRun prints what would be uploaded (projects, files, hashes, changelogs)
-  and calls no API, needs no token, and writes nothing.
+  and calls no API, needs no token, and writes nothing. -SkipBundle leaves the bundle alone (on
+  CurseForge and Wago) and uploads only the standalones: use it to finish a publish that uploaded
+  the bundle and then failed on a standalone, so the bundle is not uploaded twice.
 
   A standalone's changelog is the top-level bullets of the release notes whose bold lead starts
   with the feature's title ("**Quest Trash: ...**", "**One-Button Fishing fixes.**"), or
@@ -36,7 +38,8 @@ param(
 	[string] $Published,
 	[string] $DistDir,
 	[switch] $DryRun,
-	[switch] $Force
+	[switch] $Force,
+	[switch] $SkipBundle
 )
 
 $ErrorActionPreference = "Stop"
@@ -163,7 +166,9 @@ $bundleRelations = @(
 	@{ slug = "questiedb"; type = "optionalDependency" }
 )
 $cfId = TocField "X-Curse-Project-ID"
-if ($DryRun) {
+if ($SkipBundle) {
+	Write-Host "CurseForge: bundle skipped (-SkipBundle)."
+} elseif ($DryRun) {
 	if ($cfId) { Show-Plan "KroolWorldForever-$Version" $cfId $Zip (ZipHash $Zip) $Notes $bundleRelations }
 	else { Write-Host "CurseForge: bundle skipped (needs ## X-Curse-Project-ID in the TOC)." }
 } elseif (-not $cfId -or -not $cfToken) {
@@ -215,7 +220,9 @@ if ($DryRun) {
 # ---------------------------------------------------------------- Wago
 $wagoId = TocField "X-Wago-ID"
 $wagoToken = EnvToken "WAGO_API_TOKEN"
-if ($DryRun) {
+if ($SkipBundle) {
+	Write-Host "Wago: skipped (-SkipBundle)."
+} elseif ($DryRun) {
 	Write-Host "DRY RUN: Wago $(if ($wagoId) { "project $wagoId would get $Version" } else { 'skipped (no ## X-Wago-ID)' })."
 } elseif (-not $wagoId -or -not $wagoToken) {
 	Write-Host "Wago: skipped (needs ## X-Wago-ID in the TOC and WAGO_API_TOKEN)."
