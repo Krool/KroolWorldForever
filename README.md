@@ -319,6 +319,23 @@ On by default: yes. Toggle: `/kwf reagents on|off`. Commands: `/ru, /reagentuses
 | Show Other Characters | On | Names your other tracked characters who know each recipe. A character is remembered after it opens its own profession window with this on. |
 | Hide Grey Recipes | Off | Leaves out recipes that can no longer give you a skill point. |
 | Recipes Shown | 15 (5 to 50) | How many recipes the tooltip lists. Past that, each profession only shows its count. |
+
+### Market Movers
+
+After Auctionator scans the auction house, shows what is priced unusually: trade materials and other items that rose or fell against their usual price, bargains listed under the vendor price or far under usual, and how the items in your bags stand. Gear is left out. It keeps its own daily record of the scans, so the first comparison comes the day after your first scan. Needs Auctionator.
+
+On by default: yes. Toggle: `/kwf movers on|off`. Commands: `/kwm, /marketmovers`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Open After A Full Scan | On | Opens the window beside the auction house when Auctionator finishes its first full scan of each visit, if anything moved or there is a bargain. It closes with the auction house. Later scans in the same visit only update it. |
+| Button On The Auction House | On | A small button above the auction house's top right corner with the number of movers and bargains. A click opens or closes the window. |
+| Common At | 40 (10 to 200) | A trade material listed in at least this many units, now or usually, goes under Materials. Fewer, and it goes under Other. |
+| Ignore Under (Listed) | 10 (1 to 50) | Other items listed in fewer units than this, now and usually, are left out: one odd listing of a rare item is not a market move. |
+| Smallest Change (%) | 10 (5 to 50) | Price moves smaller than this are left out. |
+| Bargain At (% Under Usual) | 30 (10 to 80) | An item this far under its usual price, that usually has stock, is listed under Bargains. |
+| Ignore Under (Silver) | 1 (0 to 100) | Items cheaper than this both now and usually are left out: a few copper either way is not news. |
+| Rows Per List | 8 (4 to 25) | How many items each list shows, biggest moves first. |
 <!-- settings:end -->
 
 ## FAQ
