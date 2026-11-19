@@ -120,6 +120,9 @@ to break.
 
 ## 6. Packaging and publishing
 
+**This repo does not use the packager.** `scriptselease.ps1` and `scriptspublish.ps1` build and
+upload the zips (see CLAUDE.md, "Releases"). What follows is the general recipe for another addon.
+
 **BigWigsMods/packager@v2** (GitHub Action) builds the zip, substitutes keywords, writes the changelog,
 and uploads to CurseForge, Wago and GitHub Releases. Targets come from the TOC `X-*-ID` fields.
 

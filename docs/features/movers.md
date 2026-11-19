@@ -78,7 +78,7 @@ Auctionator calls our `RegisterForDBUpdate` callback (`root.OnAuctionPrices`). T
 - `pos`: where the owner dragged the window. `tab`: the tab last open.
 
 **Per faction:** Alliance and Horde houses list different things. Auctionator's own key on Forever
-is the ruleset ("PvE"), which mixes them.
+was the ruleset ("PvE"), which mixed them, until its version 348 (2026-11-18) added the faction.
 
 **Days kept:** fourteen. Older days are pruned on every recorded scan and at login.
 

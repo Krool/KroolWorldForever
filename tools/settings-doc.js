@@ -13,6 +13,8 @@ const files = toc.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.star
 
 const L = lauxlib.luaL_newstate();
 lualib.luaL_openlibs(L);
+// Addon and saved-variable Lua needs no host access: drop what could run a command or touch files.
+lauxlib.luaL_dostring(L, to_luastring("os.execute, os.remove, os.rename, os.exit, os.tmpname, os.getenv = nil; io, package, require, dofile, loadfile = nil"));
 function run(label, src, varargs) {
   if (lauxlib.luaL_loadbuffer(L, to_luastring(src), null, to_luastring("@" + label)) !== lua.LUA_OK) die(label);
   if (varargs) {

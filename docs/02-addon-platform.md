@@ -6,8 +6,10 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
 
 ## Live launch update (2026-11-05, build 1.60.1.70790)
 
-**Live on 2026-11-10: build 70888, Interface still 16001.** Builds 70840, 70862 and 70888 changed no
-function, event or enum (the allowlist in `tools/forever-api` is built from 70888).
+**Live on 2026-11-17: build 70959, Interface still 16001.** The allowlist in `tools/forever-api` is
+built from it; the build table is under "Live builds" below, and what else changed since launch
+week is in [the 2026-11-18 update](research/data-sources/update_2026-11-18.md). The bullets below
+are the launch-week record.
 
 - **Build:** launch shipped 70790 (`.build.info`, product `wowf`). Builds since the beta snapshot:
   70532 (Oct 22), 70707 (Nov 2), 70755 (Nov 3), 70790 (Nov 4), 70840 (Nov 6), 70862 (Nov 7).
@@ -65,7 +67,7 @@ function, event or enum (the allowlist in `tools/forever-api` is built from 7088
 | Item | Value | Notes |
 |---|---|---|
 | `## Interface:` | `16001` | Beta, Test and live 70790 (wiki, 2026-11-03). In-game `/dump select(4, GetBuildInfo())` gave 16001 on the stress test (70245, 2026-10-21); the bundle loads on live 70862. |
-| Client version | `1.60.1` | Live launch build: 70790 (Nov 4). Current: 70862 (Nov 7). |
+| Client version | `1.60.1` | Live launch build: 70790 (Nov 4). Current: 70959 (Nov 17). See "Live builds" below. |
 | Code family | **Mainline** (same as Midnight) | Family TOC suffix `_Mainline.toc` loads on Forever too. |
 | Game type | `camelot`, alias `forever` (since build 70291) | `[Game]` resolves to `"Camelot"`. The wiki says it "may be changed to Forever in the future." |
 | TOC filename | `MyAddon_Forever.toc` (or `_Camelot.toc`) | Lookup order: game suffix, then family suffix, then plain `MyAddon.toc`. |
@@ -73,6 +75,20 @@ function, event or enum (the allowlist in `tools/forever-api` is built from 7088
 | Ruleset detection | `C_GameRules.IsGameRuleActive(Enum.GameRule.HardcoreRuleset)` etc. | Also `IsHardcoreActive`, `IsSelfFoundAllowed`, event `GAME_RULES_CHANGED`. |
 | Install folder | `World of Warcraft\_forever_\Interface\AddOns` | Confirmed 2026-10-20 from the stress-test install. The beta used `_classic_beta_`. |
 | CDN product | `wowf` | Confirmed 2026-10-20: the install's `.product.db` says `wowf`, and `us.patch.battle.net:1119/wowf/versions` serves 1.60.1.70245. Beta (`wow_classic_beta`) is at 70450. |
+
+### Live builds
+
+From Gethe/wow-ui-source `forever` (one commit per build) and the allowlist diff. Interface stayed
+16001 throughout.
+
+| Build | Date | API change |
+|---|---|---|
+| 70790 | 2026-11-04 | Live launch. |
+| 70840 | 2026-11-06 | No function, event or enum changed. |
+| 70862 | 2026-11-07 | None. |
+| 70888 | 2026-11-10 | None. |
+| 70938 | 2026-11-13 | Added `C_TradeSkillUI.HasNoReagentCost`; 26 recipe thresholds changed (SkillLineAbility). |
+| 70959 | 2026-11-17 | Added `C_Mail.IsCODEnabled` (the mail frame can hide COD) and the constant `EncodingDeserializeSizeLimit`. FrameXML: tutorial, micro menu and gamepad bag navigation fixes. Recipe and transport tables unchanged. |
 
 Robust flavor detection:
 
@@ -142,13 +158,13 @@ deliberately closed.
 
 | Addon | Forever? | Notes |
 |---|---|---|
-| Questie | Yes | v12.6.1 (Nov 5) ships `Questie_Forever.toc` and `_Camelot.toc` (16001); 12.2.0 fixed map-icon errors in combat and secret-aura taint. QuestieDB is a separate install now (1.0.11, Nov 5, Forever data); the CurseForge app does not pull it in (Questie #8149, #8161). The unofficial `questie-forever` CurseForge package is NOT theirs. Good reference repo. |
+| Questie | Yes | Latest 12.11.0 with QuestieDB 1.1.3 (Nov 18). v12.6.1 (Nov 5) ships `Questie_Forever.toc` and `_Camelot.toc` (16001); 12.2.0 fixed map-icon errors in combat and secret-aura taint. QuestieDB is a separate install now (1.0.11, Nov 5, Forever data); the CurseForge app does not pull it in (Questie #8149, #8161). The unofficial `questie-forever` CurseForge package is NOT theirs. Good reference repo. |
 | Details! | Yes | `Details_Camelot.toc` plus plugins. |
 | DBM | Yes | Multi-interface TOC includes 16001. Secret-based alert systems extended to Forever. |
 | BigWigs | Yes | 16001 in the Interface list. Retail modules gated with `AllowLoadGameType`. Good reference for multi-flavor TOC tricks. |
 | ElvUI | Yes | Skin fixes for Forever. |
 | **WeakAuras** | **No** | Still no Mainline/Camelot TOC at launch (repo pushed Nov 2). A third-party "EverAuras" exists (unverified). |
-| Auctionator | Yes | 341 (Oct 13) declares 16001 and CurseForge lists it under WoW Forever. No public repo. Its TOC uses `[AllowLoadGameType mainline]` / `classic` / `camelot` per folder: on Forever the Mainline sources load and the Classic ones do not, so its disenchant tables are retail ones (Warlords onward) and items whose expansion is classic get no disenchant line (read from the installed 341's code, 2026-11-05; not seen in game). |
+| Auctionator | Yes | Latest 349 (Nov 18): from 348 its price database is per faction and its Classic disenchant tables load on Forever, so what follows holds for 341 to 347 only (see the 2026-11-18 update). 341 (Oct 13) declares 16001 and CurseForge lists it under WoW Forever. No public repo. Its TOC uses `[AllowLoadGameType mainline]` / `classic` / `camelot` per folder: on Forever the Mainline sources load and the Classic ones do not, so its disenchant tables are retail ones (Warlords onward) and items whose expansion is classic get no disenchant line (read from the installed 341's code, 2026-11-05; not seen in game). |
 | BugGrabber / BugSack | Yes | v12.1.1 / v12.1.9 (Oct 26, cleanups) list 16001. |
 | Bagnonium, LibTSMCore | Patched | Fixes for the project ID change and missing classic templates are useful to read. |
 

@@ -227,7 +227,6 @@ local function IsStateCVar(name, help)
 	end
 	return false
 end
-ns.IsStateCVar = IsStateCVar
 
 -- Only settings Blizzard stores on its servers: those are the interface choices that follow a
 -- character, and the ones a wipe or a new character loses. Graphics and sound live in Config.wtf.
@@ -262,7 +261,6 @@ local function ServerCVars()
 	end
 	return list
 end
-ns.ServerCVars = ServerCVars
 
 function capture.cvars()
 	local out, n = {}, 0
@@ -312,7 +310,13 @@ end
 
 function capture.addons()
 	local out, n = {}, 0
-	local me = UnitGUID("player") -- Blizzard's AddonList passes the GUID
+	local me = PlayerGUID() -- Blizzard's AddonList passes the GUID
+	if not me then
+		-- Without a GUID the calls below would change the list for every character.
+		Flag(report, "warn")
+		report.lines[#report.lines + 1] = "Addon List: skipped, the character is not ready yet. Apply again in a moment."
+		return
+	end
 	for i = 1, C_AddOns.GetNumAddOns() do
 		local name = C_AddOns.GetAddOnInfo(i)
 		if name then

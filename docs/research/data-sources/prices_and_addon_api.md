@@ -125,6 +125,10 @@ TradeSkillMaster officially claims Forever support from 4.15 (launch day 2026-11
 ## Q3. Auctionator on Forever: changelog, price database format, public API (plus Journalator and others)
 
 ### Takeaway
+**Newer: Auctionator 349 (2026-11-18) keys prices by ruleset and faction and loads its Classic
+disenchant tables on Forever; API v1 is unchanged. See `update_2026-11-18.md`. The findings below
+describe 345.**
+
 Auctionator 345 (2026-11-10) runs on Forever. It treats Forever as Mainline (modern AH code), stores prices under the ruleset name (for example `"PvE"`) with no faction in the key, and exposes a stable `Auctionator.API.v1` that already covers what the bundle needs. Its license is "All Rights Reserved", and its GitHub repo is not publicly reachable, so the changelogs for 341-344 could not be retrieved.
 
 ### Cited Findings

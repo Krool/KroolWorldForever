@@ -124,7 +124,7 @@ end
 -- Clears the target first, so a rare that is out of reach leaves you with no target, and /tm
 -- then marks nothing. "!" keeps a second press from toggling the marker off.
 function ns.Macro(name)
-	return ("/cleartarget\n/targetexact %s\n/tm [exists] !%d"):format(name, Marker())
+	return ("/cleartarget\n/targetexact %s\n/tm [exists] !%d"):format((tostring(name):gsub("[\r\n]", " ")), Marker())
 end
 
 local function Describe(r)
@@ -464,7 +464,6 @@ local function Finish(guid, why)
 		UpdateButton()
 	end
 end
-ns.Finish = Finish -- test seam
 
 -- Right-click: hides the button until this rare spawns again.
 function ns.Dismiss()

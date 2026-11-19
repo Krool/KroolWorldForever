@@ -58,7 +58,6 @@ local TABS = {
 		empty = "Nothing in your bags has a usual price yet.",
 	},
 }
-ns.TABS = TABS
 
 local function TabCount(tab, rep)
 	local n = 0
@@ -111,7 +110,6 @@ local function TrendPoints(r)
 	pts[#pts + 1] = r.now
 	return pts
 end
-ns.TrendPoints = TrendPoints
 
 -- Draws the trend in the row's trend column: a faint line at the usual price, the prices as a
 -- line (green above usual at the end, red below), and a dot for now. Hidden with under two points.

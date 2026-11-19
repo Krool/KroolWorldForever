@@ -71,6 +71,10 @@ Disenchant                                   27s 75c
 
 ## Auctionator's own disenchant line
 
+**Changed in Auctionator 348 (2026-11-18):** its Classic disenchant tables now load on Forever, so
+it shows its own Disenchant line on classic-level items beside ours. Not seen in game yet; whether
+to hide one of the two is open. The rest of this section describes 341 to 347.
+
 Auctionator 341 has a Disenchant tooltip line, but its TOC loads `Source_Mainline` on Forever
 (`[AllowLoadGameType mainline]` matches Forever's game type; `classic` does not), and the Mainline
 tables start at Warlords of Draenor. Its Classic tables (`Source_Classic/Enchant`) ship in the same
@@ -86,7 +90,8 @@ prints every material's price (which still need an auction scan); `/kwd seen` li
 
 - A green's tooltip shows Disenchant with a value after an Auctionator scan, and no Best line.
 - Shift lists the materials. A soulbound item shows no auction compare.
-- Auctionator shows no second Disenchant line (if it does, its Forever tables changed).
+- With Auctionator 347 or older there is no second Disenchant line; with 348 or newer there is
+  one. Compare the two values.
 - Disenchant a few greens and compare with the tables (dust 75% on armor, essence 75% on weapons):
   `/kwd seen` does it, and `ns.db.seen` keeps them for the generator.
 - Disenchant a blue of item level 20 or below (Forever's new brackets): what does it give?

@@ -1,6 +1,6 @@
 {
  "source": "Gethe/wow-ui-source forever branch, Blizzard_APIDocumentationGenerated",
- "version": "1.60.1.70938",
+ "version": "1.60.1.70959",
  "functions": [
   "AbortDrag",
   "AcceptAreaSpiritHeal",
@@ -2489,6 +2489,7 @@
   "C_Mail.CanCheckInbox",
   "C_Mail.GetCraftingOrderMailInfo",
   "C_Mail.HasInboxMoney",
+  "C_Mail.IsCODEnabled",
   "C_Mail.IsCommandPending",
   "C_Mail.SetOpeningAll",
   "C_MajorFactions.GetCurrentRenownLevel",

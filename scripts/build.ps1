@@ -50,7 +50,7 @@ if (-not $Ref) {
 	$test = Join-Path $repo "tools\test"
 	if (-not $SkipTests) {
 		if (-not (Test-Path (Join-Path $test "node_modules"))) {
-			Native $test { npm install --silent --no-audit --no-fund } "npm install"
+			Native $test { npm ci --silent --no-audit --no-fund } "npm ci"
 		}
 		Native $test { npm test } "Tests"
 	}

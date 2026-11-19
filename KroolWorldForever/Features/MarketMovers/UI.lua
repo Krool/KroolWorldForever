@@ -224,7 +224,6 @@ local function OnScan()
 		end
 	end
 end
-ns.OnScan = OnScan
 
 local soon = false
 local function RefreshSoon()

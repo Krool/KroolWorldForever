@@ -43,6 +43,8 @@ function luaLiteral(v) {
 function newState(label) {
   const L = lauxlib.luaL_newstate();
   lualib.luaL_openlibs(L);
+  // Addon and saved-variable Lua needs no host access: drop what could run a command or touch files.
+  lauxlib.luaL_dostring(L, to_luastring("os.execute, os.remove, os.rename, os.exit, os.tmpname, os.getenv = nil; io, package, require, dofile, loadfile = nil"));
   const output = [];
   lua.lua_register(L, to_luastring("__rawprint"), (L) => {
     output.push(lua.lua_tojsstring(L, 1));

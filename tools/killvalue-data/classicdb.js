@@ -19,7 +19,7 @@ function load() {
   if (!fs.existsSync(sqlFile)) {
     if (!fs.existsSync(gz)) {
       console.log("downloading " + URL);
-      execFileSync("curl", ["-sL", "-o", gz, URL], { stdio: "inherit" });
+      execFileSync("curl", ["-sfL", "-o", gz, URL], { stdio: "inherit" });
     }
     fs.writeFileSync(sqlFile, zlib.gunzipSync(fs.readFileSync(gz)));
   }

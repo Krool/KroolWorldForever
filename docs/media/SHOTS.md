@@ -21,7 +21,8 @@ out (the first Copper Bar shot was skipped for that, 2026-11-15).
 Tick a line when its shot is in `docs/media/`.
 
 ## Krool World Forever (bundle)
-- [x] The hub (`/kw`), all cards visible.
+- [ ] The hub (`/kw`), all 14 cards visible (the current shot predates Reagent Uses, Market Movers
+      and Boats And Zeppelins).
 - [ ] The Characters list (`/kw chars`).
 
 ## Quest Trash

@@ -1215,7 +1215,14 @@ local function Settle(wasNew)
 			-- here would roll back every character's.
 			local which = AllParts(default)
 			which.kwf = nil
-			local report = ns.Apply(default, which, ns.db)
+			-- Its own options table, not the saved one: the automatic apply always saves keybindings for
+			-- this character only, whatever Per-Character Keybindings says.
+			local opts = {}
+			for k, v in pairs(ns.db) do
+				opts[k] = v
+			end
+			opts.perCharBinds = true
+			local report = ns.Apply(default, which, opts)
 			if report.ok then
 				c.onboarded, c.askAgain = true, nil
 				ns:Print(("new character: applied your setup %s"):format(Title(default)))
@@ -1284,7 +1291,6 @@ local function SnapshotSoon()
 		end
 	end))
 end
-ns.SnapshotSoon = SnapshotSoon
 -- A chat text size change fires none of the events below, so the chat tab's Font Size menu is hooked.
 function ns.HookChatSize()
 	if ns.chatHooked or type(hooksecurefunc) ~= "function" or type(FCF_SetChatWindowFontSize) ~= "function" then

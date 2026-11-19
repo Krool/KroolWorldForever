@@ -5,7 +5,7 @@ Ships one addon, **Krool World Forever** (`KroolWorldForever/`), for World of Wa
 the owner's Valheim mod KroolWorldUI. Research lives in `docs/`; read `docs/02-addon-platform.md`
 before writing addon code.
 
-## Platform facts (verified 2026-10-20 on beta 1.60.1.70450; live rechecked 2026-11-05 and 2026-11-07)
+## Platform facts (verified 2026-10-20 on beta 1.60.1.70450; live rechecked 2026-11-05, 2026-11-07 and 2026-11-18)
 
 - Forever is a **Mainline** game type (same client/API as Midnight 12.1.5), NOT Classic Era. Use
   retail docs and the `forever` branch of Gethe/wow-ui-source.
@@ -26,12 +26,12 @@ before writing addon code.
   (2026-10-21) showed no lasting change from `ffxGlow`, horizon/farclip, `volumeFogLevel` or
   Compute Effects. No fog feature. See docs/07.
 - Install folder is `World of Warcraft\_forever_`, Battle.net product `wowf` (confirmed 2026-10-20).
-  Live launched (2026-11-04) on 1.60.1.70790. **Live is now 70938 (2026-11-13, the installed
-  `.build.info`), Interface still 16001** (the bundle loads on it). The allowlist is built from
-  wow-ui-source `forever` at 70938 (it tracks `wowf` since Nov 2); 70840, 70862 and 70888 changed
-  no function, event or enum; 70938 added `C_TradeSkillUI.HasNoReagentCost` and changed 26 recipe
-  thresholds. Builds drop every few days: rebuilding the allowlist makes `run.js` fail until
-  Skill-Up's and Reagent Uses' `Data.lua` are regenerated for the same build. Still no `WOW_PROJECT_FOREVER`.
+  Live launched (2026-11-04) on 1.60.1.70790. **Live is now 70959 (2026-11-17, the installed
+  `.build.info`), Interface still 16001.** The allowlist is built from wow-ui-source `forever` at
+  70959 (it tracks `wowf` since Nov 2); the build history is in docs/02. Builds drop every few
+  days: rebuilding the allowlist makes `run.js` fail until Skill-Up's, Reagent Uses' and Boats And
+  Zeppelins' `Data.lua` are regenerated for the same build (commands in each generator's header);
+  `tools/test/reagents/test.lua` pins the build too. Still no `WOW_PROJECT_FOREVER`.
 - **Protected calls need a click.** `C_UI.Reload` (and anything else hardware-event restricted) is
   blocked with `ADDON_ACTION_BLOCKED` from a timer or event handler; the API docs carry no flag for
   it, so the lint cannot see it. The Setups test stubs model this (`HardwareDepth`, `BlockedCalls`).
@@ -139,7 +139,7 @@ before writing addon code.
 - **Every change to the addon gets a new version and a commit.** Patch for fixes, minor for a new
   feature. Write the `## x.y.z` CHANGELOG section, then `scripts\release.ps1 -Version x.y.z`
   (`-Publish` once project ids and tokens exist). **Commit the addon changes first**: it refuses
-  while `KroolWorldForever\` has uncommitted files, because the zip is built from the tagged commit
+  while `KroolWorldForever\`, `standalone\` or `tools\standalone\` has uncommitted files, because the zip is built from the tagged commit
   (`build.ps1 -Ref`), not the shared working tree. It syncs the TOC version (and puts it back if
   the gate fails), runs the tests, regenerates the README settings tables, commits only
   TOC/CHANGELOG/README by pathspec, tags `vx.y.z`, builds `dist\KroolWorldForever-x.y.z.zip` from
@@ -147,10 +147,8 @@ before writing addon code.
   under one version. The same run builds every standalone from the tag
   (`dist\<Folder>-x.y.z.zip`, attached too); versions are lockstep.
 - **Held features ship to nobody.** An `addons.json` entry with `"held": true` is on the owner's
-  game only, through the dev junction to this tree. Market Movers (`movers`) was held from
-  2026-11-17 and released in 0.21.0 (2026-11-18) on the owner's go. Boats And Zeppelins
-  (`transports`) was built without an explicit go and held on 2026-11-18, then released the same
-  day in 0.22.0 on the owner's go. Nothing is held now.
+  game only, through the dev junction to this tree. Nothing is held now (Market Movers and Boats
+  And Zeppelins were, until 0.21.0 and 0.22.0).
   - **What the hold does:** `build.ps1` drops held feature folders and their TOC lines from the
     bundle zip, `build.js --release` skips the standalone, `publish.ps1` never uploads it, and
     `settings-doc.js` keeps it out of the README.
@@ -163,7 +161,8 @@ before writing addon code.
     afterwards.
 - The public download is that GitHub release; the README links `releases/latest`. `dist/` is
   git-ignored. If the push or `gh release create` fails, the script prints the commands that
-  finish the release by hand; do not rerun it for the same version.
+  finish the release by hand; do not rerun it for the same version. If a standalone upload failed
+  after the bundle went up, finish with `publish.ps1 ... -SkipBundle` (`standalone/CLAUDE.md`).
 - `scripts\publish.ps1` (CurseForge + Wago): ids go in the TOC (`X-Curse-Project-ID`, `X-Wago-ID`);
   tokens are the user env vars `CF_API_KEY` and `WAGO_API_TOKEN`. Never write them to a file or
   echo them. CurseForge project 1804317 (slug `krool-world-ui`, created and approved 2026-11-14,
@@ -184,7 +183,7 @@ before writing addon code.
 ## Layout
 
 - `KroolWorldForever/` shipped addon: `Core/` registry, settings, widgets, hub, lifecycle; `Features/`
-  one folder each; `Bindings.xml` (Rare Alert's key, loads by itself, not in the TOC).
+  one folder each; `Bindings.xml` (Rare Alert's and One-Button Fishing's keys, loads by itself, not in the TOC).
 - `tools/test/` test runner + suites; `tools/forever-api/` lint; `tools/killvalue-data/` the cmangos
   classic-db generators (`classicdb.js` reader; `gen-data.js` Kill Value loot, `gen-disenchant.js`
   Disenchant Value tables); `tools/skillup-data/gen-skillup.js` Skill-Up Odds recipe thresholds from

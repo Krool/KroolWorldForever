@@ -155,7 +155,6 @@ local function FromInfo(info)
 	end
 	return lvl, Num(info.skillModifier) or 0, Num(info.maxSkillLevel) or 0
 end
-ns.FromInfo = FromInfo
 
 -- The player's skill in a recipe's profession: level, bonus, cap and the API that answered.
 function ns.ReadSkill(id)

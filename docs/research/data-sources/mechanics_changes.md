@@ -7,7 +7,8 @@ Icy Veins, Wowhead, MassivelyOP, Mein-MMO, warcraft.wiki.gg); **[S]** low-confid
 anonymous forum post. **BREAKS 1.12** marks a finding that invalidates a 1.12 assumption an addon might
 make. Icy Veins and MassivelyOP pages returned HTTP 403 to the fetcher; where only a headline or search
 snippet was read, the finding says so. Blizzard's hotfix list was read from the forum mirror
-(us.forums.blizzard.com/en/wow/t/2403040), which holds the Nov 5, 6 and 9 entries.
+(us.forums.blizzard.com/en/wow/t/2403040), which holds the Nov 5, 6 and 9 entries. The Nov 10, 11, 13, 16 and 17 entries are in
+`update_2026-11-18.md`.
 
 ## Instance lockouts and dungeon-entry caps
 
@@ -331,7 +332,8 @@ Respawns, layering, rulesets
 - Dynamic respawn: not confirmed or denied by Blizzard.
 - Hardcore rules (trading, AH, self-found, dungeon limits): unpublished.
 - Profession skill-up formula changes beyond Tanning Rack: none published (the repo's Skill-Up Odds
-  measurements remain the best data).
+  measurements remain the best data). Recipe changes since: Coarse Grinding Stone skill-ups to 90,
+  Journeyman Campfire Kit at Cooking 90, Arcane Salvager, five Tailoring bags (`update_2026-11-18.md`).
 
 ## What players report as different in practice
 

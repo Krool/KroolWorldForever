@@ -226,7 +226,6 @@ local function LevelOf(info)
 	local lvl = Num(info.skillLevel)
 	return lvl and lvl > 0 and lvl or nil
 end
-ns.LevelOf = LevelOf
 
 -- The player's skill in a profession (its base skill line), or nil without the profession. Forever
 -- keeps the skill on a child line ("Classic Tailoring"); both are asked and the higher wins.

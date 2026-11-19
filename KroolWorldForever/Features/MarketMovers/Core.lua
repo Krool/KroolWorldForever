@@ -366,7 +366,6 @@ end
 -- row = { id, now, usual, ratio, change, qty, usualQty, days, series, trade, vendor, bags }
 -- (usual, ratio, change, usualQty and series are nil for a vendor row with no history.)
 local LISTS = { "tradeUp", "tradeDown", "otherUp", "otherDown", "vendor", "cheap", "bags" }
-ns.LISTS = LISTS
 function ns.Report(faction)
 	local rep = { state = "nodata", total = {}, moved = 0, bargains = 0, days = 0 }
 	for _, k in ipairs(LISTS) do

@@ -1,6 +1,6 @@
 -- Reagent Uses under the stub client, inside the whole bundle: the data, the tooltip, the
 -- known-recipe scan, the character roster, options and /ru, saved-data migration, and the other
--- tooltip features. Fixture facts come from Data.lua for build 1.60.1.70938.
+-- tooltip features. Fixture facts come from Data.lua for build 1.60.1.70959.
 
 local root = __ns
 local ns = root.features.reagents
@@ -71,7 +71,7 @@ local D = ns.Data
 
 -- ---------------------------------------------------------------- data
 
-Check(type(D) == "table" and D.build == "1.60.1.70938", "Data.lua loads with its build")
+Check(type(D) == "table" and D.build == "1.60.1.70959", "Data.lua loads with its build")
 do
 	local bad, recipes, used = 0, 0, 0
 	for id, r in pairs(D.recipes) do

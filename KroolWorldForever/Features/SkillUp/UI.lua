@@ -11,7 +11,6 @@ local Num, Call = ns.Num, ns.Call
 local PANEL_ROWS = 8
 
 local BAND_HEX = { orange = "ffff8040", yellow = "ffffff00", green = "ff40bf40", grey = "ff808080" }
-local BAND_NAME = { orange = "orange", yellow = "yellow", green = "green", grey = "grey" }
 
 local function Hex(band, text)
 	return "|c" .. (BAND_HEX[band] or "ffffffff") .. text .. "|r"
@@ -276,7 +275,6 @@ local function DecorateRow(_, row, node)
 		end
 	end
 end
-ns.DecorateRow = DecorateRow -- test seam
 
 local function RecipeBox()
 	local page = ProfessionsFrame and ProfessionsFrame.CraftingPage

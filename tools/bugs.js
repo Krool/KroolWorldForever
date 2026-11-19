@@ -35,6 +35,8 @@ function findSaved(name) {
 function readSaved(file, flatten) {
   const L = lauxlib.luaL_newstate();
   lualib.luaL_openlibs(L);
+  // Addon and saved-variable Lua needs no host access: drop what could run a command or touch files.
+  lauxlib.luaL_dostring(L, to_luastring("os.execute, os.remove, os.rename, os.exit, os.tmpname, os.getenv = nil; io, package, require, dofile, loadfile = nil"));
   const src = fs.readFileSync(file, "utf8");
   if (lauxlib.luaL_dostring(L, to_luastring(src)) !== lua.LUA_OK || lauxlib.luaL_dostring(L, to_luastring(flatten)) !== lua.LUA_OK) {
     console.log("Could not read " + file + ": " + to_jsstring(lua.lua_tostring(L, -1)));

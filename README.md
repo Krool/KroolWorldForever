@@ -43,7 +43,7 @@ off and says so.
 
 **The hub** (`/kw`): a card per feature with what it is doing now, its switch and its way in.
 
-<img src="docs/media/bundle/hub.png" alt="Krool World hub: cards for Quest Trash, Kill Value, Setups, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value and One-Button Fishing, each with its status and an On switch (taken before Reagent Uses joined)" width="420">
+<img src="docs/media/bundle/hub.png" alt="Krool World hub: cards for Quest Trash, Kill Value, Setups, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value and One-Button Fishing, each with its status and an On switch (taken before Reagent Uses, Market Movers and Boats And Zeppelins joined)" width="420">
 
 **Reagent Uses** with Ctrl held, and without it (the one-line hint). The Keep lines above are
 Quest Trash's; Vendor and Auction are Auctionator's.
@@ -158,11 +158,12 @@ Optional companions:
 | `/kwfish` | Your fishing key, and whether a pole is equipped for double right-click |
 | `/ru` | Reagent Uses' settings (`/ru chars` opens the character list) |
 | `/kwb` | The boats and zeppelins of the zone you are in (`/kwb all` lists every dock) |
+| `/kwm` | Open the Market Movers window (`/kwm bargains` and `/kwm bags` open those tabs, `/kwm print` puts the top moves in chat, `/kwm reset` puts the window back beside the auction house) |
 
 The mark key and the fishing key are under **Key Bindings > AddOns > Krool World** (in a KW addon, under its own name). `/kwf` and `/kroolworld` work like
 `/kw`; `/questtrash`, `/killvalue`, `/kwsetups`, `/rarealert`, `/disenchantvalue`, `/campguide`,
-`/skillup`, `/kwsayge`, `/leastvaluable` and `/reagentuses` are long forms of `/fqt`, `/fkv`, `/kws`,
-`/kwr`, `/kwd`, `/kwc`, `/kwu`, `/sayge`, `/kwl` and `/ru`.
+`/skillup`, `/kwsayge`, `/leastvaluable`, `/reagentuses`, `/marketmovers` and `/kwboats` are long forms of `/fqt`, `/fkv`, `/kws`,
+`/kwr`, `/kwd`, `/kwc`, `/kwu`, `/sayge`, `/kwl`, `/ru`, `/kwm` and `/kwb`.
 
 A single KW addon answers its own command (for example `/fqt` in KW Quest Trash), and also takes
 `settings`, `errors`, `chars`, `track`, `untrack` and `forget` after it (`/fqt settings`).
@@ -361,8 +362,8 @@ On by default: yes. Toggle: `/kwf transports on|off`. Commands: `/kwb, /kwboats`
 **Which game is this for?** World of Warcraft: Forever only (`_forever_` install folder, Interface
 16001). It does not load on Classic Era, Anniversary or retail.
 
-**Has it been tested in the live game?** It loaded with zero Lua errors in the Forever stress test.
-The live game launches Nov 4, 2026; expect fixes in the first weeks.
+**Has it been tested in the live game?** Yes: it has run on the live game since launch on
+Nov 4, 2026. Report anything odd as a GitHub issue.
 
 **Where do Kill Value's numbers come from?** A vanilla 1.12 loot baseline (cmangos classic-db), blended
 with the drop rates you record yourself as you loot. Forever may have rebalanced some loot, so creatures
@@ -435,6 +436,10 @@ cd tools\test; npm install; npm test                                       # all
 - `tools/forever-api/` holds the API allowlist lint. It checks every `C_*` call, event and `Enum`
   against Forever's API docs.
 - `tools/killvalue-data/` holds the Kill Value loot data generator (cmangos classic-db).
+- `tools/skillup-data/`, `tools/reagents-data/` and `tools/transports-data/` regenerate the Skill-Up
+  Odds, Reagent Uses and Boats And Zeppelins data from Forever's client tables. The test runner
+  checks each against the API list's game build.
+- `tools/standalone/` builds the KW addons from the bundle.
 - `tools/bugs.js` prints the Lua errors !BugGrabber saved in your Forever install, and the ones the
   addon caught itself (`/kw errors`).
 - `template/HelloForever` is a minimal addon skeleton.
