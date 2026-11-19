@@ -1,50 +1,54 @@
 {
     "camp":  {
-                 "hash":  "921aee78625036a02a12cb7f2cf615d01b3a3c2ea85bd0379eae064bbf3a97a7",
-                 "version":  "0.19.0"
+                 "hash":  "94874f5972c21519658df42ab51959a4a54d8e53230401aa906f0ef9725adb28",
+                 "version":  "0.21.0"
              },
     "disenchant":  {
-                       "hash":  "6e7c855eda7c1160e09c4f84eb5ac15b9175a12181bf44c9e14012a2147c4a5d",
-                       "version":  "0.20.0"
+                       "hash":  "9782413398d15919b4692938fb64f1d5bd2c85b9bebd26d5f7b8d5e582b4a39d",
+                       "version":  "0.21.0"
                    },
     "fishing":  {
-                    "hash":  "f4b7d49ec80c0246907b39197932e5a47c6e0fddee79bdff18b07d8c7a3bdb99",
-                    "version":  "0.20.0"
+                    "hash":  "99415b1c50ef10c3663f80ca9bbb5c2269c109521eb6a7efa4dba026c6961998",
+                    "version":  "0.21.0"
                 },
     "fortune":  {
-                    "hash":  "5ccdb78a3e2d1f4f8a0e31ae11acb44ea06520e310f77334ab514ed909949732",
-                    "version":  "0.19.0"
+                    "hash":  "3a336775c8c19813a499efcc1716cf8246157820683a3d68046ed0b0caf9a018",
+                    "version":  "0.21.0"
                 },
     "killvalue":  {
-                      "hash":  "32571017398ba06453ce43b6bce772f06548b05d72445301f0eace4f749a3d6c",
-                      "version":  "0.19.0"
+                      "hash":  "30494330ead469f178f838a5fe33d9491f62a37184a3b58474892acb20a225a4",
+                      "version":  "0.21.0"
                   },
     "leastvaluable":  {
-                          "hash":  "b8e6a72c705ecdafa46ed372d17d3da654b37aeab7aacde5138597533257a68d",
-                          "version":  "0.20.0"
+                          "hash":  "637868997153092913dfffaf50563de5c476504d9bd9e9495967217f39d70643",
+                          "version":  "0.21.0"
                       },
+    "movers":  {
+                   "hash":  "33830058db91d63db9b3134c5f672fe554d4eeb4870c691bbb0c5ffbf404af1f",
+                   "version":  "0.21.0"
+               },
     "questtrash":  {
-                       "hash":  "362babb948a6d1daaff14b941b361c4845babfd9549e7ee93638cacbc2f0e3ec",
-                       "version":  "0.20.0"
+                       "hash":  "a8f7728aa811e58a8c58ae58cc675532f13a5345c662c2b222b0b8a747430add",
+                       "version":  "0.21.0"
                    },
     "rares":  {
-                  "hash":  "c92a97689f40174ba485255e974fe7fee0f5ceda73d103824c1654df1605b3ba",
-                  "version":  "0.20.0"
+                  "hash":  "5fd7b25a2e077d78befb37f9c654a831de5117442c59c3f336faa3e61ec93b10",
+                  "version":  "0.21.0"
               },
     "reagents":  {
-                     "hash":  "1c08211689fe83e06b3a1bcf1f0b1893efe46f544df9942b1d41d89045b499e0",
-                     "version":  "0.20.0"
+                     "hash":  "a1046b5bea4142e3efcad9329d791858f73217b5b5f1481a11a79619561431e0",
+                     "version":  "0.21.0"
                  },
     "rewardvalue":  {
-                        "hash":  "14649751660cfdc3c0c065fc201bd1fa58016d174d376f58ae7c6eef6655313a",
-                        "version":  "0.20.0"
+                        "hash":  "ae7f0067546eadf1950f00225d711e7579b7fe90adaafe5aed8a12d16c540096",
+                        "version":  "0.21.0"
                     },
     "setups":  {
-                   "hash":  "5af130df6035dbd6944c075292f7a08d9bf25174f98eb32f1494e281aaaa7893",
-                   "version":  "0.20.0"
+                   "hash":  "743cc0c57b4b9b5bea499538d9dc0b32c73822655c018cbc22fdb45f6c10f8f0",
+                   "version":  "0.21.0"
                },
     "skillup":  {
-                    "hash":  "2349633b4acb9f967bb592a28c8bc1328acf143b6794525a5fc024cbc748b781",
-                    "version":  "0.19.1"
+                    "hash":  "d862f717689ca96b0222934a7c5afe92df2ea704e4602efb6adaeaf724d4480b",
+                    "version":  "0.21.0"
                 }
 }
