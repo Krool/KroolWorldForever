@@ -343,6 +343,17 @@ On by default: yes. Toggle: `/kwf movers on|off`. Commands: `/kwm, /marketmovers
 | Bargain At (% Under Usual) | 30 (10 to 80) | An item this far under its usual price, that usually has stock, is listed under Bargains. |
 | Ignore Under (Silver) | 1 (0 to 100) | Items cheaper than this both now and usually are left out: a few copper either way is not news. |
 | Rows Per List | 8 (4 to 25) | How many items each list shows, biggest moves first. |
+
+### Boats And Zeppelins
+
+Puts a pin on the world map at every boat dock and zeppelin tower. Hover a pin for where it goes. The routes come from the game's own data, so the new ones are there too. It cannot tell when the next one arrives.
+
+On by default: yes. Toggle: `/kwf transports on|off`. Commands: `/kwb, /kwboats`.
+
+| Setting | Default | What it does |
+|---|---|---|
+| Show On Continent Maps | On | Also shows the pins on the continent maps and the world map. Off: zone maps only. |
+| Pin Size | 22 (12 to 36) | How big a pin is on the map. |
 <!-- settings:end -->
 
 ## FAQ
