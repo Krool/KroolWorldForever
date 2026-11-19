@@ -88,8 +88,19 @@ end
 function Widget:SetAtlas(atlas)
 	self.atlas = atlas
 end
-function Widget:SetPoint(point)
+function Widget:SetPoint(point, ...)
 	self.point = point
+	self.anchor = { point, ... }
+end
+-- Screen rectangles: a test sets w.rect = { left, bottom, width, height } and w.scale.
+function Widget:GetScaledRect()
+	local r = rawget(self, "rect")
+	if r then
+		return r[1], r[2], r[3], r[4]
+	end
+end
+function Widget:GetEffectiveScale()
+	return rawget(self, "scale") or 1
 end
 function Widget:SetSize(w, h)
 	self.width, self.height = w, h
@@ -388,7 +399,7 @@ C_Container = {
 		return {
 			iconFileID = 134400,
 			stackCount = s.count or 1,
-			isLocked = false,
+			isLocked = s.locked or false,
 			quality = i.quality,
 			isReadable = false,
 			hasLoot = s.loot or false,
@@ -524,13 +535,63 @@ end
 LootFrame = NewWidget("LootFrame")
 LootFrame.shown = false
 
--- Every call that would pick up, drop, delete or loot something fails the suite.
+-- Every call that would loot, use, sell or pick up something outside the bags fails the suite.
 ForbiddenCalls = {}
-for _, name in ipairs({ "DeleteCursorItem", "PickupContainerItem", "ClearCursor", "LootSlot", "ConfirmLootSlot", "PickupItem", "UseContainerItem", "SellCursorItem" }) do
+for _, name in ipairs({ "LootSlot", "ConfirmLootSlot", "PickupItem", "UseContainerItem", "SellCursorItem" }) do
 	_G[name] = function()
 		table.insert(ForbiddenCalls, name)
 	end
 	if C_Container then
 		C_Container[name] = _G[name]
+	end
+end
+
+-- The cursor and the three calls the Bags Full card's Delete button makes. ItemCalls logs each one.
+-- Like the client, DeleteCursorItem does nothing outside a click (HardwareDepth 0): the call is
+-- logged in BlockedCalls and the item stays on the cursor. Click(button) is the player's click.
+ItemCalls, BlockedCalls, Deleted = {}, {}, {}
+HardwareDepth = 0
+Cursor = nil -- { kind=, id=, bag=, slot= }
+PickupFails = false -- the pickup leaves the cursor empty
+DeleteFails = false -- the server refuses: the item stays on the cursor
+function Click(button)
+	HardwareDepth = HardwareDepth + 1
+	local ok, err = pcall(button.scripts.OnClick, button)
+	HardwareDepth = HardwareDepth - 1
+	if not ok then
+		error(err)
+	end
+end
+function GetCursorInfo()
+	if Cursor then
+		return Cursor.kind, Cursor.id
+	end
+end
+function ClearCursor()
+	table.insert(ItemCalls, "ClearCursor")
+	if Cursor and Cursor.bag and Bag[Cursor.bag] and Bag[Cursor.bag][Cursor.slot] then
+		Bag[Cursor.bag][Cursor.slot].locked = nil
+	end
+	Cursor = nil
+end
+C_Container.PickupContainerItem = function(bag, slot)
+	table.insert(ItemCalls, "Pickup " .. bag .. ":" .. slot)
+	local s = SlotOf(bag, slot)
+	if s and not Cursor and not PickupFails then
+		Cursor = { kind = "item", id = s.id, bag = bag, slot = slot }
+		s.locked = true
+	end
+end
+function DeleteCursorItem()
+	table.insert(ItemCalls, "Delete")
+	if HardwareDepth < 1 then
+		table.insert(BlockedCalls, "DeleteCursorItem")
+		return
+	end
+	if Cursor and Cursor.bag and not DeleteFails then
+		local s = Bag[Cursor.bag][Cursor.slot]
+		table.insert(Deleted, s.id .. "x" .. (s.count or 1))
+		Bag[Cursor.bag][Cursor.slot] = nil
+		Cursor = nil
 	end
 end

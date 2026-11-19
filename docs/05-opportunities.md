@@ -81,7 +81,8 @@ and ran nothing from them.
   - It shows a card beside the LootFrame: "Destroy & loot" (it deletes the item, even in combat)
     and "Not worth picking up" when the loot is worth less than your cheapest item.
   - It also puts a best-sell coin on quest rewards, by vendor price only.
-  - Our edge: pricing at the best of vendor, AH and disenchant, and never deleting.
+  - Our edge: pricing at the best of vendor, AH and disenchant. Ours never deleted until 0.23.0,
+    which added a Delete button on the owner's request: one click on the card, asked first.
 - **BetterFishing.** Protected actions ride the player's key press through a client binding.
   - Out of combat it points the key at `SetOverrideBindingSpell(..., "Fishing")`.
   - On CHANNEL_START it rebinds the key to INTERACTTARGET with the SoftTargetInteract CVars, then

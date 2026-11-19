@@ -709,6 +709,261 @@ check("on again", Card(), true)
 CloseLoot()
 
 check("no item or loot action was ever called", table.concat(ForbiddenCalls, ","), "")
+check("nothing was picked up or deleted without a Delete click", table.concat(ItemCalls, ","), "")
+
+-- ---------------------------------------------------------------- Bags Full card: Delete
+
+local function Calls()
+	return table.concat(ItemCalls, ",")
+end
+local function Reset()
+	wipe(ItemCalls)
+	wipe(Deleted)
+	wipe(BlockedCalls)
+	Cursor, PickupFails, DeleteFails = nil, false, false
+	ns.BagsFullHide() -- a fresh card: it opens on the cheapest slot
+	FillBags()
+	FireEvent("BAG_UPDATE_DELAYED")
+	Err(ERR_INV_FULL)
+end
+local function Asking()
+	return ui.yes:IsShown() and ui.cancel:IsShown()
+end
+
+check("delete button on by default", db.bagsfulldelete, true)
+check("confirm before deleting on by default", db.bagsfullconfirm, true)
+Reset()
+check("card has the Delete button", ui.delete:IsShown(), true)
+check("no question before a click", Asking(), false)
+
+-- It asks first.
+Click(ui.delete)
+check("Delete asks first", Asking(), true)
+check("asking: the row gives way", ui.delete:IsShown() or ui.never:IsShown() or ui.prev:IsShown() or ui.next:IsShown(), false)
+check("asking: the card says so", ui.head.text:find("Delete this?", 1, true) ~= nil, true)
+check("asking deletes nothing", Calls(), "")
+Click(ui.cancel)
+check("Cancel: the row is back", ui.delete:IsShown() and ui.never:IsShown() and not Asking(), true)
+check("Cancel: the head is back", ui.head.text:find("Least valuable", 1, true) ~= nil, true)
+check("Cancel deletes nothing", Calls() .. tostring(Bag[0][2].id), tostring(SCALE))
+
+-- The question is about one stack: browsing drops it, a bag update keeps it only for that stack.
+Click(ui.delete)
+ns.BagsFullBrowse(1)
+check("browsing drops the question", Asking(), false)
+ns.BagsFullBrowse(-1)
+check("browsing back does not bring it back", Asking(), false)
+Click(ui.delete)
+FireEvent("BAG_UPDATE_DELAYED")
+check("bag update, same stack: still asking", Asking(), true)
+Put(0, 2, { id = SCALE, count = 2 })
+FireEvent("BAG_UPDATE_DELAYED")
+check("bag update, the stack changed: question dropped", Asking(), false)
+Reset()
+Click(ui.delete)
+CloseLoot()
+check("closing the card drops the question", st.confirm, nil)
+check("still nothing deleted", Calls(), "")
+
+-- Yes, Delete.
+Reset()
+Click(ui.delete)
+local said = capture(function()
+	Click(ui.yes)
+end)
+check("Yes, Delete: picks the slot up, then deletes it", Calls(), "Pickup 0:2,Delete")
+check("Yes, Delete: the stack is gone", Bag[0][2], nil)
+check("Yes, Delete: exactly that stack", table.concat(Deleted, ","), SCALE .. "x1")
+check("Yes, Delete: says what it deleted", has(said, "deleted"), true)
+check("Yes, Delete: nothing left on the cursor", Cursor, nil)
+check("Yes, Delete: the button waits for the bags", st.busy, true)
+ns.BagsFullDelete()
+check("a second press before the bags answer does nothing", Calls(), "Pickup 0:2,Delete")
+FireEvent("BAG_UPDATE_DELAYED")
+check("the freed slot hides the card", Card(), false)
+
+-- Confirm Before Deleting off: one click.
+Reset()
+root.SetOption(ns, "bagsfullconfirm", false)
+capture(function()
+	Click(ui.delete)
+end)
+check("confirm off: one click deletes", table.concat(Deleted, ","), SCALE .. "x1")
+check("confirm off: never asked", Asking(), false)
+
+-- A rare or better item always asks.
+local HEIRLOOM = 900150
+Items[HEIRLOOM] = { name = "Chipped Heirloom", quality = 3, sell = 1, class = 15 }
+Reset()
+Put(0, 2, { id = HEIRLOOM, bound = true })
+FireEvent("BAG_UPDATE_DELAYED")
+check("a bound blue is the cheapest", st.list[st.idx].id, HEIRLOOM)
+Click(ui.delete)
+check("confirm off: a rare still asks", Asking(), true)
+check("confirm off: a rare is not deleted by one click", Calls(), "")
+capture(function()
+	Click(ui.yes)
+end)
+check("a rare goes after Yes, Delete", table.concat(Deleted, ","), HEIRLOOM .. "x1")
+
+-- Outside a click the client refuses, and the item goes back.
+Reset()
+said = capture(function()
+	ns.BagsFullDelete()
+end)
+check("outside a click: the client blocks the delete", table.concat(BlockedCalls, ","), "DeleteCursorItem")
+check("blocked: nothing deleted", #Deleted, 0)
+check("blocked: the item is put back", Calls(), "Pickup 0:2,Delete,ClearCursor")
+check("blocked: slot whole and unlocked, cursor empty", Cursor == nil and Bag[0][2].id == SCALE and Bag[0][2].locked == nil, true)
+check("blocked: says so", has(said, "did not delete"), true)
+
+-- The server refuses inside a click: the same.
+Reset()
+DeleteFails = true
+said = capture(function()
+	Click(ui.delete)
+end)
+check("refused by the game: item back, nothing deleted", Calls() .. ":" .. #Deleted .. ":" .. tostring(Cursor), "Pickup 0:2,Delete,ClearCursor:0:nil")
+check("refused by the game: says so", has(said, "did not delete"), true)
+
+-- The pickup does not take.
+Reset()
+PickupFails = true
+said = capture(function()
+	Click(ui.delete)
+end)
+check("pickup failed: never deletes", Calls(), "Pickup 0:2,ClearCursor")
+check("pickup failed: says so", has(said, "could not pick"), true)
+
+-- The cursor already holds something: it is never touched.
+Reset()
+Cursor = { kind = "spell", id = 133 }
+said = capture(function()
+	Click(ui.delete)
+end)
+check("cursor busy: nothing picked up or deleted", Calls(), "")
+check("cursor busy: it keeps what it held", Cursor.kind, "spell")
+check("cursor busy: says so", has(said, "put down"), true)
+
+-- The slot is read again at the click: a changed, unmarkable or locked slot is left alone.
+Reset()
+Bag[0][2] = { id = FANG, count = 1 } -- changed, and no bag event told the card
+said = capture(function()
+	Click(ui.delete)
+end)
+check("slot changed: left alone", Calls(), "")
+check("slot changed: says so", has(said, "slot changed"), true)
+Reset()
+Bag[0][2] = { id = SCALE, quest = true }
+said = capture(function()
+	Click(ui.delete)
+end)
+check("slot now a quest item: left alone", Calls(), "")
+Reset()
+Bag[0][2].locked = true
+said = capture(function()
+	Click(ui.delete)
+end)
+check("locked slot: left alone", Calls(), "")
+check("locked slot: says so", has(said, "locked"), true)
+
+-- Delete Button On The Card off.
+Reset()
+root.SetOption(ns, "bagsfullconfirm", true)
+Click(ui.delete)
+root.SetOption(ns, "bagsfulldelete", false)
+check("button option off: no button, no question", ui.delete:IsShown() or Asking(), false)
+check("button option off: the rest of the row stays", ui.never:IsShown() and ui.prev:IsShown(), true)
+Click(ui.delete)
+Click(ui.yes)
+check("button option off: a stray click does nothing", Calls(), "")
+root.SetOption(ns, "bagsfullconfirm", false)
+Click(ui.delete)
+check("button option off, confirm off: still nothing", Calls(), "")
+root.SetOption(ns, "bagsfullconfirm", true)
+root.SetOption(ns, "bagsfulldelete", true)
+check("button option on: the button is back", ui.delete:IsShown(), true)
+check("loot calls still never made", table.concat(ForbiddenCalls, ","), "")
+
+-- ---------------------------------------------------------------- Bags Full card: keeps off the bags
+
+local function Where()
+	local a = ui.card.anchor
+	return ("%s %g,%g"):format(a[1], a[4], a[5]) .. (ui.avoiding and " moved" or "")
+end
+Reset()
+UIParent.rect = { 0, 0, 1600, 900 }
+Err(ERR_INV_FULL)
+check("bags closed: near the top of the screen", Where(), "TOP 0,-140")
+
+-- The bags open under the card (it spans 635-965 across, 498-760 up).
+ContainerFrameCombinedBags.rect = { 500, 300, 700, 500 }
+ContainerFrameCombinedBags:Open()
+check("bags opened under the card: it goes left of them", Where(), "TOPLEFT 162,760 moved")
+check("bags opened: the coin goes on the browsed slot", ui.mark.parent == ButtonFor(0, 2) and ui.mark:IsVisible(), true)
+ContainerFrameCombinedBags:Close()
+check("bags closed again: back near the top", Where(), "TOP 0,-140")
+
+-- Bags that the card does not cover leave it alone.
+ContainerFrameCombinedBags.rect = { 1300, 50, 280, 300 }
+ContainerFrameCombinedBags:Open()
+check("bags elsewhere: the card stays", Where(), "TOP 0,-140")
+
+-- Bags over the whole screen: nowhere to go, so it stays.
+ContainerFrameCombinedBags.rect = { 0, 0, 1600, 900 }
+Err(ERR_INV_FULL)
+check("no free place: the card stays", Where(), "TOP 0,-140")
+
+-- A rectangle the client will not give: the card stays.
+ContainerFrameCombinedBags.rect = { Secret(), 300, 700, 500 }
+Err(ERR_INV_FULL)
+check("secret bag rectangle: the card stays", Where(), "TOP 0,-140")
+
+-- The card's own scale counts.
+ContainerFrameCombinedBags.rect = { 500, 300, 700, 500 }
+ui.card.scale = 0.5
+Err(ERR_INV_FULL)
+check("half-size card: placed in its own units", Where(), "TOPLEFT 662,1660 moved")
+ui.card.scale = nil
+
+-- Docked to the loot window, with the bags where the card would go: the window's other side.
+LootFrame.shown, LootFrame.rect = true, { 900, 400, 200, 300 }
+ContainerFrameCombinedBags.rect = { 1200, 100, 380, 500 }
+OpenLoot({ { link = LootLink(GEM), qty = 1 } })
+Err(ERR_INV_FULL)
+check("beside the loot window over the bags: its other side", Where(), "TOPLEFT 566,700 moved")
+-- No room on that side either: past the bags, clear of the loot window.
+LootFrame.rect = { 100, 400, 200, 300 }
+ContainerFrameCombinedBags.rect = { 500, 300, 700, 500 }
+Err(ERR_INV_FULL)
+check("loot window at the left edge: right of the bags", Where(), "TOPLEFT 1208,700 moved")
+-- Bags clear of it: plainly docked.
+ContainerFrameCombinedBags.rect = { 1300, 50, 280, 300 }
+Err(ERR_INV_FULL)
+check("docked with the bags clear", Where(), "TOPLEFT 4,0")
+-- A loot window that cannot be measured: plainly docked.
+LootFrame.rect = nil
+ContainerFrameCombinedBags.rect = { 500, 300, 700, 500 }
+Err(ERR_INV_FULL)
+check("loot window unmeasured: docked as before", Where(), "TOPLEFT 4,0")
+LootFrame.shown = false
+CloseLoot()
+
+-- Dragged by the player: it stays there until it closes.
+Reset()
+check("before the drag: moved off the bags", Where(), "TOPLEFT 162,760 moved")
+ui.card.anchor = { "CENTER", nil, nil, 11, 22 }
+ui.card.hooks.OnDragStop(ui.card)
+Err(ERR_INV_FULL)
+FireEvent("BAG_UPDATE_DELAYED")
+ContainerFrameCombinedBags:Close()
+check("dragged: left where the player put it", Where():find("CENTER 11,22", 1, true) ~= nil, true)
+CloseLoot()
+Err(ERR_INV_FULL)
+check("opened again: placed afresh", Where(), "TOP 0,-140")
+CloseLoot()
+ContainerFrameCombinedBags.rect, UIParent.rect = nil, nil
+check("placing the card touched no item", Calls(), "")
 
 -- ---------------------------------------------------------------- other features untouched
 

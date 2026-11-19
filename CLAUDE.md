@@ -85,7 +85,11 @@ before writing addon code.
   One-Button Fishing (owner's request, 2026-11-12) is the same: it casts and reels only from the
   player's key or double right-click through bindings it re-points out of combat. It sets the
   soft-interact CVars only while the bobber is out and puts them back. The owner refuses any
-  auto-delete ("definitely dont want auto delete anywhere"): never call DeleteCursorItem.
+  auto-delete ("definitely dont want auto delete anywhere"). The one delete (owner's request,
+  2026-11-18) is the Delete button on Least Valuable's Bags Full card: `DeleteNow` in
+  `BagsFull.lua` is the only caller of `DeleteCursorItem`, reached only from the player's click
+  on Delete or Yes, Delete, one item per click, asked first by default (a rare or better item
+  always). Never call it from an event, timer, scan or option, and never add a second caller.
 - **Never let an error reach the client.** Tooltip and event work runs under pcall (the core
   dispatcher already wraps events).
 - Saved data: `KroolWorldForeverDB.features.<key>` is the feature's slice (`ns.db`). Option values

@@ -62,7 +62,8 @@ Tick a line when its shot is in `docs/media/`.
 - [x] A bag item's tooltip saying it is the least valuable (the bundle page only: it also shows the
   Reagent Uses hint).
 - [ ] Open bags with the copper coin on a slot.
-- [ ] The bags-full card beside a loot window.
+- [ ] The bags-full card beside a loot window, with its Delete button (0.23.0).
+- [ ] The card beside open bags, the coin on its item.
 
 ## Quest Reward Value
 - [ ] A quest's reward choices with the coin on the best one.

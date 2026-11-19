@@ -34,7 +34,7 @@ Krool World Forever is fourteen small addons for WoW Forever in one. Hover an en
 
 Recommended: Auctionator. Disenchant Value needs it to price materials, and Market Movers needs its scans. Kill Value, Rare Alert, Least Valuable, Quest Reward Value and Skill-Up Odds work without it, but use vendor prices only.
 
-Nothing here deletes, sells, loots or picks anything for you. Setups changes your bars and bindings only when you apply a setup, never in combat, and keeps an undo point. Rare Alert and One-Button Fishing act only on your own key press or click.
+Nothing here deletes, sells, loots or picks anything by itself. Least Valuable's Bags Full card has a Delete button: it deletes the one item it shows when you click it, and asks first. Setups changes your bars and bindings only when you apply a setup, never in combat, and keeps an undo point. Rare Alert and One-Button Fishing act only on your own key press or click.
 
 **Good to know**
 

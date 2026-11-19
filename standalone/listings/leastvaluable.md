@@ -15,7 +15,8 @@ A copper coin on the bag slot worth the least, so you know what to sell or drop 
 - It never marks quest items, keys, ammunition, class reagents, profession tools, unopened containers (clams, lockboxes), equipment-set gear or worthless items like the Hearthstone. `/kwl ignore` skips anything else you keep.
 - When your bags are full and you try to loot, a card beside the loot window names that item and its value against the loot's, and says whether the loot is worth making room for.
 - The coin shows in the default bags. With a bag addon, the tooltip line and `/kwl` still work.
-- It never deletes anything.
+- The card keeps off your open bags, and you can drag it.
+- The card has a Delete button for the item it shows. It deletes only when you click it, and it asks first. You can switch the question off, or the button itself. Nothing is ever deleted by itself.
 - Auction prices come from Auctionator. Without it, it goes by vendor prices and leaves greens unmarked.
 
 `/kwl` lists the five least valuable slots. Settings: Esc > Options > AddOns > KW Least Valuable.

@@ -2,7 +2,8 @@
 -- first. A slot is worth its whole stack at the best of three prices: the vendor's, the auction
 -- house's and the disenchant value (both after the 5% auction cut, compared the way Disenchant
 -- Value does). A bound item has no auction price, and its disenchant counts only when you can
--- disenchant it yourself. Advice only: it marks a slot and never sells, moves or deletes.
+-- disenchant it yourself. The mark is advice only: nothing here sells, moves or deletes by itself.
+-- The one action is the Bags Full card's Delete button (BagsFull.lua), on the player's own click.
 --
 -- Never marked, since the cheapest slot would otherwise often be something you keep:
 --   - anything worth nothing anywhere (Hearthstone, soul shards, conjured food and water)
@@ -283,6 +284,8 @@ local function BagFrames()
 	return out
 end
 
+ns.BagFrames = BagFrames -- the Bags Full card keeps off them
+
 local function BagsShown()
 	for _, f in ipairs(BagFrames()) do
 		local ok, shown = Call(f.IsShown, f)
@@ -404,12 +407,20 @@ local function OnBagsDrawn()
 		else
 			ns.Place()
 		end
+		if ns.BagsFullBagsChanged then
+			ns.BagsFullBagsChanged()
+		end
 	end)
 end
 
 local function OnBagsClosed()
 	if ns.enabled then
-		root.Try(ns, "bags", ns.Place)
+		root.Try(ns, "bags", function()
+			ns.Place()
+			if ns.BagsFullBagsChanged then
+				ns.BagsFullBagsChanged()
+			end
+		end)
 	end
 end
 
@@ -533,8 +544,24 @@ ns.options = {
 		type = "toggle",
 		label = "Bags Full Card",
 		tooltip = "When a full bag stops a pickup, shows a small card with your least valuable item and what the loot "
-			.. "is worth, so you can decide what to make room for. It only shows text and a mark: it never drops, "
-			.. "sells or deletes anything.",
+			.. "is worth, so you can decide what to make room for. It keeps off your open bags, and it never drops, "
+			.. "sells, loots or deletes anything by itself.",
+		default = true,
+	},
+	{
+		key = "bagsfulldelete",
+		type = "toggle",
+		label = "Delete Button On The Card",
+		tooltip = "Adds a Delete button to the Bags Full card. It deletes the item the card shows, to make room, and "
+			.. "only when you click it. A deleted item cannot be brought back. Off: the card only shows text and a mark.",
+		default = true,
+	},
+	{
+		key = "bagsfullconfirm",
+		type = "toggle",
+		label = "Confirm Before Deleting",
+		tooltip = "The card's Delete button asks before it deletes. Off: one click deletes. A rare or better item "
+			.. "always asks.",
 		default = true,
 	},
 }
