@@ -186,6 +186,21 @@ function GameTooltip:GetItem()
 	return "name", self.link
 end
 function GameTooltip:SetOwner() end
+-- Lines another addon (Auctionator) put on the tooltip before this bundle's hook runs.
+PriorLines = {}
+function GameTooltip:NumLines()
+	return #PriorLines
+end
+function GameTooltip:GetName()
+	return "GameTooltip"
+end
+for i = 1, 6 do
+	_G["GameTooltipTextLeft" .. i] = {
+		GetText = function()
+			return PriorLines[i]
+		end,
+	}
+end
 function GameTooltip:SetText() end
 function GameTooltip:Show() end
 function GameTooltip:Hide() end

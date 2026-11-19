@@ -451,6 +451,34 @@ AuctionatorOn(false)
 check("no Auctionator: no price", root.AuctionPrice(SOUL), nil)
 AuctionatorOn(true)
 
+-- ---------------------------------------------------------------- Auctionator's own line
+-- Auctionator 348 and later can show a Disenchant line on classic-level items: ours steps aside.
+check("Hide When Auctionator Shows Its Own is on by default", db.yield, true)
+check("no Auctionator line: ours shows", has(ShowItem(CHEST).left, "Disenchant"), true)
+PriorLines = { "Forever Chestguard", "Auction", "Disenchant" }
+check("Auctionator's line is on the tooltip: ours is not added", #ShowItem(CHEST).left, 0)
+PriorLines = { "Disenchant x5" }
+check("with a stack count too", #ShowItem(CHEST).left, 0)
+PriorLines = { "Disenchanting requires Enchanting (25)" }
+check("another line that starts alike is not Auctionator's", has(ShowItem(CHEST).left, "Disenchant"), true)
+AUCTIONATOR_L_DISENCHANT = "Entzaubern"
+PriorLines = { "Entzaubern" }
+check("Auctionator's label in another language", #ShowItem(CHEST).left, 0)
+PriorLines = { "Disenchant" }
+check("and only that label then", has(ShowItem(CHEST).left, "Disenchant"), true)
+AUCTIONATOR_L_DISENCHANT = nil
+ns.db.yield = false
+check("option off: both show", has(ShowItem(CHEST).left, "Disenchant"), true)
+ns.db.yield = true
+PriorLines = { Secret("Disenchant") }
+local okSecret, ttSecret = pcall(ShowItem, CHEST)
+check("a secret line is skipped without an error", okSecret and has(ttSecret.left, "Disenchant"), true)
+PriorLines = { "Disenchant" }
+AuctionatorOn(false)
+check("without Auctionator the line is nobody's: ours shows", has(ShowItem(CHEST).left, "Disenchant"), true)
+AuctionatorOn(true)
+PriorLines = {}
+
 realPrint(("%d checks, %d failed"):format(count, failures))
 if failures > 0 then
 	error(failures .. " check(s) failed")

@@ -583,11 +583,15 @@ function apply.bindings(data, opts, report)
 	)
 end
 
-function apply.macros(data, _, report)
-	local created, kept, failed = 0, {}, {}
+-- The automatic apply (opts.auto) creates character macros only: an account-wide macro belongs to
+-- every character, and one the player deleted on purpose must not come back by itself.
+function apply.macros(data, opts, report)
+	local created, kept, failed, skipped = 0, {}, {}, 0
 	for _, m in ipairs(data) do
 		local index = GetMacroIndexByName(m.name)
-		if index and index > 0 then
+		if opts and opts.auto and not m.char and not (index and index > 0) then
+			skipped = skipped + 1
+		elseif index and index > 0 then
 			local _, _, body = GetMacroInfo(index)
 			if (body or "") ~= m.body then
 				kept[#kept + 1] = m.name
@@ -602,6 +606,13 @@ function apply.macros(data, _, report)
 		end
 	end
 	report.lines[#report.lines + 1] = ("Macros: %d created"):format(created)
+	if skipped > 0 then
+		report.lines[#report.lines + 1] = ("  - %d account-wide %s left out: apply the setup yourself to add %s"):format(
+			skipped,
+			skipped == 1 and "macro" or "macros",
+			skipped == 1 and "it" or "them"
+		)
+	end
 	if #kept > 0 then
 		report.lines[#report.lines + 1] = "  - kept your existing macro with the same name: " .. table.concat(kept, ", ")
 	end

@@ -1216,12 +1216,13 @@ local function Settle(wasNew)
 			local which = AllParts(default)
 			which.kwf = nil
 			-- Its own options table, not the saved one: the automatic apply always saves keybindings for
-			-- this character only, whatever Per-Character Keybindings says.
+			-- this character only, whatever Per-Character Keybindings says, and adds no account-wide macro.
 			local opts = {}
 			for k, v in pairs(ns.db) do
 				opts[k] = v
 			end
 			opts.perCharBinds = true
+			opts.auto = true -- character macros only (apply.macros)
 			local report = ns.Apply(default, which, opts)
 			if report.ok then
 				c.onboarded, c.askAgain = true, nil

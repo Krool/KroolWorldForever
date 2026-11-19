@@ -9,8 +9,8 @@
 -- the client, or another quality or item level in Forever's ItemSparse when Data.lua was built)
 -- goes by its Forever values the same way. Each disenchant you do is recorded, to check all this.
 -- Without Auctionator the tooltip still names the materials. Auctionator has a disenchant line
--- of its own, but on Forever it loads its retail tables (Warlords of Draenor onward), so items
--- of classic levels get none.
+-- of its own (an option of its, off by default). Until its version 348 that line never showed on
+-- classic-level items on Forever; since then it can, and ours steps aside for it (AuctionatorLine).
 
 local _, root = ...
 local ns = root.Feature("disenchant")
@@ -159,8 +159,40 @@ local function NoteChanged(itemId, quality, itemLevel, pin)
 	ns.changedCount = (ns.changedCount or 0) + 1
 end
 
+-- True when Auctionator has already put its own Disenchant line on this tooltip. Read from the
+-- tooltip, not from Auctionator's settings (API v1 only): its line starts with its "Disenchant"
+-- label, then nothing or a stack count. Auctionator loads first and so adds its lines first; if
+-- that ever changes, nothing is found and both lines show.
+local function AuctionatorLine(tooltip)
+	if not root.HasAuctionator() or type(tooltip.NumLines) ~= "function" or type(tooltip.GetName) ~= "function" then
+		return false
+	end
+	local label = _G.AUCTIONATOR_L_DISENCHANT
+	if type(label) ~= "string" or Secret(label) or label == "" then
+		label = "Disenchant"
+	end
+	local name, lines = tooltip:GetName(), tooltip:NumLines()
+	if type(name) ~= "string" or Secret(name) or type(lines) ~= "number" or Secret(lines) then
+		return false
+	end
+	for i = 1, lines do
+		local left = _G[name .. "TextLeft" .. i]
+		local text = left and left.GetText and left:GetText()
+		if type(text) == "string" and not Secret(text) and text:sub(1, #label) == label then
+			local after = text:sub(#label + 1, #label + 1)
+			if after == "" or not after:match("%a") then -- not "Disenchanting ..."
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function Annotate(tooltip, data)
 	local itemId = data.id
+	if ns.db.yield ~= false and AuctionatorLine(tooltip) then
+		return
+	end
 	local link
 	if tooltip.GetItem then
 		local ok, _, l = pcall(tooltip.GetItem, tooltip)
@@ -372,6 +404,14 @@ ns.options = {
 		label = "Always List The Materials",
 		tooltip = "Lists each material with its chance and price. Off: hold Shift over the item to see them.",
 		default = false,
+	},
+	{
+		key = "yield",
+		type = "toggle",
+		label = "Hide When Auctionator Shows Its Own",
+		tooltip = "Auctionator can add a Disenchant line of its own (its Tooltips settings). When it is on the "
+			.. "tooltip, this addon adds nothing. Off: both show.",
+		default = true,
 	},
 }
 ns.slash = { "/kwd", "/disenchantvalue" }

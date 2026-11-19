@@ -77,7 +77,7 @@ Stress test 2026-10-21 (client 70245, realm server 70399): the first three passe
       ends. Right-click hides it; seeing the same rare again does not bring it back or alert again.
 - [ ] Disenchant Value 0.9.0: after an Auctionator scan, a BoE green's tooltip shows Disenchant with a
       value and a Best line; Shift lists the materials; `/kwd` lists material prices; the hub card
-      counts priced materials. Auctionator 347 or older shows no second Disenchant line (348 and newer do). Disenchant a few greens
+      counts priced materials. With Auctionator 348 or newer and its disenchant tooltip option on, only its Disenchant line shows (ours steps aside, 0.22.2: not seen in game yet). Disenchant a few greens
       (or watch a disenchanter's trade) and compare with the tables: armor mostly dust, weapons
       mostly essence, about 5% shards.
 - [ ] Camp Guide 0.10.0: at a campfire (with Campfire Nearby in your buffs), hover each object: the

@@ -632,6 +632,27 @@ F.reload:Click()
 check("clicking Reload Now reloads", Reloaded, true)
 check("undo is available for the auto apply", ns.db.undo["Fresh-Realm"] ~= nil, true)
 F:Hide()
+-- The automatic apply adds character macros only: an account-wide macro the player deleted must
+-- not come back by itself. Applying by hand adds both.
+do
+	local keepAccount, keepChar = AccountMacros, CharMacros
+	AccountMacros = { { name = "Everyone", icon = 1, body = "/say all" } }
+	CharMacros = { { name = "Mine", icon = 2, body = "/say mine" } }
+	local withMacros = ns.SaveNew("With macros")
+	AccountMacros, CharMacros = {}, {}
+	ns.SetDefault(withMacros.id)
+	Player = { name = "Fresher", realm = "Realm", class = "WARRIOR", level = 1 }
+	EditLayouts = { layouts = {}, activeLayout = 1 }
+	ns.Settle(ns.Identify())
+	check("auto apply: the character macro is created", (GetMacroIndexByName("Mine") or 0) > 0, true)
+	check("auto apply: the account-wide macro is left out", GetMacroIndexByName("Everyone") or 0, 0)
+	local byHand = ns.Apply(withMacros, { macros = true }, ns.db)
+	check("by hand: the account-wide macro is created", (GetMacroIndexByName("Everyone") or 0) > 0, true)
+	check("by hand: applied", byHand.ok, true)
+	F:Hide()
+	AccountMacros, CharMacros = keepAccount, keepChar
+	ns.SetDefault(classic.id)
+end
 -- A character this addon has not seen, but not new to the game (installed later, or a default
 -- picked later): never applied by itself. The picker opens instead.
 Player = { name = "Veteran", realm = "Realm", class = "WARRIOR", level = 30 }

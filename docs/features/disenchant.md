@@ -71,9 +71,21 @@ Disenchant                                   27s 75c
 
 ## Auctionator's own disenchant line
 
-**Changed in Auctionator 348 (2026-11-18):** its Classic disenchant tables now load on Forever, so
-it shows its own Disenchant line on classic-level items beside ours. Not seen in game yet; whether
-to hide one of the two is open. The rest of this section describes 341 to 347.
+**Since Auctionator 348 (2026-11-18)** its Classic disenchant tables load on Forever, so it can
+show its own Disenchant line on classic-level items. That line is an Auctionator option (its
+Tooltips settings, "enchant tooltips"), off by default.
+
+**Ours steps aside for it (0.22.2, owner 2026-11-18: "hide ours when auctionator shows").** Before
+adding anything, the tooltip's existing lines are read: a line that starts with Auctionator's
+label (`AUCTIONATOR_L_DISENCHANT`, else "Disenchant"), followed by nothing or a stack count, is
+Auctionator's, and Disenchant Value then adds no line and no materials. The option is "Hide When
+Auctionator Shows Its Own", on by default.
+- It reads the tooltip, not Auctionator's settings: the repo rule is API v1 only.
+- It relies on Auctionator adding its lines first, which it does when its tooltip hook is
+  registered before ours (it loads first). If the order is ever the other way, both lines show.
+- **Not seen in the game.** The owner's install had Auctionator 347 when this was written.
+
+The rest of this section describes 341 to 347.
 
 Auctionator 341 has a Disenchant tooltip line, but its TOC loads `Source_Mainline` on Forever
 (`[AllowLoadGameType mainline]` matches Forever's game type; `classic` does not), and the Mainline
@@ -90,8 +102,8 @@ prints every material's price (which still need an auction scan); `/kwd seen` li
 
 - A green's tooltip shows Disenchant with a value after an Auctionator scan, and no Best line.
 - Shift lists the materials. A soulbound item shows no auction compare.
-- With Auctionator 347 or older there is no second Disenchant line; with 348 or newer there is
-  one. Compare the two values.
+- With Auctionator 348 or newer and its disenchant tooltip option on: only Auctionator's
+  Disenchant line shows. Turn "Hide When Auctionator Shows Its Own" off to see both and compare.
 - Disenchant a few greens and compare with the tables (dust 75% on armor, essence 75% on weapons):
   `/kwd seen` does it, and `ns.db.seen` keeps them for the generator.
 - Disenchant a blue of item level 20 or below (Forever's new brackets): what does it give?
