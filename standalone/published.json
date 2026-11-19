@@ -24,35 +24,35 @@
                           "version":  "0.21.0"
                       },
     "movers":  {
-                   "hash":  "33830058db91d63db9b3134c5f672fe554d4eeb4870c691bbb0c5ffbf404af1f",
-                   "version":  "0.21.0"
+                   "hash":  "a8b1fda1ee8305e8d0950de1ba91151e8d7e32925f176fed6a732d4d921f6cb8",
+                   "version":  "0.22.1"
                },
     "questtrash":  {
                        "hash":  "a8f7728aa811e58a8c58ae58cc675532f13a5345c662c2b222b0b8a747430add",
                        "version":  "0.21.0"
                    },
     "rares":  {
-                  "hash":  "5fd7b25a2e077d78befb37f9c654a831de5117442c59c3f336faa3e61ec93b10",
-                  "version":  "0.21.0"
+                  "hash":  "e625a6e5b38da9b21631794d7611b34edb556a51a108b1fd8f98cc38563b02af",
+                  "version":  "0.22.1"
               },
     "reagents":  {
-                     "hash":  "a1046b5bea4142e3efcad9329d791858f73217b5b5f1481a11a79619561431e0",
-                     "version":  "0.21.0"
+                     "hash":  "d54204f82c7c372184e17f8a0cc22c6d0bef86819a08fd1e25a1a21d33d2ccd8",
+                     "version":  "0.22.1"
                  },
     "rewardvalue":  {
                         "hash":  "ae7f0067546eadf1950f00225d711e7579b7fe90adaafe5aed8a12d16c540096",
                         "version":  "0.21.0"
                     },
     "setups":  {
-                   "hash":  "743cc0c57b4b9b5bea499538d9dc0b32c73822655c018cbc22fdb45f6c10f8f0",
-                   "version":  "0.21.0"
+                   "hash":  "f934e2550a62e64ec0b113b698dd9c42c3b776ad7f750c3bcf00f3e3dc71a6c2",
+                   "version":  "0.22.1"
                },
     "skillup":  {
-                    "hash":  "d862f717689ca96b0222934a7c5afe92df2ea704e4602efb6adaeaf724d4480b",
-                    "version":  "0.21.0"
+                    "hash":  "52f8eb299ea1275ce6e98a217d6ce35e1b73ecaad50a0fdbb3f78305aeca3624",
+                    "version":  "0.22.1"
                 },
     "transports":  {
-                       "hash":  "81d602293b3c7e366faa47f4e7512c98b149463fdb6328c0b5106cc5bbec13e4",
-                       "version":  "0.22.0"
+                       "hash":  "b3de5db68f95d4fa413b374f1ed570a28cdd8bfbfa14e4e21e57c0ef23eb9290",
+                       "version":  "0.22.1"
                    }
 }
