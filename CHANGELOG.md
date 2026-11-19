@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.22.1
+
+- **Setups: a new character's automatic setup always saves keybindings for that character only.**
+  With Per-Character Keybindings off, it could save them for the whole account.
+- **Setups: the Addon List part waits for the character.** If the game has not given the addon
+  your character yet, the part is skipped and says so; it can no longer change the addon list for
+  every character.
+- **Rare Alert: a line break in a rare's name cannot add a line to the mark macro.**
+- **Skill-Up Odds: recipe data checked against game build 70959** (Nov 17). Nothing changed.
+- **Reagent Uses: recipe data checked against game build 70959.** Nothing changed.
+- **Boats And Zeppelins: route data checked against game build 70959.** Nothing changed.
+
 ## 0.22.0
 
 - **Boats And Zeppelins: new feature.** A pin on the world map at every boat dock and zeppelin
