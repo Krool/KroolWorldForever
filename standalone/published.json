@@ -50,5 +50,9 @@
     "skillup":  {
                     "hash":  "d862f717689ca96b0222934a7c5afe92df2ea704e4602efb6adaeaf724d4480b",
                     "version":  "0.21.0"
-                }
+                },
+    "transports":  {
+                       "hash":  "81d602293b3c7e366faa47f4e7512c98b149463fdb6328c0b5106cc5bbec13e4",
+                       "version":  "0.22.0"
+                   }
 }
