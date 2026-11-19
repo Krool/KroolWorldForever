@@ -172,8 +172,7 @@
       "embedded": [],
       "optionalDeps": ["Auctionator"],
       "relations": [{ "slug": "auctionator", "type": "requiredDependency" }],
-      "curseId": "",
-      "held": true
+      "curseId": "1815716"
     },
     {
       "key": "transports",

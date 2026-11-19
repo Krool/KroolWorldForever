@@ -23,8 +23,9 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **Quest Reward Value** | A coin on the quest reward worth the most when you pick one, at the best of its vendor price, auction price and, for an enchanter, its disenchant value, and that value on each reward's tooltip. A reward that binds when picked up has no auction price. It never picks the reward for you. | Nothing (Auctionator optional) |
 | **One-Button Fishing** | One key casts your line and, while it is out, reels in the bite. Set it under Key Bindings > AddOns > Krool World. With a fishing pole in your main hand, a double right-click does the same. Every cast and reel is your own key press or click. | Nothing |
 | **Reagent Uses** | Hold Ctrl (or the key you choose) over a crafting material and its tooltip lists every recipe that uses it, grouped by profession, yours first. Each recipe is colored by your skill, with how many of the material it takes, how many more recipes use what it makes, and who knows it (you, and each other character once it has opened its profession window) or where it is learned (Trainer 175, Vendor, Drop...). Built from Forever's own recipe data, including the recipes Forever added. | Nothing |
+| **Market Movers** | After Auctionator scans the auction house, a window beside it shows what is priced unusually, in four tabs: materials and other items that rose or fell against their usual price (the middle price of up to a week), bargains listed under the vendor price or far under usual, and how the items in your bags stand. Each row has a small trend line. Click a row to search the item in Auctionator. Gear is left out. It keeps its own daily record of the scans, so the first comparison comes the day after your first scan. It never buys, bids, posts or cancels. `/kwm` | Auctionator |
 
-All twelve are on by default.
+All thirteen are on by default.
 
 **Your characters.** Reagent Uses, Sayge's Fortune and Setups list your other characters. Every
 character is included by default. To leave out bank or mule alts, untick them in `/kw chars` (or
@@ -79,7 +80,7 @@ ranking your recipes by what a point costs.
 
 ## How it behaves
 
-- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value and Reagent Uses never delete, sell,
+- **Advice only.** Quest Trash, Kill Value, Rare Alert, Disenchant Value, Camp Guide, Skill-Up Odds, Sayge's Fortune, Least Valuable, Quest Reward Value, Reagent Uses and Market Movers never delete, sell, buy,
   loot, craft or click anything for you. Rare Alert's marker comes from your own click or key press: the game does not let an
   addon place one by itself. One-Button Fishing works the same way: it only points your key at the
   cast or the bobber, out of combat, and puts back the interact settings it borrows when the line is in. Setups is the one feature that changes your UI: only out of combat,
@@ -110,7 +111,7 @@ Optional companions:
   prices, Skill-Up Odds prices only the reagents it has seen at a vendor, and Least Valuable goes by
   vendor prices and leaves greens unmarked. All four mark auction prices more than 3 days old, and
   Kill Value, Skill-Up Odds and Least Valuable pick up new prices as soon as an Auctionator scan
-  finishes.
+  finishes. Market Movers needs it: its report is built from Auctionator's full scans.
 
 ## Slash commands
 
@@ -120,7 +121,7 @@ Optional companions:
 | `/kw settings` | Open the settings |
 | `/kw list` | List the features and whether each is on |
 | `/kw errors` | List the errors the addon caught (`/kw errors clear` empties the list) |
-| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`, `leastvaluable`, `rewardvalue`, `fishing`, `reagents`) |
+| `/kw <feature>` | Open that feature's window, or its settings (`questtrash`, `killvalue`, `setups`, `rares`, `disenchant`, `camp`, `skillup`, `fortune`, `leastvaluable`, `rewardvalue`, `fishing`, `reagents`, `movers`) |
 | `/kw <feature> on` / `off` | Turn one feature on or off |
 | `/kw chars` | Your characters, with a Track box each (untracked ones are left out of every character list) |
 | `/kw untrack [name]` / `track [name]` | Leave a character out of the lists, or bring it back (no name: the one you are on) |

@@ -12,9 +12,9 @@ Owner's requests:
   graphs, fits the game, not obtrusive, does not open over other windows, "consider up and down.
   and oddities, elements worth buyings below market price".
 
-**Status:** held. The owner said "dont deploy to anyone else yet just put it on my version". It is
-`"held": true` in `standalone/addons.json`, so releases leave it out (see the repo CLAUDE.md). The
-owner's game has it through the dev junction.
+**Status:** released in 0.21.0 (2026-11-18), in the bundle and as KW Market Movers. It was held
+(owner's install only) from 2026-11-17 until the owner said "we can make an addon for this ... and
+put it in the main bundle".
 
 ```
 Market Movers
@@ -149,8 +149,9 @@ sales; this record is two weeks of lowest prices.
 
 ## Known limits
 
-- **Not seen in the game since the rewrite (2026-11-18).** The tests cover the logic. The window
-  layout, the button's place on the auction house and the docking beside it have not been looked at.
+- **Checked in the game only by the owner's use (2026-11-18).** A session with it loaded logged no
+  errors, and the owner then asked for the release. No screenshot of the rewritten window, the
+  auction house button or the docking has been reviewed.
 - **Lowest price only.** A browse result has no depth: one cheap listing is "the price". Usual
   dampens that on the baseline side; on the "now" side a single cheap listing is a real bargain,
   and a single dear one only shows when the cheaper stock is gone.

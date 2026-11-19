@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.21.0
+
+- **Market Movers: new feature.** After Auctionator finishes a full scan of the auction house, a
+  window beside it shows what is priced unusually, in four tabs: Materials and Other (rising and
+  falling against the usual price), Bargains (listed under what a vendor pays, or far under the
+  usual price) and My Bags (what you carry, the best to sell first). Gear is left out. Needs
+  Auctionator.
+- **Market Movers: "usual" is the middle price of up to a week of your own scans.** It keeps its
+  own daily record, so the first comparison comes the day after your first scan.
+- **Market Movers: each row has a small trend line,** the usual price, the price now, the change
+  and the units listed. Hover for the days behind it. Click to search the item in Auctionator,
+  shift-click to link it.
+- **Market Movers: the window opens once per auction house visit,** only when something moved or
+  there is a bargain, and closes with the auction house. A small button on the auction house
+  opens it too. `/kwm`, `/kwm bargains`, `/kwm bags`, `/kwm print`.
+- **Market Movers: it never buys, bids, posts or cancels anything.**
+
 ## 0.20.0
 
 - **Setups: another class's spells stay off your bars.** Applying a shaman's setup to a paladin or a

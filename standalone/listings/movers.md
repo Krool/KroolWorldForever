@@ -4,7 +4,8 @@
 - **Main category:** Auction & Economy.
 - **Relations:** Auctionator, required.
 - **Logo:** `standalone/logos/movers.png`
-- **Status:** held (2026-11-17): on the owner's install only, not released. No CurseForge project yet.
+- **CurseForge:** project 1815716 (created 2026-11-18).
+- **Status:** released with 0.21.0 (2026-11-18).
 
 ## Summary
 
