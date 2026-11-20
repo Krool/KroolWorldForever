@@ -14,7 +14,7 @@ hand-copied code.
   - `held: true`: on the owner's install only, left out of every release. See "Held features" in the repo CLAUDE.md. Nothing is held now.
   - Optional fields: `db` (default `<folder>DB`), `slash` (fallback words when the feature declares none, e.g. Quest Reward Value's `/kwq`) and `bindings` (secure button suffixes for Bindings.xml).
 - `published.json` is the upload ledger: key -> {hash, version}. `release.ps1` commits it after a `-Publish`.
-- `listings/<key>.md`: the CurseForge name, categories, relations, summary and description. Each description ends with `[Donate](https://ko-fi.com/kroolworld)`: labeled Donate, never the platform name.
+- `listings/<key>.md`: the CurseForge name, categories, relations, summary and description. Each description ends with `[Donate](https://ko-fi.com/kroolworld)`: labeled Donate, never the platform name. Before that come the named link back to the bundle and the "Found a bug, or want something added?" paragraph, which names the addon's own slash word plus `errors` (`/kw errors` on the bundle).
 - `listings/bundle.md`: the bundle's own CurseForge page (project 1804317). Each feature name in its list links that feature's KW addon, and every KW description links back to the bundle. No CurseForge relations between the bundle and the KW addons (2026-11-15): every relation type (required, optional, embedded library, tool, incompatible) misdescribes "the same feature, packaged alone", and the CurseForge app installs required ones.
 - `logos/<key>.png`: 512px placeholder logos, the same style as Reagent Uses' logo. The owner may swap them.
 
@@ -39,7 +39,8 @@ hand-copied code.
   - the collision suite: the bundle plus every standalone in one Lua state, in both load orders;
   - the API lint over `build/standalone`.
 - The `family` list in the bundle's `Core/Identity.lua` must equal the bundle plus every manifest folder (a test checks). Setups never toggles a family member.
-- Listings are the source for the live pages, which nothing uploads: after a listing changes, set each page's Description (Markdown editor) and General > Summary in the authors console and save. A summary is at most 256 characters.
+- Listings are the source for the live pages, which nothing uploads: after a listing changes, set each page's Description (Markdown editor) and General > Summary in the authors console and save. A summary is at most 256 characters. Description and General save separately: save one tab before opening the other, or the console asks to discard. The editor rewrites the Markdown it stores (bare links become named links), so compare by content, not by length.
+- Allow Comments (General tab) is on for every project (owner, 2026-11-20): comments and GitHub issues are where players report bugs and ask for features. A new project gets it switched on when it is created.
 - CurseForge: every standalone is its own project under the same author, with Ko-fi as the donation method, GitHub source (this repo) and Automatic Packaging off. Check that each uploaded file is tagged Forever 1.60.1.
 - A project created minutes ago can refuse its first API upload: 403, errorCode 1006, "You do not have permission to manage files for this project" (KW Boats And Zeppelins, 2026-11-18, about 15 minutes after it was created; a retry a few minutes later went through). By then the bundle is already up, so finish with `scripts\publish.ps1 -Zip dist\KroolWorldForever-<v>.zip -Version <v> -Notes <the CHANGELOG section> -SkipBundle`, which uploads only the standalones still owed, then commit `published.json` as "Record standalone uploads <v>".
 
