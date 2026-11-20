@@ -21,7 +21,9 @@ Hover a creature and its tooltip says what one kill is worth on average.
 
 Settings: Esc > Options > AddOns > KW Kill Value.
 
-Part of Krool World Forever, which has every KW addon in one: https://www.curseforge.com/wow/addons/krool-world-ui. Install one or the other: next to the bundle, this copy switches itself off.
+Part of [Krool World Forever](https://www.curseforge.com/wow/addons/krool-world-ui), the bundle with every KW addon in one. Its page links each of them. Install one or the other: next to the bundle, this copy switches itself off.
+
+**Found a bug, or want something added?** Comment on this page, or open an issue on [GitHub](https://github.com/Krool/KroolWorldForever/issues). For a bug, type `/fkv errors` in game and include what it prints.
 
 Open source (MIT): https://github.com/Krool/KroolWorldForever
 

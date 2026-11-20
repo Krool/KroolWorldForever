@@ -368,7 +368,9 @@ On by default: yes. Toggle: `/kwf transports on|off`. Commands: `/kwb, /kwboats`
 16001). It does not load on Classic Era, Anniversary or retail.
 
 **Has it been tested in the live game?** Yes: it has run on the live game since launch on
-Nov 4, 2026. Report anything odd as a GitHub issue.
+Nov 4, 2026. Report anything odd as a
+[GitHub issue](https://github.com/Krool/KroolWorldForever/issues) or a comment on the CurseForge page, with what
+`/kw errors` prints.
 
 **Where do Kill Value's numbers come from?** A vanilla 1.12 loot baseline (cmangos classic-db), blended
 with the drop rates you record yourself as you loot. Forever may have rebalanced some loot, so creatures

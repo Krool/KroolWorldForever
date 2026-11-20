@@ -19,10 +19,13 @@ Setting up a new character's bars and keys by hand takes a while. KW Setups save
 - Applies only out of combat, only when you click Apply, and always saves an undo point first (`/kws undo`).
 - Mark a setup Use For New Characters and a brand-new character (level 1, no experience, no money) gets it on its first login. Any other character is never changed without a click.
 - Game settings shared by the whole account are left alone, since every character already has them.
+- Every character that logs in gets an automatic setup. `/kws chars` lists them: untick a bank alt to leave it out.
 
 `/kws` opens the window. Settings: Esc > Options > AddOns > KW Setups.
 
-Part of Krool World Forever, which has every KW addon in one: https://www.curseforge.com/wow/addons/krool-world-ui. Install one or the other: next to the bundle, this copy switches itself off.
+Part of [Krool World Forever](https://www.curseforge.com/wow/addons/krool-world-ui), the bundle with every KW addon in one. Its page links each of them. Install one or the other: next to the bundle, this copy switches itself off.
+
+**Found a bug, or want something added?** Comment on this page, or open an issue on [GitHub](https://github.com/Krool/KroolWorldForever/issues). For a bug, type `/kws errors` in game and include what it prints.
 
 Open source (MIT): https://github.com/Krool/KroolWorldForever
 

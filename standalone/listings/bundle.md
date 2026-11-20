@@ -9,7 +9,7 @@
 
 ## Summary
 
-Fourteen small WoW Forever addons in one, each with an on/off switch: which quest items to delete, kill and item values, disenchant value, cheapest skill-ups, rare spawn alerts, one-key fishing, copying bars between characters, camp buffs, Sayge's timer.
+Fourteen WoW Forever addons in one, each with an on/off switch: quest items to delete, kill and item values, disenchant value, skill-up odds, rare alerts, one-key fishing, copying bars between characters, recipe uses, auction price moves, boat map pins.
 
 ## Description
 
@@ -43,6 +43,9 @@ Nothing here deletes, sells, loots or picks anything by itself. Least Valuable's
 - Least Valuable's coin shows in the default bags. With a bag addon, /kwl lists the slots instead.
 - Reagent Uses names another character once that character has opened its profession window.
 - Kill Value shows nothing inside instances: the game hides creature data from addons there.
+- Reagent Uses, Sayge's Fortune and Setups list your characters. /kw chars leaves a bank alt out.
+
+**Found a bug, or want something added?** Comment on this page, or open an issue on [GitHub](https://github.com/Krool/KroolWorldForever/issues). For a bug, type /kw errors in game and include what it prints.
 
 Open source (MIT): https://github.com/Krool/KroolWorldForever
 

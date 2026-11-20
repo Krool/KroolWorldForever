@@ -20,7 +20,9 @@ Rare spawn alert: a sound, a screen message and a chat line when a rare enemy is
 
 Settings: Esc > Options > AddOns > KW Rare Alert.
 
-Part of Krool World Forever, which has every KW addon in one: https://www.curseforge.com/wow/addons/krool-world-ui. Install one or the other: next to the bundle, this copy switches itself off.
+Part of [Krool World Forever](https://www.curseforge.com/wow/addons/krool-world-ui), the bundle with every KW addon in one. Its page links each of them. Install one or the other: next to the bundle, this copy switches itself off.
+
+**Found a bug, or want something added?** Comment on this page, or open an issue on [GitHub](https://github.com/Krool/KroolWorldForever/issues). For a bug, type `/kwr errors` in game and include what it prints.
 
 Open source (MIT): https://github.com/Krool/KroolWorldForever
 

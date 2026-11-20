@@ -27,13 +27,15 @@ Hold Ctrl over a crafting material and its tooltip lists every recipe that uses 
 - **Hide Grey Recipes:** leave out recipes that give no skill points.
 - **Recipes Shown:** how many recipes to list.
 
-Your other characters show up after each one opens its own profession window once.
+Your other characters show up after each one opens its own profession window once. `/ru chars` lists them: untick a bank alt to leave it out.
 
 The recipe data comes from WoW Forever's own game files, including the roughly 900 recipes Forever added to the Vanilla set. Trainer levels and recipe sources come from the cmangos classic database. A recipe whose source isn't known yet shows as "Recipe".
 
 Inspired by MasterTradeSkills for Vanilla and Turtle WoW. This is a fresh write for Forever.
 
-Part of Krool World Forever, which has every KW addon in one: https://www.curseforge.com/wow/addons/krool-world-ui. Install one or the other: next to the bundle, this copy switches itself off.
+Part of [Krool World Forever](https://www.curseforge.com/wow/addons/krool-world-ui), the bundle with every KW addon in one. Its page links each of them. Install one or the other: next to the bundle, this copy switches itself off.
+
+**Found a bug, or want something added?** Comment on this page, or open an issue on [GitHub](https://github.com/Krool/KroolWorldForever/issues). For a bug, type `/ru errors` in game and include what it prints.
 
 Open source (MIT): https://github.com/Krool/KroolWorldForever
 
