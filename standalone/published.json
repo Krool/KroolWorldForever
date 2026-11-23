@@ -16,8 +16,8 @@
                     "version":  "0.21.0"
                 },
     "killvalue":  {
-                      "hash":  "30494330ead469f178f838a5fe33d9491f62a37184a3b58474892acb20a225a4",
-                      "version":  "0.21.0"
+                      "hash":  "8fd2c0be6e678ec4ef1a414f3417b33de0980646dd118ea201f740a053a1a779",
+                      "version":  "0.24.0"
                   },
     "leastvaluable":  {
                           "hash":  "41bd4dc4d384ae516a181584665378f83d2f5d752793f7eb0216c417a7dfcc86",
@@ -32,8 +32,8 @@
                        "version":  "0.21.0"
                    },
     "rares":  {
-                  "hash":  "e625a6e5b38da9b21631794d7611b34edb556a51a108b1fd8f98cc38563b02af",
-                  "version":  "0.22.1"
+                  "hash":  "5435402df235495b7e17d722a063c6e198da64d8753bb1ea139141c0b3735710",
+                  "version":  "0.24.0"
               },
     "reagents":  {
                      "hash":  "d54204f82c7c372184e17f8a0cc22c6d0bef86819a08fd1e25a1a21d33d2ccd8",
