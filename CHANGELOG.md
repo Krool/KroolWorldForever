@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.23.0
+## 0.24.0
+
+- **Kill Value: herbs, mining veins and fishing pools show what they are worth.** Hover one and
+  its tooltip gets Herb value, Vein value or Pool value: everything it yields at vendor or
+  Auctionator prices, with the top items listed. A vein counts all its mines (about 3) and a pool
+  all its catches, and the label says how many. When your Herbalism or Mining is too low, or you
+  do not have it, a line says what it needs. `/fkv node <name>` prints the breakdown. A new
+  option, Show On Herbs, Veins And Pools (on), turns it off.
+- **Where the numbers come from:** Vanilla node loot, as for creatures, and the skill each node
+  needs from this game's own data. Nodes are not learned from your loot yet.
 
 - **Least Valuable: the Bags Full card keeps off your open bags.** When its place would cover a
   bag, it goes beside them, and it moves when you open your bags under it. Drag it and it stays

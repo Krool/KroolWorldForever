@@ -12,7 +12,7 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | Feature | What you get | Needs |
 |---|---|---|
 | **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` opens a window that sorts your bags (and bank) into Can Delete, Keep and Still Checking. | QuestieDB |
-| **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. | Nothing (Auctionator optional) |
+| **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. Herbs, mining veins and fishing pools show their value too. | Nothing (Auctionator optional) |
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, chat text size, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
 | **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a marker button and a key that target it and mark it (a skull by default). One alert per spawn. The button goes once the rare has your marker or dies; right-click hides it, shift-right-click ignores that rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
 | **Disenchant Value** | On weapon and armor tooltips (green and up): what the item disenchants into, and what that is worth at auction. Hold Shift for each material's chance and price. If Auctionator shows a Disenchant line of its own, this one steps aside. | Auctionator (for prices) |
@@ -190,7 +190,7 @@ On by default: yes. Toggle: `/kwf questtrash on|off`. Commands: `/fqt, /questtra
 
 ### Kill Value
 
-Adds the expected gold per kill to creature tooltips: coins plus drop table times vendor or Auctionator prices.
+Adds the expected gold per kill to creature tooltips: coins plus drop table times vendor or Auctionator prices. Herbs, mining veins and fishing pools show what they yield the same way.
 
 On by default: yes. Toggle: `/kwf killvalue on|off`. Commands: `/fkv, /killvalue`.
 
@@ -202,6 +202,7 @@ On by default: yes. Toggle: `/kwf killvalue on|off`. Commands: `/fkv, /killvalue
 | Add My Skinning To The Total | On | When you know Skinning (or Herbalism or Mining, for creatures gathered that way) with enough skill for the creature, its skinning value is part of the total. |
 | Show Skinning Value | Off | Also shows the skinning value of creatures you cannot skin (not part of the total). |
 | Show On Friendly Creatures | Off | Also adds the line to creatures you cannot attack. |
+| Show On Herbs, Veins And Pools | On | Adds the expected value of a herb, mining vein or fishing pool to its tooltip: everything it yields at vendor or Auctionator prices. A vein counts all its mines (2 to 4), a pool all its catches. Says so when your Herbalism or Mining is too low. |
 | Login Message | On | Prints one line at login. |
 | Contributor Lines | 3 (0 to 10) | Top drops listed under the total (0 = none). |
 | Auction House Cut % | 5 (0 to 100) | Taken off Auctionator prices. |
