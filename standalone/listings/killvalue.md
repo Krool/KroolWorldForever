@@ -7,7 +7,7 @@
 
 ## Summary
 
-Shows the expected gold per kill on creature tooltips: coins, plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot.
+Shows the expected gold per kill on creature tooltips: coins, plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. Herbs, mining veins and fishing pools show their value too.
 
 ## Description
 
@@ -16,6 +16,7 @@ Hover a creature and its tooltip says what one kill is worth on average.
 - Coins, plus each drop's chance times its price, plus the skinning if you can skin it.
 - Prices come from Auctionator when you have it, else from vendor prices.
 - It starts from Vanilla drop tables and learns this game's real drop rates from what you loot.
+- Herbs, mining veins and fishing pools show what one is worth: everything it yields, every mine of a vein counted, and the Herbalism or Mining it needs when yours is too low. `/fkv node <name>` gives the breakdown.
 - `/fkv` gives the full breakdown for your target; `/fkv id <npcId>` for any creature.
 - Inside instances the game hides creature tooltip data from addons, so it shows nothing there.
 

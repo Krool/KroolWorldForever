@@ -83,6 +83,20 @@ do
 	check("Forest Spider (30) has baseline loot", D.mob[30] ~= nil, true)
 	check("baseline has vendor prices", next(D.sell) ~= nil, true)
 	check("baseline labels its source", D.source:find("Era baseline", 1, true) ~= nil, true)
+
+	local N = ns.Nodes
+	check("Nodes.lua loaded", type(N), "table")
+	check("node data has herbs", N.herbs > 20, true)
+	check("node data has veins", N.veins > 15, true)
+	check("node data has fishing pools", N.pools > 5, true)
+	check("node data names its build", N.build:match("^%d+%.%d+%.%d+%.%d+$") ~= nil, true)
+	check("Copper Vein: a vein, skill 1, about 3 mines", N.node["Copper Vein"]:match("^M:1:3|") ~= nil, true)
+	check("Mithril Deposit needs 175 (Forever lock)", N.node["Mithril Deposit"]:match("^M:175:") ~= nil, true)
+	check("Black Lotus needs Herbalism 300", N.node["Black Lotus"]:match("^H:300:1|") ~= nil, true)
+	check("Peacebloom: two per pick", N.node["Peacebloom"], "H:1:1|2447:2")
+	check("template 1731 is a Copper Vein", N.id[1731], "Copper Vein")
+	check("quest-only gatherables left out", N.node["Doom Weed"], nil)
+	check("node items have vendor prices", N.sell[2770] ~= nil, true)
 end
 
 -- ---------------------------------------------------------------- lifecycle
@@ -111,12 +125,13 @@ do
 	check("detail slider registered", RegisteredSettings[SV .. "detail"] ~= nil, true)
 	check("cut slider registered", RegisteredSettings[SV .. "cut"] ~= nil, true)
 	local toggles = 0
-	for _, key in ipairs({ "learn", "vendor", "ah", "gather", "skin", "friendly", "hello" }) do
+	for _, key in ipairs({ "learn", "vendor", "ah", "gather", "skin", "friendly", "nodes", "hello" }) do
 		if RegisteredSettings[SV .. key] then
 			toggles = toggles + 1
 		end
 	end
-	check("seven toggle options registered", toggles, 7)
+	check("eight toggle options registered", toggles, 8)
+	check("node values on by default", slice.nodes, true)
 	check("skinning counts by default", slice.gather, true)
 	check("no standalone master switch option", RegisteredSettings[SV .. "enabled"].label, "Enabled")
 	check("not enabled before login", ns.enabled, false)
@@ -124,6 +139,7 @@ do
 	FireEvent("PLAYER_LOGIN")
 	check("enabled after login", ns.enabled, true)
 	check("unit tooltip hook installed", type(TooltipCallbacks[Enum.TooltipDataType.Unit]), "function")
+	check("object tooltip hook installed", type(TooltipCallbacks[Enum.TooltipDataType.Object]), "function")
 	for _, e in ipairs({ "LOOT_READY", "LOOT_OPENED", "GET_ITEM_INFO_RECEIVED", "SKILL_LINES_CHANGED" }) do
 		local found = false
 		for _, f in ipairs(CreatedFrames) do
@@ -992,6 +1008,169 @@ do
 	check("blended creature tagged", right[1]:find("(blended)", 1, true) ~= nil, true)
 end
 
+-- ---------------------------------------------------------------- nodes: herbs, veins, pools
+
+do
+	fresh()
+	setItems()
+	ns.Nodes.node["Test Vein"] = "M:100:3|9100001:3,9100002:0.5"
+	ns.Nodes.node["Test Herb"] = "H:1:1|9100001:2"
+	ns.Nodes.node["Test Pool"] = "F:0:4|9100002:3.2"
+	ns.Nodes.node["Bad Row"] = "garbage"
+	ns.Nodes.id[9990001] = "Test Vein"
+
+	local a = FKV.ComputeNode("Test Vein")
+	check("vein computes", a ~= nil, true)
+	near("vein total: 3 x 50 + 0.5 x 1000", a.total, 650)
+	check("vein kind", a.kind, "M")
+	check("vein opens", a.opens, 3)
+	check("vein need", a.need, 100)
+	check("top sorted by value", a.top[1].id, 9100002)
+	check("public API", FKV.GetNodeValue("Test Vein"), 650)
+	check("unknown name: nil", FKV.ComputeNode("Mailbox"), nil)
+	check("malformed row: nil", FKV.ComputeNode("Bad Row"), nil)
+	check("public API, unknown name", FKV.GetNodeValue("Mailbox"), nil)
+	check("public API, nil", FKV.GetNodeValue(nil), nil)
+	check("case-insensitive find", FKV.FindNode("test vein"), "Test Vein")
+	check("find: nothing", FKV.FindNode("nope"), nil)
+
+	-- skill: none, too low, enough, unknown
+	check("no mining: cannot gather", a.canGather, false)
+	check("no mining: skill 0", a.skill, 0)
+	SkillLines[186] = { rank = 90 }
+	FKV.RefreshSkills()
+	check("mining 90 of 100: cannot", FKV.ComputeNode("Test Vein").canGather, false)
+	SkillLines[186] = { rank = 90, modifier = 10 }
+	FKV.RefreshSkills()
+	check("skill bonus counts (90 + 10)", FKV.ComputeNode("Test Vein").canGather, true)
+	SkillLines = { [2946] = { rank = 150 } }
+	FKV.RefreshSkills()
+	check("Forever child mining line counts", FKV.ComputeNode("Test Vein").canGather, true)
+	check("a miner does not herb", FKV.ComputeNode("Test Herb").canGather, false)
+	check("pools need no skill", FKV.ComputeNode("Test Pool").canGather, nil)
+	local savedSkill = C_SkillInfo
+	C_SkillInfo = nil
+	FKV.RefreshSkills()
+	check("no skill API: no verdict", FKV.ComputeNode("Test Vein").canGather, nil)
+	C_SkillInfo = savedSkill
+	SkillLines = {}
+	FKV.RefreshSkills()
+
+	-- tooltip
+	local left, right = HoverObject("Test Vein")
+	check("vein label counts its mines", left[1], "Vein value (~3 mines)")
+	check("vein value tagged baseline", right[1]:find("(baseline)", 1, true) ~= nil, true)
+	check("vein contributor named", has(left, "Item9100002"), true)
+	check("no mining: says what it needs", has(left, "needs Mining 100"), true)
+	SkillLines[186] = { rank = 60 }
+	FKV.RefreshSkills()
+	left = HoverObject("Test Vein")
+	check("too low: says what you have", has(left, "needs Mining 100, you have 60"), true)
+	SkillLines[186] = { rank = 120 }
+	FKV.RefreshSkills()
+	left = HoverObject("Test Vein")
+	check("miner: no needs line", has(left, "needs"), false)
+	SkillLines = {}
+	FKV.RefreshSkills()
+	left = HoverObject("Test Herb")
+	check("herb label", left[1], "Herb value")
+	check("skill 1 herb: needs Herbalism, no number", has(left, "needs Herbalism"), true)
+	check("skill 1 herb: no 1 shown", has(left, "Herbalism 1"), false)
+	left = HoverObject("Test Pool")
+	check("pool label counts catches", left[1], "Pool value (~4 catches)")
+	check("pool: no needs line", has(left, "needs"), false)
+	left = HoverObject("|cffffffffTest Vein|r ")
+	check("color codes and spaces stripped", left[1], "Vein value (~3 mines)")
+	left = HoverObject("Filon de cobre", "GameObject-0-1-2-3-9990001-0000ABCD")
+	check("GUID entry wins over the name (any language)", left[1], "Vein value (~3 mines)")
+	left = HoverObject("Test Herb", "GameObject-0-1-2-3-424242-0000ABCD")
+	check("unknown GUID entry falls back to the name", left[1], "Herb value")
+	left = HoverObject("Test Herb", "Creature-0-1-2-3-9990001-0000ABCD")
+	check("a creature GUID is not an object", left[1], "Herb value")
+	check("object GUID parse", FKV.ParseObjectGUID("GameObject-0-1-2-3-1731-AB"), 1731)
+	check("object GUID: malformed", FKV.ParseObjectGUID("GameObject-0-1-2-3-x-AB"), nil)
+	check("object GUID: secret", FKV.ParseObjectGUID(Secret()), nil)
+
+	FKV.cfg.detail = 0
+	left = HoverObject("Test Pool")
+	check("detail 0: only the total", #left, 1)
+	FKV.cfg.detail = 3
+
+	-- the same data twice does not repeat lines
+	GameTooltip:Reset()
+	local data = { lines = { { leftText = "Test Pool" } } }
+	TooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip, data)
+	local n = #GameTooltip.left
+	TooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip, data)
+	check("same object data does not duplicate lines", #GameTooltip.left, n)
+
+	-- degrade silently
+	check("not a node: no line", #HoverObject("Mailbox"), 0)
+	check("secret name: no line", #HoverObject(Secret()), 0)
+	GameTooltip:Reset()
+	TooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip, { lines = Secret() })
+	check("secret lines: no line", #GameTooltip.left, 0)
+	TooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip, { lines = {} })
+	check("no lines: no line", #GameTooltip.left, 0)
+	TooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip, nil)
+	check("nil data: no line", #GameTooltip.left, 0)
+	local otherTip = { left = {} }
+	function otherTip:AddDoubleLine(l)
+		table.insert(self.left, l)
+	end
+	TooltipCallbacks[Enum.TooltipDataType.Object](otherTip, { lines = { { leftText = "Test Vein" } } })
+	check("only GameTooltip", #otherTip.left, 0)
+	FKV.cfg.nodes = false
+	check("option off: no line", #HoverObject("Test Vein"), 0)
+	FKV.cfg.nodes = true
+	ns.enabled = false
+	check("disabled: no line", #HoverObject("Test Vein"), 0)
+	ns.enabled = true
+	local savedNodes = ns.Nodes.node
+	ns.Nodes.node = setmetatable({}, { __index = function()
+		error("node data exploded")
+	end })
+	FKV.ClearCaches()
+	check("data error does not escape the hook", pcall(HoverObject, "Test Vein"), true)
+	check("and adds no line", #GameTooltip.left, 0)
+	ns.Nodes.node = savedNodes
+	FKV.ClearCaches()
+
+	-- prices: a price change shows after the cache clears (an option change or a scan)
+	FKV.ComputeNode("Test Vein")
+	ItemCache[9100002].sell = 2000
+	near("cached until cleared", FKV.ComputeNode("Test Vein").total, 650)
+	FKV.ClearPriceCache()
+	near("recomputed after a clear", FKV.ComputeNode("Test Vein").total, 1150)
+	ItemCache[9100002].sell = 1000
+	FKV.ClearPriceCache()
+
+	-- /fkv node
+	local out = capture(function()
+		ns.Slash("node test vein")
+	end)
+	check("/fkv node: names it and the total", has(out, "Test Vein: "), true)
+	check("/fkv node: per vein, about 3 mines", has(out, "per vein, about 3.0 mines"), true)
+	check("/fkv node: needs line", has(out, "needs Mining 100"), true)
+	out = capture(function()
+		ns.Slash("node mailbox")
+	end)
+	check("/fkv node: unknown name", has(out, "no herb, vein or fishing pool named 'mailbox'"), true)
+	out = capture(function()
+		ns.Slash("node")
+	end)
+	check("/fkv node: usage", has(out, "usage: /fkv node"), true)
+	out = capture(function()
+		ns.Slash("status")
+	end)
+	check("/fkv status counts the nodes", has(out, "fishing pools"), true)
+
+	for _, k in ipairs({ "Test Vein", "Test Herb", "Test Pool", "Bad Row" }) do
+		ns.Nodes.node[k] = nil
+	end
+	ns.Nodes.id[9990001] = nil
+end
+
 -- ---------------------------------------------------------------- slash commands
 
 do
@@ -1141,6 +1320,7 @@ do
 	check("/kwf killvalue off disables the feature", ns.enabled, false)
 	check("and saves it", slice.enabled, false)
 	check("off: no tooltip lines", #Hover(G(9000090, "SW2")), 0)
+	check("off: no node lines", #HoverObject("Copper Vein"), 0)
 	local link = "|cffffffff|Hitem:9100001::::::::80:::::|h[Thing]|h|r"
 	Loot.slots = { { type = Enum.LootSlotType.Item, link = link, sources = { G(9000091, "SWL"), 1 } } }
 	FireEvent("LOOT_OPENED")
@@ -1153,6 +1333,7 @@ do
 	SettingsSet("KroolWorldForever_killvalue_enabled", true)
 	check("settings checkbox re-enables", ns.enabled, true)
 	check("on again: tooltip line", Hover(G(9000090, "SW3"))[1], "Kill value")
+	check("on again: node line", HoverObject("Copper Vein")[1], "Vein value (~3 mines)")
 	FireEvent("LOOT_OPENED")
 	check("on again: loot recorded", FKV.GetLearned(9000091) ~= nil, true)
 	local hooks = 0
@@ -1201,6 +1382,21 @@ do
 		ok = ok and pcall(FKV.Compute, id)
 	end
 	check("real creatures compute without error", ok, true)
+
+	-- real nodes, items uncached so prices come from Nodes.lua and Data.lua
+	local vein = FKV.ComputeNode("Copper Vein")
+	check("real vein computes", vein ~= nil and vein.total > 0, true)
+	local ore = false
+	for _, c in ipairs(vein.top) do
+		ore = ore or c.id == 2770
+	end
+	check("real vein: Copper Ore is listed", ore, true)
+	local okNodes = true
+	for name in pairs(ns.Nodes.node) do
+		local okOne, acc = pcall(FKV.ComputeNode, name)
+		okNodes = okNodes and okOne and acc ~= nil
+	end
+	check("every real node parses and computes", okNodes, true)
 
 	-- launch data (2026-11-05): beasts skinned before looting had leather learned as loot.
 	-- 1128 lists Light Leather (2318) and Ruined Leather Scraps (2934) as skinning yield; 705

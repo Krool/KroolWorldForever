@@ -18,7 +18,7 @@
       "key": "killvalue",
       "folder": "KW_KillValue",
       "title": "KW Kill Value",
-      "notes": "Gold per kill on creature tooltips: coins plus the drop table at vendor or Auctionator prices.",
+      "notes": "Gold per kill on creature tooltips: coins plus the drop table at vendor or Auctionator prices. Herbs, veins and fishing pools too.",
       "iconTexture": "Interface\\Icons\\INV_Misc_Coin_02",
       "category": "Interface Enhancements",
       "features": ["KillValue"],

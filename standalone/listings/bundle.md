@@ -16,7 +16,7 @@ Fourteen WoW Forever addons in one, each with an on/off switch: quest items to d
 Krool World Forever is fourteen small addons for WoW Forever in one. Hover an enemy for its gold per kill, a green for its disenchant value, a quest item for keep or delete, a campfire for its buffs. Each feature has its own on/off switch, and all are on by default. Type /kw for the overview.
 
 - [Quest Trash](https://www.curseforge.com/wow/addons/kw-quest-trash): shows which quest items you can delete. /fqt sorts your bags and bank into Can Delete, Keep and Still Checking. Needs QuestieDB: the CurseForge app installs it with Questie.
-- [Kill Value](https://www.curseforge.com/wow/addons/kw-kill-value): expected gold per kill on enemy tooltips, counting coin, drops and skinning. It learns real drop rates from what you loot.
+- [Kill Value](https://www.curseforge.com/wow/addons/kw-kill-value): expected gold per kill on enemy tooltips, counting coin, drops and skinning. It learns real drop rates from what you loot. Herbs, mining veins and fishing pools show their value too.
 - [Setups](https://www.curseforge.com/wow/addons/kw-setups): copy action bars, keybindings, macros, Edit Mode layout, chat text size and per-character settings from one character to another, with Undo. A new character can start from a saved setup.
 - [Rare Alert](https://www.curseforge.com/wow/addons/kw-rare-alert): a sound, a screen message and a chat line when a rare enemy is near, with its value and best drops. A button or key targets and marks it. It sees rares through enemy nameplates, which Forever starts with off: /kwr nameplates turns them on.
 - [Disenchant Value](https://www.curseforge.com/wow/addons/kw-disenchant-value): what a green or better item disenchants into, and what that is worth.

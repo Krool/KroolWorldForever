@@ -18,6 +18,10 @@
 -- total when the player knows the profession with enough skill; a gathering loot window is
 -- never learned as corpse loot.
 --
+-- Nodes (herbs, mining veins, fishing pools; Nodes.lua, generated) are valued the same way:
+-- expected quantity per node (every mine of a vein counted) times the item's price. Baseline
+-- only: nothing is learned from node loot.
+--
 -- Midnight restrictions: any value that might be secret is checked with issecretvalue before it
 -- is read, and every entry point that touches game data is wrapped in pcall by its caller.
 
@@ -52,6 +56,7 @@ FKV.DEFAULTS = {
 	gather = true, -- add the gathering value to the total when the player can gather the creature
 	skin = false, -- also show the gathering value of creatures the player cannot gather (not in the total)
 	friendly = false, -- show the line on friendly (non-attackable) creatures too
+	nodes = true, -- value line on herb, mining vein and fishing pool tooltips
 	learn = true, -- record loot from corpses you open
 	hello = true, -- login message
 }
@@ -107,6 +112,20 @@ function FKV.ParseGUID(guid)
 		return nil, kind
 	end
 	return id, kind
+end
+
+-- "GameObject-0-<server>-<instance>-<zone>-<entry>-<spawn>": the template entry, or nil.
+function FKV.ParseObjectGUID(guid)
+	if Secret(guid) or type(guid) ~= "string" then
+		return nil
+	end
+	local parts = Split(guid, "-")
+	local field = parts[6]
+	if parts[1] ~= "GameObject" or not field or not field:match("^%d+$") then
+		return nil
+	end
+	local id = tonumber(field)
+	return id and id > 0 and id or nil
 end
 
 -- -------------------------------------------------------------------- formatting
@@ -563,9 +582,9 @@ local function ItemFacts(itemId)
 		pending[itemId] = true
 		pcall(C_Item.RequestLoadItemDataByID, itemId)
 	end
-	local D = ns.Data
-	local meta = D and D.meta and D.meta[itemId]
-	local sell = D and D.sell and D.sell[itemId]
+	local D, N = ns.Data, ns.Nodes
+	local meta = (D and D.meta and D.meta[itemId]) or (N and N.meta and N.meta[itemId])
+	local sell = (D and D.sell and D.sell[itemId]) or (N and N.sell and N.sell[itemId])
 	if meta then
 		return math.floor(meta / 16), meta % 16, sell or 0, false
 	end
@@ -606,6 +625,7 @@ end
 -- -------------------------------------------------------------------- compute
 
 local computeCache, computeCount = {}, 0
+local nodeCache, nodeValues = {}, {} -- name -> parsed node; name -> { t, sig, acc }
 
 function FKV.Invalidate(npcId)
 	if computeCache[npcId] then
@@ -617,11 +637,12 @@ end
 function FKV.ClearPriceCache()
 	priceCache = {}
 	computeCache, computeCount = {}, 0
+	nodeValues = {}
 end
 
 function FKV.ClearCaches()
 	FKV.ClearPriceCache()
-	mobCache, refCache, gatherItems = {}, {}, nil
+	mobCache, refCache, gatherItems, nodeCache = {}, {}, nil, {}
 	skillsAt = nil
 end
 
@@ -826,4 +847,96 @@ function FKV.SourceTag(acc)
 		return "blended"
 	end
 	return ("learning (%d kills)"):format(acc.kills or 0)
+end
+
+-- -------------------------------------------------------------------- nodes
+
+-- Nodes.node[name] = "kind:skill:opens|item:qty,..." (see Nodes.lua). Returns the parsed node or nil.
+local function GetNode(name)
+	if type(name) ~= "string" then
+		return nil
+	end
+	local n = nodeCache[name]
+	if n then
+		return n
+	end
+	-- Every hovered object passes through here (mailboxes, chairs): only real nodes are cached.
+	local s = ns.Nodes and ns.Nodes.node and ns.Nodes.node[name]
+	local kind, skill, opens, items
+	if type(s) == "string" then
+		kind, skill, opens, items = s:match("^([HMF]):(%d+):([%d%.]+)|(.*)$")
+	end
+	if not kind then
+		return nil
+	end
+	n = { kind = kind, skill = tonumber(skill), opens = tonumber(opens), items = ParsePairs(items) }
+	nodeCache[name] = n
+	return n
+end
+
+-- The node name for a GameObject template entry (from a GUID), or nil.
+function FKV.NodeById(entry)
+	return entry and ns.Nodes and ns.Nodes.id and ns.Nodes.id[entry] or nil
+end
+
+-- The node's exact name for any capitalization ("copper vein" from a slash command), or nil.
+function FKV.FindNode(text)
+	text = type(text) == "string" and text:lower() or nil
+	for name in pairs((ns.Nodes and ns.Nodes.node) or {}) do
+		if name:lower() == text then
+			return name
+		end
+	end
+	return nil
+end
+
+-- Returns nil (not a known node) or a breakdown:
+--   { name, kind ("H" herb, "M" vein, "F" pool), opens, need, total, known, unknown,
+--     top = { {id, qty, value, src, age}... }, skill, canGather, stale, staleValue }
+-- qty and total count every open (a vein is mined 2 to 4 times). need is the Herbalism or
+-- Mining skill (0 for pools); skill and canGather are set when the player's skill can be read.
+function FKV.ComputeNode(name)
+	local sig, now = Sig(), Now()
+	local hit = nodeValues[name]
+	if hit and hit.sig == sig and now - hit.t < CACHE_TTL then
+		return hit.acc
+	end
+	local node = GetNode(name)
+	if not node then
+		return nil
+	end
+	local acc = { name = name, kind = node.kind, opens = node.opens, need = node.skill, total = 0, known = 0, unknown = 0, top = {} }
+	local old, oldest = 0, nil
+	for _, d in ipairs(node.items) do
+		local price, src, age = FKV.Price(d[1])
+		if price then
+			local c = { id = d[1], qty = d[2], value = d[2] * price, src = src, age = age }
+			acc.total = acc.total + c.value
+			acc.known = acc.known + 1
+			acc.top[#acc.top + 1] = c
+			if root.AuctionStale(age) then
+				old, oldest = old + c.value, math.max(oldest or 0, age)
+			end
+		else
+			acc.unknown = acc.unknown + 1
+		end
+	end
+	if oldest and acc.total > 0 and old >= OLD_SHARE * acc.total then
+		acc.stale, acc.staleValue = oldest, old
+	end
+	table.sort(acc.top, ByValue)
+	if node.kind ~= "F" then
+		acc.skill = FKV.GatherSkill(node.kind)
+		if acc.skill then
+			acc.canGather = acc.skill > 0 and acc.skill >= node.skill
+		end
+	end
+	nodeValues[name] = { t = now, sig = sig, acc = acc }
+	return acc
+end
+
+-- Public: expected copper for one herb, vein or pool by its tooltip name, or nil.
+function FKV.GetNodeValue(name)
+	local ok, acc = pcall(FKV.ComputeNode, name)
+	return ok and acc and acc.total or nil
 end

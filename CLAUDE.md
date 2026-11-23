@@ -189,7 +189,8 @@ before writing addon code.
 - `KroolWorldForever/` shipped addon: `Core/` registry, settings, widgets, hub, lifecycle; `Features/`
   one folder each; `Bindings.xml` (Rare Alert's and One-Button Fishing's keys, loads by itself, not in the TOC).
 - `tools/test/` test runner + suites; `tools/forever-api/` lint; `tools/killvalue-data/` the cmangos
-  classic-db generators (`classicdb.js` reader; `gen-data.js` Kill Value loot, `gen-disenchant.js`
+  classic-db generators (`classicdb.js` reader; `gen-data.js` Kill Value loot, `gen-nodes.js <build>`
+  Kill Value's herbs, veins and fishing pools with Forever's Lock skills, `gen-disenchant.js`
   Disenchant Value tables); `tools/skillup-data/gen-skillup.js` Skill-Up Odds recipe thresholds from
   wago.tools `SkillLineAbility` (regenerate when a build changes recipes);
   `tools/reagents-data/gen-data.js <build>` Reagent Uses' recipe data (Forever's own tables from

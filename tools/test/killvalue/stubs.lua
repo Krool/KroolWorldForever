@@ -13,7 +13,7 @@ function strtrim(s)
 end
 
 Enum = {
-	TooltipDataType = { Unit = 2, Item = 0 },
+	TooltipDataType = { Unit = 2, Item = 0, Object = 33 },
 	ItemClass = { Questitem = 12, Key = 13, Tradegoods = 7 },
 	BagIndex = { Backpack = 0, Bank = -1, CharacterBankTab_1 = 6, AccountBankTab_1 = 12 },
 	LootSlotType = { None = 0, Item = 1, Money = 2, Currency = 3 },
@@ -125,6 +125,10 @@ function GameTooltip:AddDoubleLine(l, r)
 	table.insert(self.left, l)
 	table.insert(self.right, r)
 end
+function GameTooltip:AddLine(l)
+	table.insert(self.left, l)
+	table.insert(self.right, "")
+end
 function GameTooltip:GetUnit()
 	return "Name", TooltipUnitToken
 end
@@ -136,6 +140,14 @@ end
 function Hover(guid)
 	GameTooltip:Reset()
 	TooltipCallbacks[Enum.TooltipDataType.Unit](GameTooltip, { guid = guid })
+	return GameTooltip.left, GameTooltip.right
+end
+
+-- Hover a world object: the name on the first line, and a GUID when given. Returns left, right.
+function HoverObject(name, guid)
+	GameTooltip:Reset()
+	local data = { type = Enum.TooltipDataType.Object, guid = guid, lines = { { leftText = name } } }
+	TooltipCallbacks[Enum.TooltipDataType.Object](GameTooltip, data)
 	return GameTooltip.left, GameTooltip.right
 end
 

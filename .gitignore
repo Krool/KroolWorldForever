@@ -8,6 +8,7 @@ build/
 **/node_modules/
 **/Libs/
 tools/killvalue-data/sqlcache/
+tools/killvalue-data/cache/
 
 # Local agent and editor state
 .claude/

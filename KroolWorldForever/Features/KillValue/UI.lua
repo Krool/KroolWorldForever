@@ -131,6 +131,111 @@ local function AddLines(tooltip, data)
 	end
 end
 
+-- -------------------------------------------------------------------- node tooltip
+
+local NODE_LABEL = { H = "Herb value", M = "Vein value", F = "Pool value" }
+local NODE_WORD = { H = "herb", M = "vein", F = "pool" }
+local OPEN_WORD = { M = "mines", F = "catches" }
+
+local function Plain(v, kind)
+	if Secret(v) or type(v) ~= kind then
+		return nil
+	end
+	return v
+end
+
+-- The node a world tooltip shows: by the GUID's template entry when the data carries one (any
+-- client language), else by the name on its first line.
+local function NodeName(data)
+	local byId = FKV.NodeById(FKV.ParseObjectGUID(data.guid))
+	if byId then
+		return byId
+	end
+	local lines = Plain(data.lines, "table")
+	local first = lines and Plain(lines[1], "table")
+	local text = first and Plain(first.leftText, "string")
+	if not text then
+		return nil
+	end
+	text = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+	return strtrim(text)
+end
+ns.NodeName = NodeName -- test seam
+
+-- "Vein value (~3 mines)": a vein or pool opens more than once, and the numbers count them all.
+local function NodeLabel(acc)
+	local word = OPEN_WORD[acc.kind]
+	if word and acc.opens >= 1.5 then
+		return ("%s (~%d %s)"):format(NODE_LABEL[acc.kind], math.floor(acc.opens + 0.5), word)
+	end
+	return NODE_LABEL[acc.kind]
+end
+
+-- "needs Mining 175", or nil when the player can gather it (or the skill is unknown).
+local function NodeNeed(acc)
+	if acc.canGather ~= false then
+		return nil
+	end
+	local text = "needs " .. GATHER_TITLE[acc.kind] .. (acc.need > 1 and (" " .. acc.need) or "")
+	if acc.skill and acc.skill > 0 then
+		text = text .. ", you have " .. acc.skill
+	end
+	return text
+end
+
+local function AddNodeLines(tooltip, data)
+	local cfg = FKV.cfg
+	local name = cfg.nodes and NodeName(data)
+	local acc = name and FKV.ComputeNode(name)
+	if not acc then
+		return
+	end
+	local tag = "|cff888888(baseline)|r"
+	if acc.known == 0 then
+		tag = "|cff888888(no prices)|r"
+	elseif acc.stale then
+		tag = "|cff888888(baseline, " .. OLD .. "old prices|cff888888)|r"
+	end
+	tooltip:AddDoubleLine(NodeLabel(acc), Money(acc.total) .. " " .. tag, 0.2, 1, 0.6, 1, 1, 1)
+	local n = 0
+	for _, c in ipairs(acc.top) do
+		if n >= cfg.detail or c.value < 1 then
+			break
+		end
+		tooltip:AddDoubleLine(
+			"  " .. root.UI.ItemIcon(c.id, 12) .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. SrcTag(c),
+			Money(c.value),
+			0.7,
+			0.7,
+			0.7,
+			0.8,
+			0.8,
+			0.8
+		)
+		n = n + 1
+	end
+	local need = NodeNeed(acc)
+	if need then
+		tooltip:AddLine("  " .. need, 1, 0.6, 0.33)
+	end
+end
+
+local lastObject
+
+-- Runs on every world object tooltip (Camp Guide's hook sees the same ones); any failure must
+-- degrade to no line. Object names are not secret outside instances; inside, Plain drops them.
+local function OnObjectTooltip(tooltip, data)
+	if tooltip ~= GameTooltip or not (ns.enabled and ns.db) then
+		return
+	end
+	if type(data) ~= "table" or data == lastObject then
+		return -- the same tooltip data processed twice would repeat our lines
+	end
+	lastObject = data
+	root.TryQuiet(ns, "node tooltip", AddNodeLines, tooltip, data)
+end
+ns.OnObjectTooltip = OnObjectTooltip -- test seam
+
 local lastData
 
 -- Runs on every unit tooltip; any failure must degrade to "no line", never an error popup.
@@ -222,6 +327,41 @@ local function Report(npcId, label)
 	end
 end
 
+local function ReportNode(name)
+	local ok, acc = root.Try(ns, "/fkv node", FKV.ComputeNode, name)
+	if not ok or not acc then
+		return
+	end
+	local per = NODE_WORD[acc.kind]
+	local opens = OPEN_WORD[acc.kind] and acc.opens >= 1.5 and (", about %.1f %s"):format(acc.opens, OPEN_WORD[acc.kind]) or ""
+	Print(("%s: %s per %s%s |cff888888(baseline)|r"):format(name, Money(acc.total), per, opens))
+	local n = 0
+	for _, c in ipairs(acc.top) do
+		if n >= 10 or c.value < 1 then
+			break
+		end
+		Print("  " .. ItemName(c.id) .. " " .. FmtQty(c.qty) .. SrcTag(c) .. ": " .. Money(c.value))
+		n = n + 1
+	end
+	local need = NodeNeed(acc)
+	if need then
+		Print("  " .. need)
+	elseif acc.kind ~= "F" and acc.need > 1 then
+		Print("  needs " .. GATHER_TITLE[acc.kind] .. " " .. acc.need)
+	end
+	if acc.unknown > 0 then
+		Print("  " .. acc.unknown .. " item(s) have no known price")
+	end
+	if acc.stale then
+		Print(("  %sold prices|r: %s of this is priced from auctions last seen over %d days ago (up to %d). Scan the auction house."):format(
+			OLD,
+			Money(acc.staleValue),
+			root.STALE_DAYS,
+			acc.stale
+		))
+	end
+end
+
 local function Status()
 	local D = ns.Data or {}
 	local npcs, corpses = 0, 0
@@ -238,6 +378,14 @@ local function Status()
 		)
 	)
 	Print(("learned: %d creatures, %d corpses looted (learning %s)"):format(npcs, corpses, FKV.cfg.learn and "on" or "off"))
+	local N = ns.Nodes or {}
+	Print(("nodes: %d herbs, %d veins, %d fishing pools (skills from Forever build %s; tooltips %s)"):format(
+		N.herbs or 0,
+		N.veins or 0,
+		N.pools or 0,
+		tostring(N.build or "none"),
+		FKV.cfg.nodes and "on" or "off"
+	))
 	Print("Auctionator prices: " .. (hasAH and (ns.auctionHooked and "available, refreshed after its scans" or "available") or "not installed (vendor prices only)"))
 	FKV.RefreshSkills()
 	local known = {}
@@ -259,9 +407,10 @@ end
 -- on/off is the feature's own Enabled checkbox.
 
 ns.title = "Kill Value"
-ns.description = "Adds the expected gold per kill to creature tooltips: coins plus drop table times vendor or Auctionator prices."
+ns.description = "Adds the expected gold per kill to creature tooltips: coins plus drop table times vendor or Auctionator prices. "
+	.. "Herbs, mining veins and fishing pools show what they yield the same way."
 ns.icon = "Interface\\Icons\\INV_Misc_Coin_02"
-ns.blurb = "Gold per kill on creature tooltips"
+ns.blurb = "Gold per kill, herb, vein and pool"
 
 -- The hub card: how much it has learned, and what feeds the numbers.
 function ns.HubStatus()
@@ -286,6 +435,7 @@ ns.options = {
 	{ key = "gather", type = "toggle", label = "Add My Skinning To The Total", tooltip = "When you know Skinning (or Herbalism or Mining, for creatures gathered that way) with enough skill for the creature, its skinning value is part of the total.", default = FKV.DEFAULTS.gather },
 	{ key = "skin", type = "toggle", label = "Show Skinning Value", tooltip = "Also shows the skinning value of creatures you cannot skin (not part of the total).", default = FKV.DEFAULTS.skin },
 	{ key = "friendly", type = "toggle", label = "Show On Friendly Creatures", tooltip = "Also adds the line to creatures you cannot attack.", default = FKV.DEFAULTS.friendly },
+	{ key = "nodes", type = "toggle", label = "Show On Herbs, Veins And Pools", tooltip = "Adds the expected value of a herb, mining vein or fishing pool to its tooltip: everything it yields at vendor or Auctionator prices. A vein counts all its mines (2 to 4), a pool all its catches. Says so when your Herbalism or Mining is too low.", default = FKV.DEFAULTS.nodes },
 	{ key = "hello", type = "toggle", label = "Login Message", tooltip = "Prints one line at login.", default = FKV.DEFAULTS.hello },
 	{ key = "detail", type = "range", label = "Contributor Lines", tooltip = "Top drops listed under the total (0 = none).", default = FKV.DEFAULTS.detail, min = 0, max = 10, step = 1 },
 	{ key = "cut", type = "range", label = "Auction House Cut %", tooltip = "Taken off Auctionator prices.", default = FKV.DEFAULTS.cut, min = 0, max = 100, step = 1 },
@@ -302,10 +452,11 @@ local TOGGLES = {
 	gather = { "gather", "your skinning in the total" },
 	skin = { "skin", "skinning line for creatures you cannot skin" },
 	friendly = { "friendly", "line on friendly creatures" },
+	nodes = { "nodes", "herb, vein and pool values" },
 	hello = { "hello", "login message" },
 }
 
-local CONFIG_ORDER = { "detail", "cut", "rare", "learn", "vendor", "ah", "gather", "skin", "friendly", "hello" }
+local CONFIG_ORDER = { "detail", "cut", "rare", "learn", "vendor", "ah", "gather", "skin", "friendly", "nodes", "hello" }
 local CONFIG_HELP = {
 	detail = "contributor lines under the total",
 	cut = "auction house cut %",
@@ -316,6 +467,7 @@ local CONFIG_HELP = {
 	gather = "your skinning in the total, when you can skin it",
 	skin = "skinning line when you cannot (not in total)",
 	friendly = "show on friendly creatures",
+	nodes = "value on herb, vein and pool tooltips",
 	hello = "login message",
 }
 
@@ -331,9 +483,10 @@ local function Help()
 	Print("commands:")
 	Print("  /fkv                    breakdown for your target")
 	Print("  /fkv id <npcId>         breakdown for any creature")
+	Print("  /fkv node <name>        value of a herb, vein or fishing pool (Copper Vein)")
 	Print("  /fkv status | config | options | reset [learned] | help")
 	Print("  /fkv detail <0-10> | cut <pct> | rare <pct>")
-	Print("  /fkv learn | vendor | ah | gather | skin | friendly | hello    (on/off switches)")
+	Print("  /fkv learn | vendor | ah | gather | skin | friendly | nodes | hello    (on/off switches)")
 	Print(root.ID.standalone and "  turn the whole feature on or off in Options > AddOns > " .. root.ID.title or "  turn the whole feature on or off with /kw killvalue on|off")
 end
 
@@ -407,6 +560,15 @@ function ns.OnSlash(msg)
 		else
 			Print("usage: /fkv id <npcId>")
 		end
+	elseif cmd == "node" then
+		local name = FKV.FindNode(arg)
+		if name then
+			ReportNode(name)
+		elseif arg == "" then
+			Print("usage: /fkv node <name>, for example /fkv node copper vein")
+		else
+			Print("no herb, vein or fishing pool named '" .. arg .. "'")
+		end
 	elseif cmd == "help" then
 		Help()
 	elseif cmd == "" or cmd == "target" then
@@ -439,12 +601,16 @@ local hooked, greeted = false, false
 function ns.OnEnable()
 	if not hooked then
 		hooked = true
-		TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, OnUnitTooltip)
+		local kinds = Enum.TooltipDataType
+		TooltipDataProcessor.AddTooltipPostCall(kinds.Unit, OnUnitTooltip)
+		if kinds.Object then
+			TooltipDataProcessor.AddTooltipPostCall(kinds.Object, OnObjectTooltip)
+		end
 	end
 	if not greeted then
 		greeted = true
 		if ns.db and FKV.cfg.hello then
-			Print("loaded. Hover a creature for its kill value; /fkv help for commands.")
+			Print("loaded. Hover a creature, herb or vein for its value; /fkv help for commands.")
 		end
 	end
 	if (FKV.cleaned or 0) > 0 then
