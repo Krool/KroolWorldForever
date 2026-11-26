@@ -6,7 +6,7 @@ below. Sources in [sources.md](sources.md). Anything marked **UNCONFIRMED** belo
 
 ## Live launch update (2026-11-05, build 1.60.1.70790)
 
-**Live on 2026-11-17: build 70959, Interface still 16001.** The allowlist in `tools/forever-api` is
+**Live on 2026-11-25: build 71139, Interface still 16001.** The allowlist in `tools/forever-api` is
 built from it; the build table is under "Live builds" below, and what else changed since launch
 week is in [the 2026-11-18 update](research/data-sources/update_2026-11-18.md). The bullets below
 are the launch-week record.
@@ -67,7 +67,7 @@ are the launch-week record.
 | Item | Value | Notes |
 |---|---|---|
 | `## Interface:` | `16001` | Beta, Test and live 70790 (wiki, 2026-11-03). In-game `/dump select(4, GetBuildInfo())` gave 16001 on the stress test (70245, 2026-10-21); the bundle loads on live 70862. |
-| Client version | `1.60.1` | Live launch build: 70790 (Nov 4). Current: 70959 (Nov 17). See "Live builds" below. |
+| Client version | `1.60.1` | Live launch build: 70790 (Nov 4). Current: 71139 (Nov 25). See "Live builds" below. |
 | Code family | **Mainline** (same as Midnight) | Family TOC suffix `_Mainline.toc` loads on Forever too. |
 | Game type | `camelot`, alias `forever` (since build 70291) | `[Game]` resolves to `"Camelot"`. The wiki says it "may be changed to Forever in the future." |
 | TOC filename | `MyAddon_Forever.toc` (or `_Camelot.toc`) | Lookup order: game suffix, then family suffix, then plain `MyAddon.toc`. |
@@ -89,6 +89,8 @@ From Gethe/wow-ui-source `forever` (one commit per build) and the allowlist diff
 | 70888 | 2026-11-10 | None. |
 | 70938 | 2026-11-13 | Added `C_TradeSkillUI.HasNoReagentCost`; 26 recipe thresholds changed (SkillLineAbility). |
 | 70959 | 2026-11-17 | Added `C_Mail.IsCODEnabled` (the mail frame can hide COD) and the constant `EncodingDeserializeSizeLimit`. FrameXML: tutorial, micro menu and gamepad bag navigation fixes. Recipe and transport tables unchanged. |
+| 71037, 71091 | 2026-11-20, 2026-11-24 | Not diffed one by one; covered by the 71139 row. |
+| 71139 | 2026-11-25 | Added `C_BattleNet.IsGameAccountOnSameRealm`; nothing removed. Recipes: new Leatherworking recipe Centaur Hoofwarmers (spell 1294289), and Orcish War Leggings gained a recipe item. Lock skills and transport stops unchanged. |
 
 Robust flavor detection:
 

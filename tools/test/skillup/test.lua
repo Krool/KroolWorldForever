@@ -107,7 +107,7 @@ for _, L in pairs(ns.Data.lines) do
 		total = total + 1
 	end
 end
-check("every recipe is in the data", total, 2544)
+check("every recipe is in the data", total, 2545)
 check("unknown recipe", ns.Recipe(123456789), nil)
 check("secret recipe id", ns.Recipe(Secret()), nil)
 check("green halfway", ns.Green(r), 57)

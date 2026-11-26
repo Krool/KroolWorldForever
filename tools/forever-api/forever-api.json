@@ -1,6 +1,6 @@
 {
  "source": "Gethe/wow-ui-source forever branch, Blizzard_APIDocumentationGenerated",
- "version": "1.60.1.70959",
+ "version": "1.60.1.71139",
  "functions": [
   "AbortDrag",
   "AcceptAreaSpiritHeal",
@@ -489,6 +489,7 @@
   "C_BattleNet.IsBattleNetFriendsListEnabled",
   "C_BattleNet.IsBattleNetFriendsListSupported",
   "C_BattleNet.IsFriendTagSupportedForCurrentGameType",
+  "C_BattleNet.IsGameAccountOnSameRealm",
   "C_BattleNet.SearchFriends",
   "C_BattleNet.SendGameData",
   "C_BattleNet.SendTitleFriendInviteByName",
