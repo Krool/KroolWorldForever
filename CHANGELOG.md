@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.25.0
+
+- **Boats And Zeppelins: Dalaran's portal to Stormwind.** High Order Skyborne get a portal pin in
+  the Sky Enclave on the Alterac Mountains map, with To Stormwind City in its tooltip, and
+  `/kwb` lists it there. Other races do not see it: guides say only Skyborne can use it, and the
+  enclave is the High Order's. Continent maps and the world map leave it off, so it does not
+  cover the airship stop beside it. No game table holds a portal's place, so this one was read
+  in the game at the portal: tell Krool about another portal and where it stands.
+
 ## 0.24.1
 
 - **Recipe data follows game build 71139 (Nov 25).** Reagent Uses and Skill-Up Odds now know the

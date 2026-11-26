@@ -24,7 +24,7 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **One-Button Fishing** | One key casts your line and, while it is out, reels in the bite. Set it under Key Bindings > AddOns > Krool World. With a fishing pole in your main hand, a double right-click does the same. Every cast and reel is your own key press or click. | Nothing |
 | **Reagent Uses** | Hold Ctrl (or the key you choose) over a crafting material and its tooltip lists every recipe that uses it, grouped by profession, yours first. Each recipe is colored by your skill, with how many of the material it takes, how many more recipes use what it makes, and who knows it (you, and each other character once it has opened its profession window) or where it is learned (Trainer 175, Vendor, Drop...). Built from Forever's own recipe data, including the recipes Forever added. | Nothing |
 | **Market Movers** | After Auctionator scans the auction house, a window beside it shows what is priced unusually, in four tabs: materials and other items that rose or fell against their usual price (the middle price of up to a week), bargains listed under the vendor price or far under usual, and how the items in your bags stand. Each row has a small trend line. Click a row to search the item in Auctionator. Gear is left out. It keeps its own daily record of the scans, so the first comparison comes the day after your first scan. It never buys, bids, posts or cancels. `/kwm` | Auctionator |
-| **Boats And Zeppelins** | A pin on the world map at every boat dock and zeppelin tower. Hover it for where the boat or zeppelin goes. The routes come from Forever's own data, so the new ones (Stormwind to Darkshore) are there with the classic ones. Zone maps show their docks; continent maps and the world map can too. Two that leave from one place share a pin. It shows every route in the game's data: it cannot tell when the next boat arrives, or whether a route is running yet. `/kwb` | Nothing |
+| **Boats And Zeppelins** | A pin on the world map at every boat dock and zeppelin tower. Hover it for where the boat or zeppelin goes. The routes come from Forever's own data, so the new ones (Stormwind to Darkshore) are there with the classic ones. Zone maps show their docks; continent maps and the world map can too. Two that leave from one place share a pin. High Order Skyborne also get a pin at Dalaran's portal to Stormwind, on zone maps. It shows every route in the game's data: it cannot tell when the next boat arrives, or whether a route is running yet. `/kwb` | Nothing |
 
 All fourteen are on by default.
 
@@ -353,7 +353,7 @@ On by default: yes. Toggle: `/kwf movers on|off`. Commands: `/kwm, /marketmovers
 
 ### Boats And Zeppelins
 
-Puts a pin on the world map at every boat dock and zeppelin tower. Hover a pin for where it goes. The routes come from the game's own data, so the new ones are there too. It cannot tell when the next one arrives.
+Puts a pin on the world map at every boat dock and zeppelin tower. Hover a pin for where it goes. The routes come from the game's own data, so the new ones are there too. It cannot tell when the next one arrives. High Order Skyborne also get a pin at Dalaran's portal to Stormwind, on zone maps.
 
 On by default: yes. Toggle: `/kwf transports on|off`. Commands: `/kwb, /kwboats`.
 
