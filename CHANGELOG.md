@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.24.1
+
+- **Recipe data follows game build 71139 (Nov 25).** Reagent Uses and Skill-Up Odds now know the
+  new Leatherworking recipe, Centaur Hoofwarmers. Reagent Uses also shows that Orcish War
+  Leggings can be learned from a recipe item at Blacksmithing 205, not only from the quest.
+- Kill Value's node skills and the boat and zeppelin stops were checked against the same build:
+  nothing changed.
+
 ## 0.24.0
 
 - **Kill Value: herbs, mining veins and fishing pools show what they are worth.** Hover one and
