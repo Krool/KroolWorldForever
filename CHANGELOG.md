@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.26.0
+
+- **Quest Reward Value: works in the quest log.** Select a quest in the log, or in the map's quest
+  view, and the coin marks the reward choice worth the most, with Best value or Worth on each
+  choice's tooltip, the same as at the quest giver. You can see the best reward before you hand
+  the quest in. Asked for in a comment on the addon's page.
+- It still only marks. Nothing is marked for a single choice, a tie, or rewards worth nothing.
+
 ## 0.25.0
 
 - **Boats And Zeppelins: Dalaran's portal to Stormwind.** High Order Skyborne get a portal pin in

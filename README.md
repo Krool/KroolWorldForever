@@ -301,14 +301,14 @@ On by default: yes. Toggle: `/kwf leastvaluable on|off`. Commands: `/kwl, /least
 
 ### Quest Reward Value
 
-Marks the quest reward choice worth the most, with a coin on its button: each choice at the best of its vendor price, Auction House price (Auctionator) and disenchant value. It only marks; you still pick the reward. Without Auctionator it counts vendor prices only.
+Marks the quest reward choice worth the most, with a coin on its button, at the quest giver and in the quest log: each choice at the best of its vendor price, Auction House price (Auctionator) and disenchant value. It only marks; you still pick the reward. Without Auctionator it counts vendor prices only.
 
 On by default: yes. Toggle: `/kwf rewardvalue on|off`.
 
 | Setting | Default | What it does |
 |---|---|---|
 | Mark Best Reward | On | A copper coin on the reward choice worth the most, counting the whole stack at its best price (vendor, Auction House or disenchant). Nothing is marked when choices tie or are worth nothing. |
-| Value On Reward Tooltips | On | Adds what a reward choice is worth, and at which price, to its tooltip while you choose. |
+| Value On Reward Tooltips | On | Adds what a reward choice is worth, and at which price, to its tooltip, at the quest giver and in the quest log. |
 
 ### One-Button Fishing
 
