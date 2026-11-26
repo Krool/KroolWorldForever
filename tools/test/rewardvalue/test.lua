@@ -204,15 +204,131 @@ Button(1).shown = false
 check("a hidden button hides the coin", Marked(), nil)
 Button(1).shown = true
 
+-- ---------------------------------------------------------------- quest log
+
 -- The quest log and the map view display through QuestInfo_Display too (a template with
--- questLog = true); the dialog's choices are not theirs, so nothing is priced or marked.
+-- questLog = true). Their choices are the selected quest's, not the quest giver's.
+local function LogChoose(...)
+	LogChoices = {}
+	for _, c in ipairs({ ... }) do
+		LogChoices[#LogChoices + 1] = type(c) == "table" and c or { id = c }
+	end
+end
+local function MapButton(i)
+	return _G["MapQuestInfoRewardsFrameQuestInfoItem" .. i]
+end
+local function MarkedMap()
+	if not (ns.Coin() and ns.Coin():IsVisible()) then
+		return nil
+	end
+	for i = 1, 3 do
+		if ns.Coin():GetParent() == MapButton(i) then
+			return i
+		end
+	end
+end
+
 CloseQuest()
-Choose(SWORD, DAGGER)
+Choose(DAGGER, SWORD) -- the quest giver's last offer: not the log's business
+LogChoose(SWORD, DAGGER)
 OpenQuestLog()
-check("the quest log display marks nothing", Marked(), nil)
-check("the quest log display prices nothing", ns.best, nil)
+check("quest log: the best choice gets the coin", Marked(), 2)
+check("quest log: it is the log's choice, not the quest giver's", ns.best.id, DAGGER)
+check("quest log: Best value on the tooltip", Says(Hover(DAGGER, Button(2)), "Best value:"), true)
+check("quest log: Worth on the other choice", Says(Hover(SWORD, Button(1)), "Worth"), true)
+check("quest log: hub status names the best reward", ns.HubStatus():find("Plain Dagger", 1, true) ~= nil, true)
+LogChoose({ id = SWORD, count = 4 }, DAGGER)
+OpenQuestLog()
+check("quest log: the stack counts", Marked(), 1)
+
+-- Another quest is selected: the panel is laid out again.
+LogChoose(DAGGER, SWORD, RING)
+OpenQuestLog()
+check("quest log: another quest moves the coin", Marked(), 1)
+LogChoose(DAGGER)
+OpenQuestLog()
+check("quest log: a single choice: no mark", Marked(), nil)
+
+-- The map's quest view has its own rewards frame.
+LogChoose(SWORD, RING, DAGGER)
+OpenQuestLog(true)
+check("map view: the coin is on the map's button", MarkedMap(), 3)
+check("map view: not on the quest frame's", Marked(), nil)
+check("map view: tooltip", Says(Hover(DAGGER, MapButton(3)), "Best value:"), true)
+OpenQuestLog()
+check("back in the log frame: the coin follows", Marked(), 3)
+
+-- In the log a currency choice and an item choice can carry the same button id: items and
+-- currencies are numbered apart. The coin goes on the item.
+LogChoose({ currency = true }, DAGGER, SWORD)
+OpenQuestLog()
+check("quest log: currency first, the item button gets the coin", Marked(), 2)
+check("quest log: the best keeps its choice index", ns.best.index, 2)
+check("quest log: and the item's button id", ns.best.button, 1)
+check("quest log: the item's tooltip", Says(Hover(DAGGER, Button(2)), "Best value:"), true)
+check("quest log: a currency button's tooltip: nothing", #Hover(DAGGER, Button(1)), 0)
+
+-- An item whose link is not ready is waited on by the id the log gives.
+local LATELOG = 900211
+LogChoose(SWORD, { id = LATELOG, nolink = true })
+OpenQuestLog()
+check("quest log: no link yet: no mark", Marked(), nil)
+local _, _, logWaiting = ns.Scan()
+check("quest log: the item is waited on by id", logWaiting[LATELOG], true)
+Items[LATELOG] = { name = "Late Log Blade", quality = 1, sell = 900, class = 2 }
+LogChoices[2].nolink = nil
+FireEvent("GET_ITEM_INFO_RECEIVED", LATELOG)
+check("quest log: marked when the item arrives", Marked(), 2)
+
+-- Neither a link nor an id yet: the next item to arrive, whichever it is, prompts another look.
+LogChoose(SWORD, { nolink = true })
+OpenQuestLog()
+check("quest log: no link and no id: no mark", Marked(), nil)
+LogChoices[2] = { id = LATELOG }
+FireEvent("GET_ITEM_INFO_RECEIVED", 12345)
+check("quest log: looked again when an item arrived", Marked(), 2)
+
+-- Nothing to read: no selected quest, rewards hidden by the client, a secret quest id.
+LogChoose(SWORD, DAGGER)
+LogQuestID = 0
+OpenQuestLog()
+check("quest log: no selected quest: no mark", Marked(), nil)
+check("quest log: no selected quest: no best", ns.best, nil)
+LogQuestID = 4711
+LogShowRewards = false
+OpenQuestLog()
+check("quest log: rewards not shown: no mark", Marked(), nil)
+LogShowRewards = true
+local realSelected = C_QuestLog.GetSelectedQuest
+C_QuestLog.GetSelectedQuest = function()
+	return Secret()
+end
+OpenQuestLog()
+check("quest log: a secret quest id: no mark", Marked(), nil)
+C_QuestLog.GetSelectedQuest = realSelected
+OpenQuestLog()
+check("quest log: marks again", Marked(), 2)
+
+-- The quest giver's window closing does not take the log's mark, and the log closing has no
+-- event: the hub stops naming the reward once its button is off screen.
+CloseQuest()
+check("quest log: QUEST_FINISHED leaves the log's mark", Marked(), 2)
+CloseQuestLog()
+check("quest log closed: the coin is hidden with its button", Marked(), nil)
+check("quest log closed: hub status names no reward", ns.HubStatus():find("Plain Dagger", 1, true), nil)
+
+-- Back at a quest giver: its own choices again.
+Choose(SWORD, DAGGER)
+LogChoose(DAGGER, SWORD)
 OpenQuest()
-check("the quest dialog display marks (the layout hook ran)", Marked(), 2)
+check("the quest dialog display marks its own choices", Marked(), 2)
+OpenQuestLog()
+check("the log again: the log's choices", Marked(), 1)
+OpenQuest("QUEST_DETAIL")
+check("QUEST_DETAIL after the log: the quest giver's choices", Marked(), 2)
+CloseQuest()
+check("the quest giver's window closing clears its mark", Marked(), nil)
+check("and its best", ns.best, nil)
 
 -- ---------------------------------------------------------------- tooltip
 
@@ -270,6 +386,10 @@ check("off: coin gone", Marked(), nil)
 check("off: tooltip silent", #Hover(DAGGER, Button(2)), 0)
 OpenQuest()
 check("off: a new quest is not marked", Marked(), nil)
+OpenQuestLog()
+check("off: the quest log is not marked", Marked(), nil)
+check("off: the quest log's tooltip is silent", #Hover(DAGGER, Button(1)), 0)
+OpenQuest()
 capture(function()
 	SlashCmdList.KROOLWORLDFOREVER("rewardvalue on")
 end)

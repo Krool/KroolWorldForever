@@ -17,8 +17,19 @@
 -- QuestInfo_ShowRewards is hooked through QuestInfo_Display, not by name: the QUEST_TEMPLATE_*
 -- tables hold the function itself in .elements, and QuestInfo_Display calls it from there
 -- (elementsTable[i](parentFrame)), so a hook on the global never runs. QuestFrame.lua calls
--- QuestInfo_Display(QUEST_TEMPLATE_REWARD / QUEST_TEMPLATE_DETAIL, ...); the quest log and the
--- map view pass templates with questLog = true, which the hook skips.
+-- QuestInfo_Display(QUEST_TEMPLATE_REWARD / QUEST_TEMPLATE_DETAIL, ...).
+--
+-- The quest log (0.26.0; read at build 71139, 2026-11-26): QuestMapFrame.lua calls the same
+-- QuestInfo_Display with templates that have questLog = true (QUEST_TEMPLATE_LOG, and
+-- QUEST_TEMPLATE_MAP_DETAILS then QUEST_TEMPLATE_MAP_REWARDS with mapView set, which swaps
+-- QuestInfoFrame.rewardsFrame to MapQuestInfoRewardsFrame). The buttons are laid out the same
+-- way, but the choices are the selected quest's and come from other calls:
+-- GetNumQuestLogChoices(questID, true), GetQuestLogChoiceInfoLootType(i),
+-- GetQuestLogChoiceInfo(i) (name, texture, count, quality, usable, item id) and
+-- GetQuestLogItemLink("choice", n). There the button's id is not the choice index: items and
+-- currencies are numbered apart (questItem:SetID(choiceItemIndex)), and the link and the tooltip
+-- (GameTooltip:SetQuestLogItem) take the item number. button.objectType tells the two apart.
+-- Those calls are plain globals, absent from the API docs: Blizzard's own code is the proof.
 
 local _, root = ...
 local ns = root.Feature("rewardvalue")
@@ -44,29 +55,91 @@ end
 
 -- -------------------------------------------------------------------- value
 
--- One choice's facts from its link: { index, id, link, name, count, unit, value, how, stale } or
--- { index, pending = true } while the item is not cached.
-local function Price(i, ctx)
-	-- A currency choice has no item link: skip it, or it would wait for an item that never loads.
-	-- Loot type 1 is LOOT_LIST_CURRENCY (Blizzard's forever QuestInfo.lua, QuestInfo_ShowRewards).
-	local okT, lootType = Call(GetQuestItemInfoLootType, "choice", i)
-	if okT and not Secret(lootType) and lootType == 1 then
-		return { index = i, currency = true, value = 0 }
+-- A value the client handed over, when it is the wanted type and not secret; nil otherwise.
+local function Plain(kind, ok, v)
+	if ok and not Secret(v) and type(v) == kind then
+		return v
 	end
-	local ok, link = Call(GetQuestItemLink, "choice", i)
-	if not ok or Secret(link) or type(link) ~= "string" then
-		return { index = i, pending = true }
+	return nil
+end
+
+-- What the open panel offers, by choice index: { index, button, link, count, id } for an item
+-- and { index, currency = true, value = 0 } for a currency. button is the id of the reward button
+-- that shows it. A currency has no item link: it is skipped, or the scan would wait for an item
+-- that never loads. Loot type 1 is LOOT_LIST_CURRENCY (Blizzard's forever QuestInfo.lua).
+
+-- The quest giver's window.
+local function DialogChoices()
+	local out = {}
+	local n = Plain("number", Call(GetNumQuestChoices)) or 0
+	for i = 1, n do
+		if Plain("number", Call(GetQuestItemInfoLootType, "choice", i)) == 1 then
+			out[i] = { index = i, currency = true, value = 0 }
+		else
+			local okI, _, _, count = Call(GetQuestItemInfo, "choice", i)
+			out[i] = {
+				index = i,
+				button = i,
+				link = Plain("string", Call(GetQuestItemLink, "choice", i)),
+				count = Plain("number", okI, count),
+			}
+		end
 	end
-	local okI, _, _, count = Call(GetQuestItemInfo, "choice", i)
-	if not okI or Secret(count) or type(count) ~= "number" or count < 1 then
+	return out
+end
+
+-- The quest log and the map's quest view: the selected quest's choices.
+local function LogChoices()
+	local out = {}
+	local Q = C_QuestLog
+	local questID = Plain("number", Call(Q and Q.GetSelectedQuest))
+	if not questID or questID == 0 then
+		return out
+	end
+	-- Blizzard lays no rewards out when this says no (QuestInfo_ShowRewards).
+	if Plain("boolean", Call(Q.ShouldShowQuestRewards, questID)) == false then
+		return out
+	end
+	local n = Plain("number", Call(GetNumQuestLogChoices, questID, true)) or 0
+	local items = 0
+	for i = 1, n do
+		if Plain("number", Call(GetQuestLogChoiceInfoLootType, i)) == 1 then
+			out[i] = { index = i, currency = true, value = 0 }
+		else
+			items = items + 1
+			local okI, _, _, count, _, _, id = Call(GetQuestLogChoiceInfo, i)
+			out[i] = {
+				index = i,
+				button = items,
+				link = Plain("string", Call(GetQuestLogItemLink, "choice", items)),
+				count = Plain("number", okI, count),
+				id = Plain("number", okI, id),
+			}
+		end
+	end
+	return out
+end
+
+-- One choice's facts from its link: { index, button, id, link, name, count, unit, value, how,
+-- stale } or { index, button, id, pending = true } while the item is not cached.
+local function Price(c, ctx)
+	if c.currency then
+		return c
+	end
+	local i, link = c.index, c.link
+	if not link then
+		return { index = i, button = c.button, id = c.id, pending = true }
+	end
+	local count = c.count
+	if not count or count < 1 then
 		count = 1
 	end
+	local id = tonumber(link:match("item:(%d+)")) or c.id
 	local okG, name, _, quality, itemLevel, _, _, _, _, _, _, sell, classID, _, bindType =
 		Call(C_Item and C_Item.GetItemInfo, link)
 	if not (okG and type(name) == "string") then
-		return { index = i, link = link, pending = true }
+		return { index = i, button = c.button, id = id, link = link, pending = true }
 	end
-	local id = tonumber(link:match("item:(%d+)"))
 	local bound = BIND_ON_PICKUP[bindType] == true
 	local vendor = type(sell) == "number" and sell > 0 and sell or nil
 	local auction, age, de, deStale, deUnsure
@@ -86,7 +159,7 @@ local function Price(i, ctx)
 	elseif vendor then
 		how, unit = "vendor", vendor
 	end
-	local r = { index = i, id = id, link = link, name = name, count = count }
+	local r = { index = i, button = c.button, id = id, link = link, name = name, count = count }
 	if how then
 		r.how, r.unit, r.value = how, unit, unit * count
 		if how == "auction" and root.AuctionStale(age) then
@@ -101,25 +174,28 @@ local function Price(i, ctx)
 	return r
 end
 
--- Prices every choice. Returns the list (index order), the best choice or nil, and the ids of
--- items still loading. The best is nil unless it is the only one at its value and above zero.
+-- Prices every choice of the panel on show: the quest log's (ns.log) or the quest giver's.
+-- Returns the list (index order), the best choice or nil, and the ids of items still loading.
+-- The best is nil unless it is the only one at its value and above zero.
 function ns.Scan()
 	local list, best, waiting = {}, nil, {}
-	local okN, n = Call(GetNumQuestChoices)
-	if not okN or Secret(n) or type(n) ~= "number" or n < 1 then
+	local choices = ns.log and LogChoices() or DialogChoices()
+	local n = #choices
+	if n < 1 then
 		return list, nil, waiting
 	end
 	local DE = root.features.disenchant
 	local ctx = { DE = DE, canDE = DE and DE.CanDisenchant and DE.CanDisenchant() or false }
 	local tie, anyPending = false, false
 	for i = 1, n do
-		local r = Price(i, ctx)
+		local r = Price(choices[i], ctx)
 		list[i] = r
 		if r.pending then
 			anyPending = true
-			local id = r.link and tonumber(r.link:match("item:(%d+)"))
-			if id then
-				waiting[id] = true
+			if r.id then
+				waiting[r.id] = true
+			else
+				waiting.any = true -- no id to wait on: any item arriving is worth another look
 			end
 		elseif not best or r.value > best.value then
 			best, tie = r, false
@@ -135,12 +211,14 @@ end
 
 -- -------------------------------------------------------------------- the coin
 
--- The reward button for a choice index, or nil.
+-- The reward button with a choice's button id, or nil. The panel on show owns
+-- QuestInfoFrame.rewardsFrame (the map view has its own). In the quest log a currency choice can
+-- carry the same id as an item choice, so a currency button never matches.
 local function FindButton(i)
 	local rf = type(QuestInfoFrame) == "table" and QuestInfoFrame.rewardsFrame or QuestInfoRewardsFrame
 	local buttons = type(rf) == "table" and rf.RewardButtons
 	local function Match(b)
-		return type(b) == "table" and b.type == "choice" and b:GetID() == i
+		return type(b) == "table" and b.type == "choice" and b.objectType ~= "currency" and b:GetID() == i
 	end
 	if type(buttons) == "table" then
 		for _, b in ipairs(buttons) do
@@ -148,6 +226,7 @@ local function FindButton(i)
 				return b
 			end
 		end
+		return nil
 	end
 	for n = 1, 12 do
 		local b = _G["QuestInfoRewardsFrameQuestInfoItem" .. n]
@@ -179,7 +258,7 @@ end -- test seam
 -- Puts the coin on the marked choice's button, or takes it away. It takes no mouse.
 function ns.Place()
 	local m = ns.enabled and ns.db and ns.db.mark and ns.best or nil
-	local button = m and FindButton(m.index) or nil
+	local button = m and FindButton(m.button) or nil
 	if not button then
 		if coin then
 			coin:Hide()
@@ -229,14 +308,23 @@ local function Annotate(tooltip, data)
 	if Secret(i) or type(i) ~= "number" then
 		return
 	end
+	if owner.objectType == "currency" then
+		return
+	end
 	local list, best = ns.Scan()
-	local r = list[i]
+	local r
+	for _, c in ipairs(list) do
+		if c.button == i then
+			r = c
+			break
+		end
+	end
 	if not r or r.pending or r.id ~= data.id or not r.how then
 		return
 	end
 	local what = root.Money(r.value) .. GREY .. " (" .. HOW[r.how] .. ")|r"
 	local text
-	if best and best.index == i then
+	if best and best.index == r.index then
 		text = root.UI.InlineIcon(ns.icon, 14) .. " " .. GOLD .. "Best value:|r " .. what
 	else
 		text = GREY .. "Worth|r " .. what
@@ -272,9 +360,9 @@ ns.OnItemTooltip = OnItemTooltip -- test seam
 -- -------------------------------------------------------------------- definition
 
 ns.title = "Quest Reward Value"
-ns.description = "Marks the quest reward choice worth the most, with a coin on its button: each choice at the "
-	.. "best of its vendor price, Auction House price (Auctionator) and disenchant value. It only marks; "
-	.. "you still pick the reward. Without Auctionator it counts vendor prices only."
+ns.description = "Marks the quest reward choice worth the most, with a coin on its button, at the quest giver and in "
+	.. "the quest log: each choice at the best of its vendor price, Auction House price (Auctionator) and disenchant "
+	.. "value. It only marks; you still pick the reward. Without Auctionator it counts vendor prices only."
 ns.icon = "Interface\\Icons\\INV_Misc_Coin_02"
 ns.blurb = "Marks the quest reward worth the most"
 ns.options = {
@@ -290,13 +378,26 @@ ns.options = {
 		key = "tooltip",
 		type = "toggle",
 		label = "Value On Reward Tooltips",
-		tooltip = "Adds what a reward choice is worth, and at which price, to its tooltip while you choose.",
+		tooltip = "Adds what a reward choice is worth, and at which price, to its tooltip, at the quest giver and in "
+			.. "the quest log.",
 		default = true,
 	},
 }
 
+-- The quest log has no "closed" event: its best reward counts only while its button is on screen.
+local function BestOnShow()
+	if not ns.best then
+		return false
+	end
+	if not ns.log then
+		return true
+	end
+	local button = FindButton(ns.best.button)
+	return button ~= nil and button:IsVisible() == true
+end
+
 function ns.HubStatus()
-	if ns.best then
+	if BestOnShow() then
 		return "Best reward: " .. root.UI.ItemIcon(ns.best.id, 0) .. ns.best.name .. ", " .. root.Money(ns.best.value)
 	end
 	local text = GREY .. "Marks the best reward when you choose one|r"
@@ -314,17 +415,29 @@ local function Shown()
 	end
 end
 
--- QuestInfo_Display(template, ...) lays a quest panel out. The quest log and the map view use it
--- too (their templates have questLog = true): Scan reads the NPC dialog's choices, so those are
--- left alone.
+-- QuestInfo_Display(template, ...) lays a quest panel out: the quest giver's window, or the quest
+-- log and the map view (their templates have questLog = true). Which one decides whose choices
+-- Scan reads. The hook runs after Blizzard's function, so QuestInfoFrame.questLog is set too.
 local function Displayed(template)
-	if type(template) == "table" and template.questLog then
-		return
+	local log = type(template) == "table" and template.questLog == true
+	if not log and type(QuestInfoFrame) == "table" and QuestInfoFrame.questLog == true then
+		log = true
 	end
-	if type(QuestInfoFrame) == "table" and QuestInfoFrame.questLog then
-		return
-	end
+	ns.log = log
 	Shown()
+end
+
+-- The quest giver's events fire before its panel is laid out: they are that window's for sure.
+local function Offered()
+	ns.log = false
+	Shown()
+end
+
+-- The quest giver's window closed. A mark in the quest log is not its to take away.
+local function Finished()
+	if not ns.log then
+		Clear()
+	end
 end
 
 -- Tooltip and layout hooks cannot be removed, so they are added once and check ns.enabled.
@@ -348,12 +461,13 @@ function ns.OnOptionChanged()
 	ns.Place()
 end
 
-ns:RegisterEvent("QUEST_DETAIL", Shown)
-ns:RegisterEvent("QUEST_COMPLETE", Shown)
+ns:RegisterEvent("QUEST_DETAIL", Offered)
+ns:RegisterEvent("QUEST_COMPLETE", Offered)
 ns:RegisterEvent("QUEST_ITEM_UPDATE", Shown)
-ns:RegisterEvent("QUEST_FINISHED", Clear)
+ns:RegisterEvent("QUEST_FINISHED", Finished)
 ns:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(_, itemId)
-	if not Secret(itemId) and pending[itemId] then -- the secret check first: testing a secret errors
+	-- The secret check first: testing a secret errors.
+	if not Secret(itemId) and itemId ~= nil and (pending[itemId] or pending.any) then
 		Shown()
 	end
 end)

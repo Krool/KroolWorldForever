@@ -33,6 +33,32 @@ No mark when:
 
 The coin goes when the quest frame closes (`QUEST_FINISHED`) or the quest changes.
 
+## In the quest log (0.26.0)
+
+The quest log and the map's quest view mark the same way, for the selected quest (a CurseForge
+comment asked, 2026-11-23). There is no event: the mark is set each time the panel is laid out
+(the `QuestInfo_Display` hook), and it follows the selection. Closing the log has no event
+either; the coin hides with its button, and the hub names the reward only while that button is on
+screen. `QUEST_FINISHED` clears the quest giver's mark, not the log's.
+
+The log reads other calls than the quest giver's window (Blizzard's `QuestInfo.lua`, build 71139):
+
+| | Quest giver | Quest log |
+|---|---|---|
+| Count | `GetNumQuestChoices()` | `GetNumQuestLogChoices(questID, true)`, quest from `C_QuestLog.GetSelectedQuest()` |
+| Item or currency | `GetQuestItemInfoLootType("choice", i)` | `GetQuestLogChoiceInfoLootType(i)` |
+| Stack | `GetQuestItemInfo("choice", i)` | `GetQuestLogChoiceInfo(i)` (also gives the item id) |
+| Link | `GetQuestItemLink("choice", i)` | `GetQuestLogItemLink("choice", n)` |
+| Button id | the choice index | items and currencies numbered apart |
+
+- **Button ids differ in the log.** `n` counts item choices only, and a currency choice can carry
+  the same id as an item choice; `button.objectType` (`"item"` or `"currency"`) tells them apart.
+  Each priced choice keeps both numbers (`index`, `button`).
+- **Nothing is read** when no quest is selected or `C_QuestLog.ShouldShowQuestRewards` says no.
+- **The log calls are plain globals**, absent from the API docs, so the lint cannot check them.
+  Blizzard's own panel calls them at this build.
+- **Not yet seen in game** (2026-11-26): written from Blizzard's source and the test stubs.
+
 ## Tooltip
 
 Only on reward-choice tooltips (the owner is a reward button with `.type == "choice"` and the item is
@@ -49,7 +75,8 @@ laid out, so the feature also hooks `QuestInfo_Display`. It cannot hook `QuestIn
 the `QUEST_TEMPLATE_*` tables hold that function itself in `.elements`, and `QuestInfo_Display`
 calls it from the table, so a hook on the global name never runs. `QuestFrame.lua` calls
 `QuestInfo_Display(QUEST_TEMPLATE_REWARD / QUEST_TEMPLATE_DETAIL, ...)`; the quest log and the map
-view call it with templates that have `questLog = true`, and the hook ignores those. The coin is
+view call it with templates that have `questLog = true` (`QuestMapFrame.lua`), and the map view
+swaps `QuestInfoFrame.rewardsFrame` to `MapQuestInfoRewardsFrame`. The coin is
 Blizzard's `coin-copper` atlas (as Least Valuable), on one frame of ours parented to the button.
 
 ## Options
