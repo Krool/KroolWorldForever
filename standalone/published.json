@@ -52,7 +52,7 @@
                     "version":  "0.24.1"
                 },
     "transports":  {
-                       "hash":  "8564b5abf5786eaa4222f29bc81b4922d16a03aab73a0047e708e65affe23d39",
-                       "version":  "0.24.1"
+                       "hash":  "d88b6fa53f41145cafa07a767aed7771709278fb74ba62da18759754a997feb1",
+                       "version":  "0.25.0"
                    }
 }
