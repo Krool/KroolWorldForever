@@ -16,8 +16,8 @@
                     "version":  "0.21.0"
                 },
     "killvalue":  {
-                      "hash":  "8fd2c0be6e678ec4ef1a414f3417b33de0980646dd118ea201f740a053a1a779",
-                      "version":  "0.24.0"
+                      "hash":  "6b83529d449723a65510312a10a716c0d5f2d87571090e01477834c727a216f6",
+                      "version":  "0.24.1"
                   },
     "leastvaluable":  {
                           "hash":  "41bd4dc4d384ae516a181584665378f83d2f5d752793f7eb0216c417a7dfcc86",
@@ -32,12 +32,12 @@
                        "version":  "0.21.0"
                    },
     "rares":  {
-                  "hash":  "5435402df235495b7e17d722a063c6e198da64d8753bb1ea139141c0b3735710",
-                  "version":  "0.24.0"
+                  "hash":  "9ef026915a01350baf1542b7646f238606944fd06fc1677a7e44a60caadd20c1",
+                  "version":  "0.24.1"
               },
     "reagents":  {
-                     "hash":  "d54204f82c7c372184e17f8a0cc22c6d0bef86819a08fd1e25a1a21d33d2ccd8",
-                     "version":  "0.22.1"
+                     "hash":  "8285cd41d8e282915b5dfb16975a16621254c564006dbc936fe48b5aa92ffc7a",
+                     "version":  "0.24.1"
                  },
     "rewardvalue":  {
                         "hash":  "aa52845e9fbbe61058e4082ea7c55491664a1a1773e881fdeaee4d253b14a8ba",
@@ -48,11 +48,11 @@
                    "version":  "0.22.2"
                },
     "skillup":  {
-                    "hash":  "52f8eb299ea1275ce6e98a217d6ce35e1b73ecaad50a0fdbb3f78305aeca3624",
-                    "version":  "0.22.1"
+                    "hash":  "9d777309f9fe9ff1b01373b2a8919192cb41cec5be5a2cd40ed2a64d53998be4",
+                    "version":  "0.24.1"
                 },
     "transports":  {
-                       "hash":  "b3de5db68f95d4fa413b374f1ed570a28cdd8bfbfa14e4e21e57c0ef23eb9290",
-                       "version":  "0.22.1"
+                       "hash":  "8564b5abf5786eaa4222f29bc81b4922d16a03aab73a0047e708e65affe23d39",
+                       "version":  "0.24.1"
                    }
 }
