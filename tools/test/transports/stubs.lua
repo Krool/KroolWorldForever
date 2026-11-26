@@ -36,6 +36,9 @@ Maps = {
 	[1420] = { name = "Tirisfal Glades", type = 3, parent = 1415, continent = 0, rect = { 3500, 1000, 1700, -2000 } },
 	[1424] = { name = "Hillsbrad Foothills", type = 3, parent = 1415, continent = 0, rect = { 500, -1700, 1100, -2100 } },
 	[1421] = { name = "Silverpine Forest", type = 3, parent = 1415, continent = 0, rect = { 1500, -700, 2500, 300 } },
+	-- The game's own bounds (UiMapAssignment, 71139). Its outline stops short of Dalaran's airship
+	-- stop and portal, so the stop keeps the zone the client names for it (Silverpine Forest).
+	[1416] = { name = "Alterac Mountains", type = 3, parent = 1415, continent = 0, rect = { 1500, -366.67, 783.33, -2016.67 }, outline = { 1500, -366.67, 400, -2016.67 } },
 	[1500] = { name = "Powderfuse Port", type = 3, parent = 1415, continent = 0, rect = { -7000, -9500, -5000, -6500 } },
 	-- A cave inside Darkshore: its rectangle holds Auberdine's docks, and it must show none.
 	[1600] = { name = "Auberdine Cellar", type = 5, parent = 1439, continent = 1, rect = { 7000, 6000, 1500, 0 } },
@@ -200,6 +203,16 @@ end
 function ZoomMap(scale)
 	CanvasScale = scale
 	WorldMapFrame:OnCanvasScaleChanged()
+end
+
+-- The player's race, a ChrRaces id: 95 High Order Skyborne, 96 Windshaper Skyborne. nil: the
+-- client does not know it yet.
+PlayerRaceID = 1
+function UnitRace()
+	if PlayerRaceID == nil then
+		return nil
+	end
+	return "Race", "Race", PlayerRaceID
 end
 
 -- The tooltip remembers its title.

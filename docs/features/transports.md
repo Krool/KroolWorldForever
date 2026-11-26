@@ -19,6 +19,31 @@ screenshots from that day are the media in `docs/media/transports/`.
 - Option **Pin Size** (12 to 36, default 22).
 - Display only: a click on a pin goes through to the map.
 
+## Portals (0.25.0)
+
+High Order Skyborne get a **Portal** pin at Dalaran's portal to Stormwind City, in the Sky
+Enclave: tooltip "Portal", "To Stormwind City", "Alterac Mountains". `/kwb` lists it there and
+`/kwb all` counts it apart ("22 docks on 13 routes, 1 portal").
+
+- **Entered by hand** (`ns.PORTALS` in `Transports.lua`), because no client table holds it. The
+  server spawns portals. Checked and empty for Dalaran (builds 70959 and 71091): AreaPOI,
+  GameObjects (client spawns), AreaTrigger (walk-in triggers; the only new ones are elsewhere),
+  and QuestieDB's Forever objects (7298, quest objects only). Wowhead's Forever search and
+  ForeverDB's maps have no portal either.
+- **The position** is the owner's readout standing at it, 2026-11-25: map 1416 (Alterac Mountains)
+  at 0.1209, 0.5653, world 444.8, 444.8 on continent 0. It matches 1416's UiMapAssignment bounds.
+  Dalaran is on the Eastern Kingdoms continent, not its own map (map 2980 "Dalaran City" holds
+  only signposts in the client table).
+- **Who sees it:** race 95 (High Order Skyborne, the Alliance side) only, read with
+  `UnitRace("player")`. Method and Wowhead say Skyborne only; the High Order's NPCs stand beside
+  it. Windshaper Skyborne (96) are Horde, and Dalaran's guards attack Horde on sight (dev notes,
+  2026-10-16). One report says it opens only after the City of Dalaran dungeon; not checked.
+- **Zone maps only.** It stands about 100 yards from the airship stop near Dalaran, which would be
+  the same spot on a continent map.
+- **Icon:** `mageportalalliance` (UiTextureAtlasMember 4772, sheet 647, the sheet of the other two).
+  Not seen in the game yet.
+- **Gone the other way:** players say Stormwind's portal to Dalaran was removed during the beta.
+
 ## Where the routes come from
 
 `tools/transports-data/gen-data.js` reads Forever's own `TaxiPathNode` table (wago.tools). A
@@ -55,6 +80,8 @@ Uses' data, so a new build's routes are picked up when the allowlist is rebuilt.
   the zone a stop lies in, so they are in the player's language. Feathermoon's boat reads "Boat to
   Feralas" at both ends.
 - **The Deeprun Tram is not a taxi path** and has no pin.
+- **Portals are by hand.** Only the one above is known. A portal elsewhere (Rut'theran's to
+  Darnassus) has no pin until someone reads its place in the game.
 - **Icons:** `flightmasterferry` for a boat and `vehicle-air-occupied` for a zeppelin, both on the
   object icons sheet that holds `flightmaster` (which Forever's own transport rows use). Chosen
   from the atlas table; both are seen in the game. `ns.ATLAS` in

@@ -10,6 +10,9 @@
 -- What it cannot know: whether the server runs a path, when the next one arrives, or which
 -- faction may ride it. The table has none of that.
 --
+-- Portals are in no client table: the server places them. ns.PORTALS below holds the ones read
+-- in the game by hand, each shown only to the races that may use it, and only on zone maps.
+--
 -- The pins are plain frames of our own on the map's canvas, placed the way Blizzard places its
 -- pins (MapCanvasMixin:ApplyPinPosition). They are not taken from the map's pin pools, which
 -- addon code taints. Display only: a click goes through to the map.
@@ -20,10 +23,21 @@ local ns = root.Feature("transports")
 ns.DOCK = 100 -- yards: stops this close on one continent share a pin
 ns.AIR = 20 -- a stop this far above sea level is a zeppelin tower
 
--- Both are on the object icons sheet (UiTextureAtlasMember, sheet 647, build 1.60.1.70938), the
--- sheet of `flightmaster`, which Forever's own transport rows use (TaxiNodes.MinimapAtlasMemberID
--- 4689). Not seen in the game yet.
-ns.ATLAS = { boat = "flightmasterferry", zeppelin = "vehicle-air-occupied" }
+-- All three are on the object icons sheet (UiTextureAtlasMember, sheet 647, build 1.60.1.70938),
+-- the sheet of `flightmaster`, which Forever's own transport rows use (TaxiNodes.MinimapAtlasMemberID
+-- 4689). The boat and zeppelin are seen in the game; `mageportalalliance` (member 4772, still there
+-- in 71139) is not yet.
+ns.ATLAS = { boat = "flightmasterferry", zeppelin = "vehicle-air-occupied", portal = "mageportalalliance" }
+
+-- Portals, by hand: { continent, x, y (world), map = the zone map it stands on, to = the map it
+-- goes to, races = { [ChrRaces id] = true } the races that may use it, or nil for everyone }.
+ns.PORTALS = {
+	-- Dalaran, the Sky Enclave, to Stormwind City. Read by the owner standing at it, 2026-11-25:
+	-- map 1416 (Alterac Mountains) at 0.1209, 0.5653, world 444.8, 444.8. Method and Wowhead say
+	-- Skyborne only, and the enclave is the High Order's, so it is for High Order Skyborne (95, the
+	-- Alliance side), not Windshaper Skyborne (96, Horde: Dalaran's guards attack Horde on sight).
+	{ continent = 0, x = 444.8, y = 444.8, map = 1416, to = 1453, races = { [95] = true } },
+}
 
 local GREY = "|cffaaaaaa"
 
@@ -112,9 +126,18 @@ end
 
 -- ---------------------------------------------------------------- docks
 
--- Every dock, built once from the data: { continent, x, y, zeppelin, name (its zone, or nil),
--- to = { zone names its transports go to } }. Names need the client's maps, so this waits for
--- the first use after login.
+-- The player's race id (ChrRaces), or nil.
+function ns.PlayerRace()
+	if type(UnitRace) ~= "function" then
+		return nil
+	end
+	local ok, _, _, id = pcall(UnitRace, "player")
+	return ok and type(id) == "number" and id or nil
+end
+
+-- Every dock, built once from the data: { continent, x, y, zeppelin, portal, name (its zone, or
+-- nil), to = { zone names its transports go to } }. Names need the client's maps, so this waits
+-- for the first use after login.
 function ns.Docks()
 	if ns.docks then
 		return ns.docks
@@ -153,6 +176,21 @@ function ns.Docks()
 		end
 	end
 	ns.routeCount = #routes
+	local race = ns.PlayerRace()
+	for _, p in ipairs(type(ns.PORTALS) == "table" and ns.PORTALS or {}) do
+		if p.races and not race then
+			named = false -- the race is not known yet: ask again next time
+		elseif not p.races or p.races[race] then
+			local at, dest = MapInfo(p.map), MapInfo(p.to)
+			local d = { continent = p.continent, x = p.x, y = p.y, portal = true, to = {}, seen = {} }
+			d.name = at and type(at.name) == "string" and at.name or nil
+			if dest and type(dest.name) == "string" then
+				d.to[1] = dest.name
+			end
+			named = named and d.name ~= nil and #d.to > 0
+			docks[#docks + 1] = d
+		end
+	end
 	if #docks > 0 and named then
 		ns.docks = docks -- every zone has its name: keep the list
 	end
@@ -160,7 +198,23 @@ function ns.Docks()
 end
 
 function ns.Kind(dock)
+	if dock.portal then
+		return "Portal"
+	end
 	return dock.zeppelin and "Zeppelin" or "Boat"
+end
+
+-- Boat and zeppelin docks, and portals, in the list.
+function ns.Counts()
+	local stops, portals = 0, 0
+	for _, dock in ipairs(ns.Docks()) do
+		if dock.portal then
+			portals = portals + 1
+		else
+			stops = stops + 1
+		end
+	end
+	return stops, portals
 end
 
 -- "Boat to Darkshore, Hillsbrad Foothills", or "Boat" before the zones have names.
@@ -187,7 +241,8 @@ local function ContinentOf(uiMapID)
 end
 
 -- The docks a map shows: a list of { dock = , x = , y = }. Zone maps always; continent maps and
--- the world map by the option. Never a dungeon's or a cave's map.
+-- the world map by the option, without portals (a portal stands in a city, and Dalaran's would
+-- cover the airship stop beside it). Never a dungeon's or a cave's map.
 function ns.DocksOn(uiMapID)
 	local out = {}
 	local info = MapInfo(uiMapID)
@@ -201,7 +256,7 @@ function ns.DocksOn(uiMapID)
 	end
 	local here = kind ~= MapKind("World") and ContinentOf(uiMapID) or nil
 	for _, dock in ipairs(ns.Docks()) do
-		if not here or here == dock.continent then
+		if not (dock.portal and wide) and (not here or here == dock.continent) then
 			local x, y = OnMap(dock.continent, dock.x, dock.y, uiMapID)
 			if x then
 				out[#out + 1] = { dock = dock, x = x, y = y }
@@ -294,7 +349,7 @@ function ns.Refresh()
 		pin.dock, pin.x, pin.y = at.dock, at.x, at.y
 		pin:SetSize(size, size)
 		pin:SetFrameLevel(2100) -- over the map's art and points of interest (Blizzard's pins start at 2000)
-		pin.icon:SetAtlas(at.dock.zeppelin and ns.ATLAS.zeppelin or ns.ATLAS.boat)
+		pin.icon:SetAtlas(at.dock.portal and ns.ATLAS.portal or at.dock.zeppelin and ns.ATLAS.zeppelin or ns.ATLAS.boat)
 		Place(map, pin)
 		pin:Show()
 	end
@@ -342,7 +397,8 @@ end
 
 ns.title = "Boats And Zeppelins"
 ns.description = "Puts a pin on the world map at every boat dock and zeppelin tower. Hover a pin for where it goes. "
-	.. "The routes come from the game's own data, so the new ones are there too. It cannot tell when the next one arrives."
+	.. "The routes come from the game's own data, so the new ones are there too. It cannot tell when the next one arrives. "
+	.. "High Order Skyborne also get a pin at Dalaran's portal to Stormwind, on zone maps."
 ns.icon = "Interface\\Icons\\INV_Misc_Spyglass_02"
 ns.blurb = "Map pins for every boat and zeppelin"
 ns.options = {
@@ -402,7 +458,12 @@ end
 
 local function PrintAll()
 	local docks = ns.Docks()
-	ns:Print(("%d docks on %d routes (game data %s):"):format(#docks, ns.routeCount or 0, ns.Data.build))
+	local stops, portals = ns.Counts()
+	local head = ("%d docks on %d routes"):format(stops, ns.routeCount or 0)
+	if portals > 0 then
+		head = head .. (portals == 1 and ", 1 portal" or (", %d portals"):format(portals))
+	end
+	ns:Print(head .. (" (game data %s):"):format(ns.Data.build))
 	local lines = {}
 	for _, dock in ipairs(docks) do
 		lines[#lines + 1] = (dock.name or "?") .. ": " .. ns.Label(dock)
@@ -432,8 +493,7 @@ function ns.HubStatus()
 	if #labels > 0 then
 		return "Here: " .. table.concat(labels, "; ")
 	end
-	local docks = ns.Docks()
-	return ("%d docks on the map"):format(#docks)
+	return ("%d docks on the map"):format((ns.Counts()))
 end
 
 function ns.OnOptionChanged()

@@ -243,6 +243,71 @@ OpenedCategory = nil
 SlashCmdList.KROOLWORLDFOREVER_TRANSPORTS("options")
 check("/kwb options opens the settings", OpenedCategory ~= nil, true)
 
+-- ---------------------------------------------------------------- portals
+
+check("data: one portal by hand", #ns.PORTALS, 1)
+check("not Skyborne: no portal in the list", #ns.Docks(), 22)
+OpenMap(1416)
+check("not Skyborne: Alterac shows only the airship stop", #Shown(), 1)
+check("not Skyborne: no portal pin", PinFor("Portal to Stormwind City"), nil)
+
+PlayerRaceID = 96
+ns.docks = nil
+check("Windshaper Skyborne (Horde): no portal", #ns.Docks(), 22)
+
+PlayerRaceID = nil
+ns.docks = nil
+check("race not known yet: no portal", #ns.Docks(), 22)
+check("race not known yet: the list is not kept", ns.docks, nil)
+
+PlayerRaceID = 95
+ns.docks = nil
+local withPortal = ns.Docks()
+check("High Order Skyborne: the portal joins the list", #withPortal, 23)
+check("High Order Skyborne: the list is kept", ns.Docks(), withPortal)
+check("the portal's label and zone", has(DockLabels(), "Alterac Mountains: Portal to Stormwind City"), true)
+local stops, portals = ns.Counts()
+check("counts: docks", stops, 22)
+check("counts: portals", portals, 1)
+check("the airship stop beside it keeps its zone", has(DockLabels(), "Silverpine Forest: Zeppelin to Zephras Isle"), true)
+
+OpenMap(1416)
+check("Alterac: the portal and the airship stop", #Shown(), 2)
+local portal = PinFor("Portal to Stormwind City")
+check("Alterac: the portal has a pin", portal ~= nil, true)
+check("a portal's icon", portal.icon.atlas, ns.ATLAS.portal)
+-- What the game printed at the portal: map 1416 at 0.1209, 0.5653.
+near("placed across where the game put it: 0.1209 of 1000", portal.px, 120.9)
+near("placed down where the game put it: 0.5653 of 600", portal.py, -339.17)
+GameTooltip:Reset()
+GameTooltip.title = nil
+portal.scripts.OnEnter(portal)
+check("portal tooltip: what it is", GameTooltip.title, "Portal")
+check("portal tooltip: where it goes", has(GameTooltip.lines, "To Stormwind City"), true)
+check("portal tooltip: where it is", has(GameTooltip.lines, "Alterac Mountains"), true)
+OpenMap(1415)
+check("the continent map: no portal pin", PinFor("Portal to Stormwind City"), nil)
+check("the continent map: the airship stop still shows", PinFor("Zeppelin to Zephras Isle") ~= nil, true)
+OpenMap(947)
+check("the world map: no portal pin, the same 20 docks", #Shown(), 20)
+
+PlayerMapID = 1416
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_TRANSPORTS("")
+end)
+check("/kwb in Alterac: the portal", has(out, "Portal to Stormwind City"), true)
+out = capture(function()
+	SlashCmdList.KROOLWORLDFOREVER_TRANSPORTS("all")
+end)
+check("/kwb all: the portal counted apart", has(out, "22 docks on 13 routes, 1 portal (game data"), true)
+check("/kwb all: a line for the portal", #out, 25)
+PlayerMapID = 1412 + 9000
+check("hub: a portal is not a dock", ns.HubStatus(), "22 docks on the map")
+
+PlayerRaceID = 1
+ns.docks = nil
+CloseMap()
+
 -- ---------------------------------------------------------------- off
 
 OpenMap(1439)
