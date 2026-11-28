@@ -12,12 +12,68 @@ screenshots from that day are the media in `docs/media/transports/`.
   (Stormwind's harbor on Elwynn's map).
 - Stops within 100 yards on one continent share a pin: both Orgrimmar zeppelins leave from one
   tower, and the pin lists both destinations.
-- The tooltip: **Boat** or **Zeppelin**, a "To <zone>" line per destination, then the dock's own
-  zone. A stop more than 20 yards above sea level is a zeppelin tower.
-- `/kwb` lists the docks of the zone you are in, `/kwb all` every dock with its destinations and
-  the game build the data is from, `/kwb options` opens the settings.
+- The tooltip: **Boat** or **Zeppelin**, a "To <town>, <zone>" line per destination, the dock's
+  own town and zone, and how long the transport waits. A stop more than 20 yards above sea level
+  is a zeppelin tower.
+- `/kwb` lists the docks of the zone you are in, or names the nearest dock when it has none;
+  `/kwb <place>` lists what goes to a place; `/kwb go [place]` puts the game's map pin on the
+  nearest; `/kwb all` lists every dock with its destinations and the game build the data is from;
+  `/kwb options` opens the settings.
 - Option **Pin Size** (12 to 36, default 22).
 - Display only: a click on a pin goes through to the map.
+
+## Towns, sides and waits (0.27.0)
+
+- **Town:** the generator gives each stop the nearest flight master within 550 yards (`node`, a
+  TaxiNodes id, and `town`, its English name before the comma). 21 of the 27 stops have one.
+  Stormwind's harbor is 884 yards from its flight master and is named by hand (`TOWN_BY_HAND`).
+  The six without: Feathermoon's mainland dock, Tanaris' coast, Riverglades, the stop near
+  Dalaran, and both on Zephras Isle. They show their zone, as before.
+- **In the player's language:** `C_TaxiMap.GetTaxiNodesForMap(<the continent's map>)` lists the
+  flight masters with their names ("Booty Bay, Stranglethorn"); the part before the comma is the
+  town. When the client names none, the English `town` of the data is shown. Which of the two
+  the live client gives is not seen in the game yet.
+- **Side:** `side = "A"` or `"H"` when every flight master within range is one side's (TaxiNodes
+  Flags 1 Alliance, 2 Horde). Booty Bay and Ratchet have both and get none. The tooltip adds
+  "(Horde)" or "(Alliance)" after the town, red when it is not the player's side
+  (`UnitFactionGroup`), grey otherwise. It is the flight master's side, not a rule on who may ride.
+- **Wait:** `wait` is TaxiPathNode's Delay at the stop, 60 seconds at every dock (Feathermoon's
+  route lists its home dock twice at 30; the generator adds the two). The tooltip says "Waits 1
+  minute at the dock".
+- **Not there:** the crossing time. The path lengths are in the table but a transport's speed is
+  in no client table. One timed crossing would give an estimate for all of them.
+- A zone that already says the town stands alone: "Stormwind City", not "Stormwind, Stormwind
+  City".
+
+## Nearest dock, search and the map pin (0.27.0)
+
+- The player's place is `C_Map.GetPlayerMapPosition` turned into world coordinates. In a dungeon
+  the client gives none, and `/kwb go` says "Cannot tell where you are here."
+- `ns.Find(text)` lists the docks that go to a place whose town or zone holds the text, nearest
+  first; a dock on another continent has no distance and sorts after.
+- `/kwb go` sets the game's own map pin (`C_Map.SetUserWaypoint`, then
+  `C_SuperTrack.SetSuperTrackedUserWaypoint(true)`) on the dock's zone map, or the continent's when
+  the zone map takes none (`C_Map.CanSetUserWaypointOnMap`). It replaces a pin the player set
+  before. Only the typed command does this. Whether Forever's maps take a pin is not seen in the
+  game yet; when they do not, the command still names the dock.
+
+## The tram and Darnassus (0.27.0)
+
+Four more hand entries in `ns.PORTALS`, shown to everyone, on zone maps only, tagged Alliance:
+
+| Pin | Stands at (world) | AreaTrigger |
+|---|---|---|
+| Tram to Ironforge | Stormwind, Dwarven District: -8346.5, 514 | 2173 |
+| Tram to Stormwind City | Ironforge, Tinker Town: -4840.3, -1330.5 | 2175 |
+| Portal to Darnassus | Rut'theran Village: 8799.4, 969.8 | 542 |
+| Portal to Rut'theran Village | Darnassus: 9947.5, 2630 | 527 |
+
+- **The places** are from Forever's own AreaTrigger table (build 71139): the walk-in triggers are
+  still in the client.
+- **Where they lead** is the classic server's answer (cmangos classic-db `areatrigger_teleport`,
+  the same trigger ids, in `tools/killvalue-data/sqlcache`). Forever's server could differ.
+- **Icon:** `vehicle-alliancecart` for the tram (atlas member 4748, the sheet of the others).
+- Not seen in the game yet: the pins' places on the city maps, and the tram icon.
 
 ## Portals (0.25.0)
 
@@ -46,9 +102,11 @@ Enclave: tooltip "Portal", "To Stormwind City", "Alterac Mountains". `/kwb` list
 
 ## Where the routes come from
 
-`tools/transports-data/gen-data.js` reads Forever's own `TaxiPathNode` table (wago.tools). A
-transport rides a taxi path like a flight does; its stops are the nodes with the stop flag and a
-wait. Build 1.60.1.70938 has 13 such paths, 22 docks:
+`tools/transports-data/gen-data.js` reads Forever's own `TaxiPathNode` and `TaxiNodes` tables
+(wago.tools; it takes both files since 0.27.0). A transport rides a taxi path like a flight does;
+its stops are the nodes with the stop flag and a wait. Build 1.60.1.71139 has 13 such paths, 22
+docks. The TaxiPath table has a row for the eight classic paths and none for the five new ones,
+which says nothing about whether they run (11616 has none and runs):
 
 | Path | Route (zones as the client names them) |
 |---|---|
@@ -75,13 +133,12 @@ Uses' data, so a new build's routes are picked up when the allowlist is rebuilt.
   295 and 11167 share both end docks, so one may have replaced the other; the pins are the same
   either way, the Menethil and Auberdine ones just list Hillsbrad too. A path that turns out not
   to exist goes in `SKIP` in the generator.
-- **No arrival times and no faction.** Every dock shows for everyone.
-- **Names are zones**, not towns: "Boat to Darkshore", not "Boat to Auberdine". The client names
-  the zone a stop lies in, so they are in the player's language. Feathermoon's boat reads "Boat to
-  Feralas" at both ends.
-- **The Deeprun Tram is not a taxi path** and has no pin.
-- **Portals are by hand.** Only the one above is known. A portal elsewhere (Rut'theran's to
-  Darnassus) has no pin until someone reads its place in the game.
+- **No arrival times, no crossing times, and no rule on who may ride.** Every dock shows for
+  everyone; the side tag is the flight master's.
+- **A dock with no flight master near is named by its zone.** Feathermoon's boat reads "Boat to
+  Feralas" on the island and "Boat to Feathermoon" on the coast.
+- **Portals and the tram are by hand.** A portal elsewhere has no pin until someone reads its
+  place in the game or finds it in a table.
 - **Icons:** `flightmasterferry` for a boat and `vehicle-air-occupied` for a zeppelin, both on the
   object icons sheet that holds `flightmaster` (which Forever's own transport rows use). Chosen
   from the atlas table; both are seen in the game. `ns.ATLAS` in

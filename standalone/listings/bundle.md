@@ -15,7 +15,7 @@ Fourteen WoW Forever addons in one, each with an on/off switch: quest items to d
 
 Krool World Forever is fourteen small addons for WoW Forever in one. Hover an enemy for its gold per kill, a green for its disenchant value, a quest item for keep or delete, a campfire for its buffs. Each feature has its own on/off switch, and all are on by default. Type /kw for the overview.
 
-- [Quest Trash](https://www.curseforge.com/wow/addons/kw-quest-trash): shows which quest items you can delete. /fqt sorts your bags and bank into Can Delete, Keep and Still Checking. Needs QuestieDB: the CurseForge app installs it with Questie.
+- [Quest Trash](https://www.curseforge.com/wow/addons/kw-quest-trash): shows which quest items you can delete, and tells you after a turn-in. /fqt sorts your bags and bank into Can Delete, No Quest Needs It, Keep and Still Checking. Needs QuestieDB: the CurseForge app installs it with Questie.
 - [Kill Value](https://www.curseforge.com/wow/addons/kw-kill-value): expected gold per kill on enemy tooltips, counting coin, drops and skinning. It learns real drop rates from what you loot. Herbs, mining veins and fishing pools show their value too.
 - [Setups](https://www.curseforge.com/wow/addons/kw-setups): copy action bars, keybindings, macros, Edit Mode layout, chat text size and per-character settings from one character to another, with Undo. A new character can start from a saved setup.
 - [Rare Alert](https://www.curseforge.com/wow/addons/kw-rare-alert): a sound, a screen message and a chat line when a rare enemy is near, with its value and best drops. A button or key targets and marks it. It sees rares through enemy nameplates, which Forever starts with off: /kwr nameplates turns them on.
@@ -28,7 +28,7 @@ Krool World Forever is fourteen small addons for WoW Forever in one. Hover an en
 - [One-Button Fishing](https://www.curseforge.com/wow/addons/kw-one-button-fishing): one key casts and reels in (bind it under Key Bindings > AddOns > Krool World). With a fishing pole equipped, a double right-click does the same.
 - [Reagent Uses](https://www.curseforge.com/wow/addons/reagent-uses): hold Ctrl (or the key you choose) over a crafting material to see every recipe that uses it, colored by your skill, with where it is learned and which of your characters know it.
 - [Market Movers](https://www.curseforge.com/wow/addons/kw-market-movers): after Auctionator scans the auction house, what rose or fell against its usual price, bargains under the vendor price, and how the items in your bags stand. /kwm
-- [Boats And Zeppelins](https://www.curseforge.com/wow/addons/kw-boats-and-zeppelins): a pin on the world map at every boat dock and zeppelin tower, saying where it goes. The routes come from the game's own data, so Forever's new boats are there too. /kwb
+- [Boats And Zeppelins](https://www.curseforge.com/wow/addons/kw-boats-and-zeppelins): a pin on the world map at every boat dock and zeppelin tower, saying which town it goes to, whose town that is and how long the boat waits. The routes come from the game's own data, so Forever's new boats are there too. The Deeprun Tram and Darnassus' portal have pins as well. /kwb
 
 **Only want one or two?** Every feature above is also its own addon, named "KW" plus the feature: click a name to get just that one. Install the bundle or the single ones, not both. Next to the bundle, a single one switches itself off and says so in chat.
 

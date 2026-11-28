@@ -28,9 +28,13 @@ Maps = {
 	[1444] = { name = "Feralas", type = 3, parent = 1414, continent = 1, rect = { -2500, -6000, 5500, 0 } },
 	[1446] = { name = "Tanaris", type = 3, parent = 1414, continent = 1, rect = { -5800, -10500, -2300, -5500 } },
 	[1412] = { name = "Mulgore", type = 3, parent = 1414, continent = 1, rect = { 600, -3500, 2000, -1000 } },
+	-- A zone with no dock, and Darnassus inside Teldrassil's rectangle.
+	[1440] = { name = "Ashenvale", type = 3, parent = 1414, continent = 1, rect = { 4300, 1600, 2600, -4000 } },
+	[1457] = { name = "Darnassus", type = 3, parent = 1414, continent = 1, rect = { 10300, 9500, 3000, 2000 } },
 	-- Eastern Kingdoms
 	[1437] = { name = "Wetlands", type = 3, parent = 1415, continent = 0, rect = { -2100, -4700, 300, -4100 } },
 	[1453] = { name = "Stormwind City", type = 3, parent = 1415, continent = 0, rect = { -8100, -9300, 1700, 100 } },
+	[1455] = { name = "Ironforge", type = 3, parent = 1415, continent = 0, rect = { -4600, -5100, -1000, -1700 } },
 	[1429] = { name = "Elwynn Forest", type = 3, parent = 1415, continent = 0, rect = { -8000, -10500, 1500, -2000 }, outline = { -9300, -10500, 100, -2000 } },
 	[1434] = { name = "Stranglethorn Vale", type = 3, parent = 1415, continent = 0, rect = { -11000, -15500, 2500, -1500 } },
 	[1420] = { name = "Tirisfal Glades", type = 3, parent = 1415, continent = 0, rect = { 3500, 1000, 1700, -2000 } },
@@ -134,7 +138,56 @@ C_Map = {
 	GetBestMapForUnit = function()
 		return PlayerMapID
 	end,
+	-- Where the player stands on a map: PlayerPos = { x, y } from 0 to 1, or nil (a dungeon).
+	GetPlayerMapPosition = function(id)
+		if not Maps[id] or not PlayerPos then
+			return nil
+		end
+		return { x = PlayerPos[1], y = PlayerPos[2] }
+	end,
+	-- The game's own map pin. NoPinMaps[id] = true: a map that takes none.
+	CanSetUserWaypointOnMap = function(id)
+		return Maps[id] ~= nil and not NoPinMaps[id]
+	end,
+	SetUserWaypoint = function(point)
+		Waypoint = point
+	end,
 }
+PlayerPos = nil
+NoPinMaps = {}
+Waypoint = nil -- the last pin set: { uiMapID, x, y }
+Tracked = false -- the pin is being followed
+UiMapPoint = {
+	CreateFromCoordinates = function(id, x, y)
+		return { uiMapID = id, x = x, y = y }
+	end,
+}
+C_SuperTrack = {
+	SetSuperTrackedUserWaypoint = function(on)
+		Tracked = on
+	end,
+}
+
+-- The flight masters the client names on a continent's map: TaxiNodes[map] = { { nodeID, name } }.
+-- Empty: the client names none, and a dock takes the English town of the data.
+TaxiNodes = {}
+TaxiCalls = 0
+C_TaxiMap = {
+	GetTaxiNodesForMap = function(id)
+		TaxiCalls = TaxiCalls + 1
+		local out = {}
+		for _, n in ipairs(TaxiNodes[id] or {}) do
+			out[#out + 1] = { nodeID = n[1], name = n[2], position = { x = 0, y = 0 }, faction = 0 }
+		end
+		return out
+	end,
+}
+
+-- The player's side: "Alliance", "Horde" or nil (not known).
+PlayerFaction = "Alliance"
+function UnitFactionGroup()
+	return PlayerFaction
+end
 
 -- Frames remember where they were put and at what scale.
 local plainCreate = CreateFrame

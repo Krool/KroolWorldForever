@@ -197,8 +197,9 @@ before writing addon code.
   `tools/reagents-data/gen-data.js <build>` Reagent Uses' recipe data (Forever's own tables from
   wago.tools, trainer levels and recipe sources from killvalue-data's classic-db sqlcache; run.js
   fails until it matches the allowlist's build, like Skill-Up's);
-  `tools/transports-data/gen-data.js <TaxiPathNode.csv> <build>` the boat and zeppelin stops (same
-  build check); `tools/settings-doc.js` README
+  `tools/transports-data/gen-data.js <TaxiPathNode.csv> <build> <TaxiNodes.csv>` the boat and
+  zeppelin stops, their waits and the flight master beside each dock (same build check; it needs
+  both tables since 0.27.0); `tools/settings-doc.js` README
   settings tables; `tools/standalone/` the standalone generator and its tests.
 - Reagent Uses (feature `reagents`, 2026-11-14) came from the separate repo Krool/ReagentUses,
   now archived; it keeps per-character `ns.db.known` / `ns.db.skills` keyed by the roster key.
