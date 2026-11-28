@@ -73,25 +73,49 @@ local VERDICT_LINE = {
 	pending = "|cffaaaaaaChecking quest data... keep for now|r",
 	unknown = "|cffaaaaaaNo quest data - keep to be safe|r",
 }
+-- A key whose quests are over (it comes with its quest links; the never-delete list has none).
+local KEY_LINE = "|cff33ff99Keep - a key|r |cffaaaaaa(its quests are over, but it may still open a lock)|r"
 
--- Deletion advice only applies to true quest items; anything else (tradable mats,
--- class-locked drops, keys) gets sell/AH wording instead of "delete".
+-- Deletion advice only applies to true quest items. Anything else no quest needs is told what the
+-- client knows of it: tradable, or bound to you with or without a vendor price.
 local SAFE_REASON = { done = "quests completed", closed = "quests closed to you", mixed = "quests completed or closed" }
 
 local function VerdictLine(verdict, itemID, links)
+	if verdict == "keep" and links and #links > 0 then
+		return KEY_LINE
+	end
 	if verdict ~= "safe" and verdict ~= "notyours" then
 		return VERDICT_LINE[verdict]
 	end
 	local reason = verdict == "safe" and SAFE_REASON[FQT.SafeReason(links)] or "only race/class-locked quests use it"
-	local isQuest = FQT.IsQuestItem(itemID)
-	if isQuest then
+	local advice, price = FQT.Advice(itemID)
+	if advice == "delete" then
 		return "|cffff5555Can be deleted|r |cffaaaaaa(" .. reason .. ")|r"
 	end
-	local head = verdict == "safe" and "No quest needs this anymore" or "No use to you"
-	if isQuest == nil then
-		return "|cffff9955" .. head .. "|r |cffaaaaaa(item not cached yet - hover again)|r"
+	local head = "|cffff9955" .. (verdict == "safe" and "No quest needs this anymore" or "No use to you") .. "|r |cffaaaaaa("
+	if advice == "trade" then
+		return head .. "tradable - sell or AH it)|r"
+	elseif advice == "vendor" then
+		return head .. "soulbound - a vendor pays|r " .. root.Money(price) .. "|cffaaaaaa)|r"
+	elseif advice == "bound" then
+		return head .. "soulbound, no vendor value)|r"
 	end
-	return "|cffff9955" .. head .. "|r |cffaaaaaa(tradable - sell or AH it)|r"
+	return head .. "item not cached yet - hover again)|r"
+end
+
+-- The words after a quest's name: its state, and for a quest not done yet what it asks of you.
+local function StateText(qid, state, why)
+	if state == "closed" then
+		return CLOSED_TEXT[why]
+	end
+	local text = STATE_TEXT[state]
+	if state == "open" then
+		local notes = FQT.QuestNotes(qid)
+		if #notes > 0 then
+			text = text .. ": " .. table.concat(notes, ", ")
+		end
+	end
+	return text
 end
 
 -- A bag slot's tooltip: learn the quest the client says the item starts.
@@ -144,7 +168,7 @@ local function Annotate(tooltip, itemID)
 			break
 		end
 		local qid, role, state, why = link[1], link[2], link[3], link[4]
-		local stateText = state == "closed" and CLOSED_TEXT[why] or STATE_TEXT[state]
+		local stateText = StateText(qid, state, why)
 		tooltip:AddLine(
 			"|cffaaaaaa  "
 				.. ROLE_TEXT[role]
@@ -182,14 +206,23 @@ ns.OnItemTooltip = OnItemTooltip -- test seam
 -- -------------------------------------------------------------------- scan
 
 local VERDICT_HEAD = {
-	safe = "|cffff5555Deletable / no longer needed:|r",
-	notyours = "|cffff9955Race/class-locked (no use to you):|r",
+	delete = "|cffff5555Deletable quest items:|r",
+	spare = "|cffff9955No quest needs these (sell, trade or keep):|r",
 	farm = "|cff88bbffRepeatable/seasonal demand (keep):|r",
 	maybe = "|cffffcc00Quest not done yet (keep):|r",
 	pending = "|cffaaaaaaStill checking (keep for now):|r",
 	unknown = "|cffaaaaaaQuest items with no data (keep):|r",
 }
-local SCAN_ORDER = { "safe", "notyours", "farm", "maybe", "pending", "unknown" }
+local SCAN_ORDER = { "delete", "spare", "farm", "maybe", "pending", "unknown" }
+
+-- Where an item is listed: "delete" (a quest item no quest needs), "spare" (anything else no
+-- quest needs), or its verdict.
+function FQT.Group(e)
+	if e.verdict == "safe" or e.verdict == "notyours" then
+		return e.advice == "delete" and "delete" or "spare"
+	end
+	return e.verdict
+end
 
 local bankOpen = false
 
@@ -234,6 +267,9 @@ function FQT.Collect()
 					if verdict then
 						local name = C_Item.GetItemNameByID(itemID) or ItemDB.name(itemID) or ("item #" .. itemID)
 						e = { id = itemID, verdict = verdict, links = links, count = 0, name = name }
+						if verdict == "safe" or verdict == "notyours" then
+							e.advice, e.price = FQT.Advice(itemID)
+							end
 						list[#list + 1] = e
 					end
 					byId[itemID] = e
@@ -256,9 +292,10 @@ function FQT.Scan()
 		groups[key] = {}
 	end
 	for _, e in ipairs(FQT.Collect()) do
-		if groups[e.verdict] then
+		local group = groups[FQT.Group(e)]
+		if group then
 			local why = e.links[1] and (" |cffaaaaaa- " .. FQT.QuestName(e.links[1][1]) .. "|r") or ""
-			table.insert(groups[e.verdict], "  " .. e.name .. why)
+			table.insert(group, "  " .. e.name .. why)
 		end
 	end
 	local total = 0
@@ -314,7 +351,14 @@ ns.options = {
 		key = "questList",
 		type = "toggle",
 		label = "List The Quests Involved",
-		tooltip = "Shows up to four quests and their status under the verdict.",
+		tooltip = "Shows up to four quests and their status under the verdict. A quest not done yet also says its level, and a profession or reputation it needs that you do not have.",
+		default = true,
+	},
+	{
+		key = "turnIn",
+		type = "toggle",
+		label = "Tell Me After A Turn-In",
+		tooltip = "After you hand in a quest, says in chat which items in your bags no quest needs anymore.",
 		default = true,
 	},
 }
@@ -345,16 +389,86 @@ function ns.HubStatus()
 		local ok, info = FQT.ProviderStatus()
 		return ok and "|cffaaaaaaReading quest data...|r" or ("|cffff5555" .. tostring(info) .. "|r")
 	end
-	local n = 0
+	local n, spare = 0, 0
 	for _, e in ipairs(FQT.Collect()) do
-		if e.verdict == "safe" or e.verdict == "notyours" then
+		local group = FQT.Group(e)
+		if group == "delete" then
 			n = n + 1
+		elseif group == "spare" then
+			spare = spare + 1
 		end
 	end
-	if n == 0 then
-		return "|cff33ff99Nothing to delete in your bags|r"
+	if n > 0 then
+		return ("|cffff5555%d %s you can delete|r"):format(n, n == 1 and "item" or "items")
 	end
-	return ("|cffff5555%d %s you can delete|r"):format(n, n == 1 and "item" or "items")
+	if spare > 0 then
+		return ("|cffff9955%d %s no quest needs|r"):format(spare, spare == 1 and "item" or "items")
+	end
+	return "|cff33ff99Nothing to delete in your bags|r"
+end
+
+-- -------------------------------------------------------------------- after a turn-in
+
+-- The items in the bags no quest needs, by id: what the player has been told of, or had at login.
+-- A turn-in is announced by what joined this set since, so a quest it closed counts too.
+local known
+
+local function Unneeded()
+	local out = {}
+	for _, e in ipairs(FQT.Collect()) do
+		local group = FQT.Group(e)
+		if group == "delete" or group == "spare" then
+			out[e.id] = e
+		end
+	end
+	return out
+end
+
+-- Takes the bags as they are for what is already known, and says nothing.
+function FQT.Baseline()
+	known = {}
+	for id in pairs(Unneeded()) do
+		known[id] = true
+	end
+end
+
+local function Names(list)
+	table.sort(list)
+	if #list > 3 then
+		return ("%s, %s and %d more"):format(list[1], list[2], #list - 2)
+	end
+	return table.concat(list, ", ")
+end
+
+-- Says which bag items no quest needs since the last look. Returns how many it named.
+function FQT.TellTurnIn()
+	ns.telling = false
+	if not (ns.enabled and ns.ready and ns.scan.done) then
+		return 0
+	end
+	FQT.ClearCache()
+	local now = Unneeded()
+	local delete, spare = {}, {}
+	for id, e in pairs(now) do
+		if not (known and known[id]) then
+			local list = FQT.Group(e) == "delete" and delete or spare
+			list[#list + 1] = e.name
+		end
+	end
+	known = {}
+	for id in pairs(now) do
+		known[id] = true
+	end
+	if not ns.db.turnIn then
+		return 0
+	end
+	if #delete > 0 then
+		Print("|cffff5555Can be deleted now:|r " .. Names(delete) .. ". |cffaaaaaa" .. ns.slash[1] .. " lists them.|r")
+	end
+	if #spare > 0 then
+		Print("|cffff9955No quest needs these now:|r " .. Names(spare) .. ". |cffaaaaaaSell, trade or keep them.|r")
+	end
+	return #delete + #spare
 end
 
 -- -------------------------------------------------------------------- lifecycle
@@ -368,6 +482,7 @@ local function StartBackgroundScan()
 			Print("|cffff5555quest index failed|r: " .. tostring(done))
 		elseif done then
 			ticker:Cancel()
+			root.Try(ns, "baseline", FQT.Baseline)
 		end
 	end)
 end
@@ -400,7 +515,17 @@ local function ClearCache()
 	WindowChanged()
 end
 ns:RegisterEvent("QUEST_LOG_UPDATE", ClearCache)
-ns:RegisterEvent("QUEST_TURNED_IN", ClearCache)
+-- The client marks the quest done and takes its items a moment after the event: look then.
+ns:RegisterEvent("QUEST_TURNED_IN", function()
+	ClearCache()
+	if ns.telling or type(C_Timer) ~= "table" or type(C_Timer.After) ~= "function" then
+		return
+	end
+	ns.telling = true
+	C_Timer.After(1.5, function()
+		root.Try(ns, "turn-in", FQT.TellTurnIn)
+	end)
+end)
 ns:RegisterEvent("PLAYER_LEVEL_UP", ClearCache) -- a level cap can close a quest
 ns:RegisterEvent("BAG_UPDATE_DELAYED", WindowChanged)
 ns:RegisterEvent("BANKFRAME_OPENED", function()

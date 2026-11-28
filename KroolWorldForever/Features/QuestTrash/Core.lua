@@ -24,7 +24,9 @@
 -- A prerequisite that is only race/class-locked ("never") does not close the quest after it: that
 -- would rest on the race masks alone.
 -- Item verdict, most protective wins: active > farm > maybe > unknown > safe > notyours.
--- Everything unknown fails toward keep.
+-- Everything unknown fails toward keep. A key (item class Key) never reads safe or notyours: it
+-- reads keep. Only a quest item is told "delete" (FQT.Advice); anything else no quest needs is
+-- told what the client knows of it: tradable, or bound with or without a vendor price.
 
 local _, root = ...
 local ns = root.Feature("questtrash")
@@ -368,8 +370,144 @@ function FQT.IsQuestItem(itemID)
 	return classID == Enum.ItemClass.Questitem
 end
 
+-- A key (item class Key). true / false / nil like IsQuestItem.
+function FQT.IsKey(itemID)
+	local classID = ItemClassOf(itemID)
+	if classID == nil then
+		return nil
+	end
+	return classID == Enum.ItemClass.Key
+end
+
+-- What the client knows of an item beyond its class: bound (it binds when picked up, or is bound
+-- to a quest) and price (what a vendor pays for one, in copper). nil until the client has the item.
+local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind OnAcquire, Quest
+function FQT.ItemFacts(itemID)
+	if type(C_Item) ~= "table" or type(C_Item.GetItemInfo) ~= "function" then
+		return nil
+	end
+	local r = { pcall(C_Item.GetItemInfo, itemID) }
+	if not r[1] or r[2] == nil then
+		return nil
+	end
+	local price, bind = r[12], r[15] -- sellPrice and bindType, after pcall's own result
+	if Secret(price) or type(price) ~= "number" then
+		price = 0
+	end
+	if Secret(bind) or type(bind) ~= "number" then
+		return nil
+	end
+	return { bound = bind == BIND_ON_PICKUP or bind == BIND_QUEST, price = price }
+end
+
+-- What to say of an item no quest needs (verdict safe or notyours), and for "vendor" its price:
+--   "delete"  a quest item: there is nothing else to do with it
+--   "trade"   it can be sold or traded
+--   "vendor"  bound to you, and a vendor pays for it
+--   "bound"   bound to you, and no vendor pays for it
+--   "wait"    the client does not know the item yet
+-- Only "delete" is ever told to delete.
+function FQT.Advice(itemID)
+	local isQuest = FQT.IsQuestItem(itemID)
+	if isQuest == nil then
+		return "wait"
+	end
+	if isQuest then
+		return "delete"
+	end
+	local facts = FQT.ItemFacts(itemID)
+	if not facts then
+		return "wait"
+	end
+	if not facts.bound then
+		return "trade"
+	end
+	if facts.price > 0 then
+		return "vendor", facts.price
+	end
+	return "bound"
+end
+
+-- What an open quest asks of the player, as short notes: its level, a level the player has not
+-- reached, a profession or a reputation the player does not have. For the tooltip, so a quest
+-- the player will never do can be told from one still ahead. Never changes a verdict.
+local QUEST_NOTE_FIELDS = { "questLevel", "requiredLevel", "requiredSkill", "requiredMinRep" }
+
+local function SkillName(id)
+	local T = type(C_TradeSkillUI) == "table" and C_TradeSkillUI or nil
+	if T and type(T.GetTradeSkillDisplayName) == "function" then
+		local ok, name = pcall(T.GetTradeSkillDisplayName, id)
+		if ok and not Secret(name) and type(name) == "string" and name ~= "" then
+			return name
+		end
+	end
+	return "a profession"
+end
+
+-- The player's rank in a skill line, or nil when the client does not say.
+local function SkillRank(id)
+	local S = type(C_SkillInfo) == "table" and C_SkillInfo or nil
+	if not S or type(S.GetSkillLineInfoByID) ~= "function" then
+		return nil
+	end
+	local ok, info = pcall(S.GetSkillLineInfoByID, id)
+	if not ok or type(info) ~= "table" or Secret(info.rank) or type(info.rank) ~= "number" then
+		return nil
+	end
+	return info.rank
+end
+
+-- A faction's name and the player's standing with it, or nil.
+local function Faction(id)
+	local R = type(C_Reputation) == "table" and C_Reputation or nil
+	if not R or type(R.GetFactionDataByID) ~= "function" then
+		return nil
+	end
+	local ok, data = pcall(R.GetFactionDataByID, id)
+	if not ok or type(data) ~= "table" or Secret(data.name) or type(data.name) ~= "string" then
+		return nil
+	end
+	local standing = data.currentStanding
+	if Secret(standing) or type(standing) ~= "number" then
+		standing = nil
+	end
+	return data.name, standing
+end
+
+function FQT.QuestNotes(qid)
+	local notes = {}
+	local v = QuestDB.GetAll(qid, QUEST_NOTE_FIELDS)
+	if not v then
+		return notes
+	end
+	local questLevel, needLevel, skill, rep = v[1], v[2], v[3], v[4]
+	local level = PlayerLevel()
+	if type(needLevel) == "number" and level and needLevel > level then
+		notes[#notes + 1] = "from level " .. needLevel
+	elseif type(questLevel) == "number" and questLevel > 0 then
+		notes[#notes + 1] = "level " .. questLevel
+	end
+	if type(skill) == "table" and type(skill[1]) == "number" and skill[1] ~= 0 then
+		local want = type(skill[2]) == "number" and skill[2] or 0
+		local rank = SkillRank(skill[1])
+		if not rank or rank < math.max(want, 1) then
+			notes[#notes + 1] = "needs " .. SkillName(skill[1]) .. (want > 1 and (" " .. want) or "")
+		end
+	end
+	if type(rep) == "table" and type(rep[1]) == "number" and rep[1] ~= 0 then
+		local want = type(rep[2]) == "number" and rep[2] or 0
+		local name, standing = Faction(rep[1])
+		if not standing or standing < want then
+			notes[#notes + 1] = "needs " .. (name and (name .. " reputation") or "a reputation")
+		end
+	end
+	return notes
+end
+
 -- Returns verdict, links ({ {qid, role, state, why}, ... }); nil for items no quest uses that
 -- are not quest items. Verdicts: keep, active, farm, maybe, pending, safe, notyours, unknown.
+-- "keep" is the never-delete list (no links) or a key whose quests are over (with its links): a
+-- key may still open a door or a chest, and no table here says which.
 function FQT.GetVerdict(itemID)
 	local hit = cache[itemID]
 	if hit then
@@ -406,6 +544,9 @@ function FQT.GetVerdict(itemID)
 				verdict = "safe"
 			else
 				verdict = "notyours"
+			end
+			if (verdict == "safe" or verdict == "notyours") and FQT.IsKey(itemID) then
+				verdict = "keep"
 			end
 		end
 	end

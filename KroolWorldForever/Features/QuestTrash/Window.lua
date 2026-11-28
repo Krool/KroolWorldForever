@@ -1,5 +1,5 @@
 -- Quest Trash window (/fqt, the hub): every quest item in your bags, and the bank while it is
--- open, sorted into Can Delete, Keep and Still Checking. Hovering a row shows the item's tooltip,
+-- open, sorted into Can Delete, No Quest Needs It, Keep and Still Checking. Hovering a row shows the item's tooltip,
 -- which carries the verdict and its quests. Advice only: nothing here deletes or moves items.
 -- Built on first open, never at file scope.
 
@@ -11,20 +11,38 @@ local UI = root.UI
 local W, H, ROW_H, HEAD_H = 420, 470, 24, 26
 local frame -- built on first open
 
+-- The coin on a junk item's bag slot: atlas member 2713 (build 71139), used by Blizzard's own
+-- ContainerFrame.xml (JunkIcon).
+local COIN = "bags-junkcoin"
+
+-- Each group lists the items FQT.Group sorts into it. Only quest items are under Can Delete: a
+-- trade good or a soulbound item no quest needs is under No Quest Needs It, to sell or keep.
 local GROUPS = {
-	{ title = "Can Delete", color = { 1, 0.4, 0.35 }, atlas = UI.ATLAS.fail, verdicts = { safe = true, notyours = true } },
-	{ title = "Keep", color = { 0.55, 0.9, 0.55 }, atlas = UI.ATLAS.ok, verdicts = { active = true, farm = true, maybe = true, keep = true } },
-	{ title = "Still Checking", color = { 0.7, 0.7, 0.7 }, atlas = UI.ATLAS.search, verdicts = { pending = true, unknown = true } },
+	{ title = "Can Delete", color = { 1, 0.4, 0.35 }, atlas = UI.ATLAS.fail, groups = { delete = true } },
+	{ title = "No Quest Needs It", color = { 1, 0.6, 0.33 }, atlas = COIN, groups = { spare = true } },
+	{ title = "Keep", color = { 0.55, 0.9, 0.55 }, atlas = UI.ATLAS.ok, groups = { active = true, farm = true, maybe = true, keep = true } },
+	{ title = "Still Checking", color = { 0.7, 0.7, 0.7 }, atlas = UI.ATLAS.search, groups = { pending = true, unknown = true } },
 }
 
 -- The row's right column: why, in a few words.
 local function Why(e)
 	local v = e.verdict
-	if v == "safe" then
-		if FQT.IsQuestItem(e.id) == false then
+	if v == "safe" or v == "notyours" then
+		if e.advice == "trade" then
+			return "Sell or trade"
+		elseif e.advice == "vendor" then
+			return "Vendor: " .. root.Money(e.price)
+		elseif e.advice == "bound" then
+			return "Soulbound, no value"
+		elseif e.advice ~= "delete" then
 			return "No quest needs it"
 		end
+	end
+	if v == "safe" then
 		return FQT.SafeReason(e.links) == "closed" and "Quests closed" or "Quests done"
+	end
+	if v == "keep" and e.links[1] then
+		return "A key"
 	end
 	return ({
 		notyours = "Not for your race/class",
@@ -141,8 +159,10 @@ function ns.RefreshWindow(force)
 	for _, r in ipairs(frame.rows) do
 		r:Hide()
 	end
-	for _, h in ipairs(frame.headers) do
-		ShowHeader(h, false)
+	for gi = 1, #GROUPS do -- by index: a group never shown yet has no header, and ipairs would stop there
+		if frame.headers[gi] then
+			ShowHeader(frame.headers[gi], false)
+		end
 	end
 	frame.note:SetText(FQT.BankOpen() and "Bags and bank." or "Bags only. Open your bank to include it.")
 	if not ns.ready then
@@ -156,19 +176,21 @@ function ns.RefreshWindow(force)
 		return
 	end
 	local list = FQT.Collect()
-	local y, rowIndex, deletable = -4, 0, 0
+	local y, rowIndex, deletable, spare = -4, 0, 0, 0
 	for gi, g in ipairs(GROUPS) do
 		local members = {}
 		for _, e in ipairs(list) do
-			if g.verdicts[e.verdict] then
+			if g.groups[FQT.Group(e)] then
 				members[#members + 1] = e
 			end
 		end
 		table.sort(members, function(a, b)
 			return a.name < b.name
 		end)
-		if gi == 1 then
+		if g.groups.delete then
 			deletable = #members
+		elseif g.groups.spare then
+			spare = #members
 		end
 		if #members > 0 then
 			local h = Header(frame.content, gi)
@@ -207,6 +229,8 @@ function ns.RefreshWindow(force)
 	frame.empty:SetText("No quest items in your bags.")
 	if deletable > 0 then
 		frame.banner:SetText(("|cffff5555%d %s you can delete.|r Hover one for why."):format(deletable, deletable == 1 and "item" or "items"))
+	elseif spare > 0 then
+		frame.banner:SetText(("|cff33ff99Nothing to delete.|r %d no quest needs: sell or keep."):format(spare))
 	elseif rowIndex > 0 then
 		frame.banner:SetText("|cff33ff99Nothing to delete.|r Everything here is still needed.")
 	else

@@ -153,6 +153,7 @@ function FireEvent(e, ...)
 end
 
 Tickers = {}
+Afters = {} -- C_Timer.After calls not run yet: { seconds, fn }
 C_Timer = {
 	NewTicker = function(_, fn)
 		local t = { fn = fn, cancelled = false }
@@ -162,7 +163,20 @@ C_Timer = {
 		table.insert(Tickers, t)
 		return t
 	end,
+	After = function(seconds, fn)
+		table.insert(Afters, { seconds, fn })
+	end,
 }
+
+-- Lets the time pass: runs every C_Timer.After waiting. Returns how many ran.
+function RunAfters()
+	local waiting = Afters
+	Afters = {}
+	for _, a in ipairs(waiting) do
+		a[2]()
+	end
+	return #waiting
+end
 
 function RunTickers()
 	for _ = 1, 1000 do
@@ -292,6 +306,9 @@ C_QuestLog = {
 }
 
 ItemClass = {} -- [itemID] = classID; missing = not cached
+ItemBind = {} -- [itemID] = Enum.ItemBind value (default 0, none; 1 binds when picked up, 4 quest)
+SellPrice = {} -- [itemID] = what a vendor pays, in copper (default 0)
+NoItemInfo = {} -- [itemID] = true: the client knows its class but not the rest yet
 C_Item = {
 	GetItemInfoInstant = function(itemID)
 		local classID = ItemClass[itemID]
@@ -299,6 +316,14 @@ C_Item = {
 			return nil
 		end
 		return itemID, "type", "subtype", "", 0, classID, 0
+	end,
+	-- name, link, quality, level, minLevel, type, subType, stack, equipLoc, texture, sellPrice,
+	-- classID, subclassID, bindType
+	GetItemInfo = function(itemID)
+		if ItemClass[itemID] == nil or NoItemInfo[itemID] then
+			return nil
+		end
+		return "Item" .. itemID, "link", 1, 1, 0, "type", "subtype", 20, "", 134400, SellPrice[itemID] or 0, ItemClass[itemID], 0, ItemBind[itemID] or 0
 	end,
 	GetItemNameByID = function(itemID)
 		return "Item" .. itemID
@@ -341,6 +366,28 @@ local NUMERIC = {
 	startQuest = true,
 	requiredMaxLevel = true,
 	availableUntilCompleted = true,
+	questLevel = true,
+	requiredLevel = true,
+}
+
+-- Professions and reputations, for what an open quest asks of the player.
+SkillNames = { [202] = "Engineering" }
+SkillRanks = {} -- [skill line] = the player's rank; missing = not learned
+C_TradeSkillUI = {
+	GetTradeSkillDisplayName = function(id)
+		return SkillNames[id]
+	end,
+}
+C_SkillInfo = {
+	GetSkillLineInfoByID = function(id)
+		return SkillRanks[id] and { rank = SkillRanks[id] } or nil
+	end,
+}
+Factions = { [576] = { name = "Timbermaw Hold", currentStanding = 0 } }
+C_Reputation = {
+	GetFactionDataByID = function(id)
+		return Factions[id]
+	end,
 }
 
 -- QuestieDB semantics: numeric fields read 0 when absent, unknown ids read nil everywhere.

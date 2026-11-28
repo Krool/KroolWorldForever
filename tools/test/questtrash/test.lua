@@ -114,10 +114,45 @@ ItemClass[5030] = QUEST
 Quests[1032] = { name = "Client Start" }
 ItemClass[5032] = QUEST
 ClientStarts[5032] = 1032
+-- 5040 a key (item class Key) whose only quest is done; 5043 a key whose quest is still open
+Quests[1040] = { name = "Jail Break", objectives = { nil, nil, { { 5040 } } } }
+ItemClass[5040] = 13
+Quests[1043] = { name = "Locked Chest", objectives = { nil, nil, { { 5043 } } } }
+ItemClass[5043] = 13
+-- 5041 and 5042 are handed out by done quests and bind when picked up: one a vendor buys, one not
+Quests[1041] = { name = "Borrowed Tool", sourceItemId = 5041 }
+ItemClass[5041] = TRADE
+ItemBind[5041] = 1
+SellPrice[5041] = 250
+Quests[1042] = { name = "Worthless Token", sourceItemId = 5042 }
+ItemClass[5042] = TRADE
+ItemBind[5042] = 1
+-- 5044 a trade good of a done quest whose details the client has not loaded
+Quests[1044] = { name = "Uncached Mat", objectives = { nil, nil, { { 5044 } } } }
+ItemClass[5044] = TRADE
+NoItemInfo[5044] = true
+-- Open quests that ask something of the player (level 20): 1050 a level 14 quest, 1051 opens at
+-- level 30, 1052 needs Engineering 150, 1053 needs Timbermaw Hold reputation
+Quests[1050] = { name = "Skipped Long Ago", questLevel = 14, requiredLevel = 10, objectives = { nil, nil, { { 5050 } } } }
+ItemClass[5050] = QUEST
+Quests[1051] = { name = "Still Ahead", questLevel = 32, requiredLevel = 30, objectives = { nil, nil, { { 5051 } } } }
+ItemClass[5051] = QUEST
+Quests[1052] = { name = "Gnomish Gadget", questLevel = 30, requiredSkill = { 202, 150 }, objectives = { nil, nil, { { 5052 } } } }
+ItemClass[5052] = QUEST
+Quests[1053] = { name = "Furbolg Friend", requiredMinRep = { 576, 3000 }, objectives = { nil, nil, { { 5053 } } } }
+ItemClass[5053] = QUEST
+-- 1060 is turned in during the test: 5060 its quest item, 5061 a trade good it used.
+-- 1061 is offered only until 1060 is done: its item 5062 closes with the same turn-in.
+Quests[1060] = { name = "Hand It In", objectives = { nil, nil, { { 5060 }, { 5061 } } } }
+ItemClass[5060] = QUEST
+ItemClass[5061] = TRADE
+Quests[1061] = { name = "Other Road", availableUntilCompleted = 1060, objectives = { nil, nil, { { 5062 } } } }
+ItemClass[5062] = QUEST
 
 Completed[1001], Completed[1002], Completed[1003], Completed[16], Completed[1005] = true, true, true, true, true
 Completed[1010], Completed[1012], Completed[1014], Completed[1016], Completed[1018] = true, true, true, true, true
 Completed[1022], Completed[1032] = true, true
+Completed[1040], Completed[1041], Completed[1042], Completed[1044] = true, true, true, true
 
 -- ---------------------------------------------------------------- lifecycle
 
@@ -170,6 +205,46 @@ check("ordinary item tooltip untouched", #HoverItem(5017), 0)
 check("relatedQuests link counts", FQT.GetVerdict(5018), "safe")
 check("spell objective item is linked", FQT.GetVerdict(5019), "maybe")
 check("never-delete list wins", FQT.GetVerdict(16309), "keep")
+check("never-delete list: its own wording", has(HoverItem(16309), "key/attunement item"), true)
+
+-- ---------------------------------------------------------------- keys and what else no quest needs
+
+check("a key whose quests are done -> keep", FQT.GetVerdict(5040), "keep")
+check("a key is never told to sell or delete", has(HoverItem(5040), "sell or AH") or has(HoverItem(5040), "Can be deleted"), false)
+check("a key says why it is kept", has(HoverItem(5040), "Keep - a key"), true)
+check("a key still lists its quest", has(HoverItem(5040), "Jail Break"), true)
+check("a key with an open quest keeps that verdict", FQT.GetVerdict(5043), "maybe")
+check("advice: a quest item", FQT.Advice(5001), "delete")
+check("advice: a trade good", FQT.Advice(5015), "trade")
+check("advice: soulbound with a vendor price", FQT.Advice(5041), "vendor")
+check("advice: the vendor price comes with it", select(2, FQT.Advice(5041)), 250)
+check("advice: soulbound, no vendor price", FQT.Advice(5042), "bound")
+check("advice: details not loaded", FQT.Advice(5044), "wait")
+check("advice: class not loaded", FQT.Advice(599999), "wait")
+check("a soulbound item is not called tradable", has(HoverItem(5041), "tradable"), false)
+check("a soulbound item a vendor buys says so", has(HoverItem(5041), "soulbound - a vendor pays"), true)
+check("with the price", has(HoverItem(5041), "2s"), true)
+check("a soulbound item no vendor buys says so", has(HoverItem(5042), "soulbound, no vendor value"), true)
+check("a soulbound item is never told delete", has(HoverItem(5042), "Can be deleted"), false)
+check("details not loaded: hover again", has(HoverItem(5044), "not cached yet"), true)
+
+-- ---------------------------------------------------------------- what an open quest asks
+
+check("an open quest says its level", has(HoverItem(5050), "not done yet: level 14"), true)
+check("a quest above you says when it opens", has(HoverItem(5051), "not done yet: from level 30"), true)
+check("a profession you lack is named with its rank", has(HoverItem(5052), "level 30, needs Engineering 150"), true)
+SkillRanks[202] = 120
+check("a rank too low still says so", has(HoverItem(5052), "needs Engineering 150"), true)
+SkillRanks[202] = 200
+check("a profession you have is not mentioned", has(HoverItem(5052), "needs Engineering"), false)
+SkillRanks[202] = nil
+check("a reputation you lack is named", has(HoverItem(5053), "needs Timbermaw Hold reputation"), true)
+Factions[576].currentStanding = 3000
+check("a reputation you have is not mentioned", has(HoverItem(5053), "Timbermaw"), false)
+Factions[576].currentStanding = 0
+check("the notes never change a verdict", FQT.GetVerdict(5052), "maybe")
+check("a quest with nothing to note reads as before", has(HoverItem(5014), "(not done yet)"), true)
+check("a done quest gets no notes", has(HoverItem(5001), "level"), false)
 
 -- ---------------------------------------------------------------- closed for good
 
@@ -291,8 +366,9 @@ local function rowsShown()
 end
 local function headersShown()
 	local out = {}
-	for _, h in ipairs(win.headers) do
-		if h.shown then
+	for gi = 1, 4 do -- by group: one never shown has no header yet
+		local h = win.headers[gi]
+		if h and h.shown then
 			out[#out + 1] = h.text
 		end
 	end
@@ -310,7 +386,7 @@ check("note says the bank is not included", win.note.text:find("Open your bank",
 check("polish: the window has its intro animation (played on show; see the setups suite)", #AnimationsOn(win) >= 1, true)
 check("polish: rows fade in when the window opens", (AnimationsOn(rows[1])[1] or {}).plays, 1)
 check("polish: Can Delete has the red X", win.headers[1].icon.atlas, "groupfinder-icon-redx")
-check("polish: Keep has the check mark", win.headers[2].icon.atlas, "common-icon-checkmark")
+check("polish: Keep has the check mark", win.headers[3].icon.atlas, "common-icon-checkmark")
 check("polish: headers carry a divider", win.headers[1].line.shown, true)
 win.refresh:Click()
 local toast = __ns.UI.ToastOf(win)
@@ -351,6 +427,92 @@ Bags[0] = {}
 check("hub status when nothing to delete", QT.HubStatus():find("Nothing to delete", 1, true) ~= nil, true)
 Bags[0] = { 5001, 5002, 5017 }
 Stacks[5001] = nil
+
+-- What no quest needs but is not a quest item has its own group: never under Can Delete.
+Bags[0] = { 5001, 5015, 5041, 5042, 5040, 5002 }
+QT.RefreshWindow(true)
+check("four groups: delete, no quest needs it, keep", table.concat(headersShown(), " | "), "Can Delete (1) | No Quest Needs It (3) | Keep (2)")
+check("the new group has the junk coin", win.headers[2].icon.atlas, "bags-junkcoin")
+local function whyOf(name)
+	for _, r in ipairs(rowsShown()) do
+		if r.name.text:find(name, 1, true) then
+			return r.why.text
+		end
+	end
+	return nil
+end
+check("a trade good: sell or trade", whyOf("Item5015"), "Sell or trade")
+check("a soulbound item with a price: vendor", whyOf("Item5041"):find("Vendor: ", 1, true) ~= nil, true)
+check("a soulbound item without: says so", whyOf("Item5042"), "Soulbound, no value")
+check("a key is under Keep", whyOf("Item5040"), "A key")
+check("the banner counts quest items only", win.banner.text:find("1 item you can delete", 1, true) ~= nil, true)
+check("the hub counts quest items only", QT.HubStatus():find("1 item you can delete", 1, true) ~= nil, true)
+Bags[0] = { 5015, 5041 }
+QT.RefreshWindow(true)
+check("nothing to delete, two to sell: the banner", win.banner.text:find("Nothing to delete.|r 2 no quest needs", 1, true) ~= nil, true)
+check("nothing to delete, two to sell: the hub", QT.HubStatus():find("2 items no quest needs", 1, true) ~= nil, true)
+check("a header of an emptied group is hidden", table.concat(headersShown(), " | "), "No Quest Needs It (2)")
+Bags[0] = { 5002 }
+QT.RefreshWindow(true)
+check("only Keep left: the other headers are gone", table.concat(headersShown(), " | "), "Keep (1)")
+local listed = {}
+do
+	local real = print
+	print = function(s)
+		listed[#listed + 1] = s
+	end
+	Bags[0] = { 5001, 5015 }
+	SlashCmdList.KROOLWORLDFOREVER_QUESTTRASH("print")
+	print = real
+end
+check("/fqt print: the trade good is not under Deletable", has(listed, "No quest needs these"), true)
+
+-- ---------------------------------------------------------------- after a turn-in
+
+local function Told(fn)
+	local out, real = {}, print
+	print = function(s)
+		out[#out + 1] = s
+	end
+	fn()
+	print = real
+	return out
+end
+RunAfters() -- the turn-ins fired above
+Bags[0] = { 5001, 5060, 5061, 5062, 5002 }
+QuestLog[1060] = true
+FQT.ClearCache()
+FQT.Baseline() -- as at login: 5001 is old junk and is not announced
+check("before the turn-in its item is kept", FQT.GetVerdict(5060), "active")
+QuestLog[1060] = nil
+Completed[1060] = true
+local told = Told(function()
+	FireEvent("QUEST_TURNED_IN", 1060)
+end)
+check("nothing is said at the event itself", #told, 0)
+check("it waits a moment for the client", #Afters, 1)
+FireEvent("QUEST_TURNED_IN", 1060)
+check("a second turn-in in that moment asks once", #Afters, 1)
+told = Told(RunAfters)
+check("after a turn-in: the quest item can go", has(told, "Can be deleted now:"), true)
+check("it names the item", has(told, "Item5060"), true)
+check("an item of a quest the turn-in closed is named too", has(told, "Item5062"), true)
+check("a trade good is not told delete", has(told, "No quest needs these now:|r Item5061"), true)
+check("old junk is not announced again", has(told, "Item5001"), false)
+check("two lines, no more", #told, 2)
+FireEvent("QUEST_TURNED_IN", 1060)
+check("the same items are not announced twice", #Told(RunAfters), 0)
+DB.turnIn = false
+Completed[1050] = true
+Bags[0] = { 5050 }
+FireEvent("QUEST_TURNED_IN", 1050)
+check("the option off: nothing is said", #Told(RunAfters), 0)
+DB.turnIn = true
+FireEvent("QUEST_TURNED_IN", 1050)
+check("turned on again: what was passed over stays quiet", #Told(RunAfters), 0)
+Completed[1050], Completed[1060] = nil, nil
+Bags[0] = { 5001, 5002, 5017 }
+FQT.ClearCache()
 
 local realLib = LibQuestieDB
 LibQuestieDB = nil
