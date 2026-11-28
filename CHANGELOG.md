@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.27.0
+
+- **Quest Trash: only quest items are told to delete.** The window listed every item no quest
+  needs under Can Delete, trade goods included, while the tooltip said to sell them. Trade goods
+  and soulbound items now have their own group, No Quest Needs It, and the hub card and the
+  banner count quest items only.
+- **Quest Trash: no "sell or AH it" on an item you cannot sell.** A soulbound item no quest needs
+  now says what a vendor pays for it, or that it has no vendor value.
+- **Quest Trash: a key reads Keep.** A key whose quests are over is never told to sell or delete:
+  it may still open a lock.
+- **Quest Trash: what a quest asks of you.** A quest not done yet shows its level, the level it
+  opens at when you are below it, and a profession or reputation it needs that you do not have.
+  So you can tell a quest you skipped long ago from one still ahead.
+- **Quest Trash: a line in chat after a turn-in**, naming the items in your bags no quest needs
+  anymore. Option Tell Me After A Turn-In, on by default.
+- **Boats And Zeppelins: towns, not only zones.** A pin says To Booty Bay, Stranglethorn Vale.
+  The town is the flight master's beside the dock, in your language when the game names it.
+  Docks with no flight master near (Tanaris' coast, Riverglades, Zephras Isle) show their zone.
+- **Boats And Zeppelins: whose town it is.** (Horde) or (Alliance) follows a town that belongs to
+  one side, in red when it is not yours. It comes from the flight masters there. It does not say
+  who may ride.
+- **Boats And Zeppelins: how long the boat waits** at the dock: one minute everywhere in the
+  game's data. It still cannot tell when the next one arrives.
+- **Boats And Zeppelins: the nearest dock.** `/kwb` names it, with the distance, when your zone
+  has none. `/kwb <place>` lists what goes to a place, nearest first. `/kwb go` puts the game's
+  map pin on the nearest dock, and `/kwb go <place>` on the nearest that goes there.
+- **Boats And Zeppelins: the Deeprun Tram, and the portal between Rut'theran Village and
+  Darnassus**, have pins on zone maps. Their places are from Forever's own data; where they lead
+  is classic's.
+
 ## 0.26.0
 
 - **Quest Reward Value: works in the quest log.** Select a quest in the log, or in the map's quest

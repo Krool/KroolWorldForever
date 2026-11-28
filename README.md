@@ -11,7 +11,7 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 
 | Feature | What you get | Needs |
 |---|---|---|
-| **Quest Trash** | A keep or delete verdict on quest item tooltips. `/fqt` opens a window that sorts your bags (and bank) into Can Delete, Keep and Still Checking. | QuestieDB |
+| **Quest Trash** | A keep or delete verdict on quest item tooltips, with the quests behind it and what each still asks of you. `/fqt` opens a window that sorts your bags (and bank) into Can Delete, No Quest Needs It, Keep and Still Checking. A line in chat after a turn-in names what you no longer need. | QuestieDB |
 | **Kill Value** | Expected gold per kill on creature tooltips: coins plus each drop's chance times its price, plus the skinning if you can skin it. Learns real drop rates from what you loot. Herbs, mining veins and fishing pools show their value too. | Nothing (Auctionator optional) |
 | **Setups** | Save a character's action bars, keybindings, macros, Edit Mode layout, interface settings, chat text size, addon list and this addon's settings, then apply them to another character. A window shows which setup goes onto which character, and a check, warning or X per part afterwards. New characters can start from a saved setup. | Nothing |
 | **Rare Alert** | A sound, a screen message and a chat line when a rare enemy is near, with what it is worth and its best drops, plus a marker button and a key that target it and mark it (a skull by default). One alert per spawn. The button goes once the rare has your marker or dies; right-click hides it, shift-right-click ignores that rare (the Stormwind canal crocolisk is ignored out of the box). Rares are noticed through enemy nameplates, which Forever starts with off: the hub's Plates On button turns them on. | Nothing |
@@ -24,7 +24,7 @@ what it is doing right now, its on/off switch, and the way in (its window or its
 | **One-Button Fishing** | One key casts your line and, while it is out, reels in the bite. Set it under Key Bindings > AddOns > Krool World. With a fishing pole in your main hand, a double right-click does the same. Every cast and reel is your own key press or click. | Nothing |
 | **Reagent Uses** | Hold Ctrl (or the key you choose) over a crafting material and its tooltip lists every recipe that uses it, grouped by profession, yours first. Each recipe is colored by your skill, with how many of the material it takes, how many more recipes use what it makes, and who knows it (you, and each other character once it has opened its profession window) or where it is learned (Trainer 175, Vendor, Drop...). Built from Forever's own recipe data, including the recipes Forever added. | Nothing |
 | **Market Movers** | After Auctionator scans the auction house, a window beside it shows what is priced unusually, in four tabs: materials and other items that rose or fell against their usual price (the middle price of up to a week), bargains listed under the vendor price or far under usual, and how the items in your bags stand. Each row has a small trend line. Click a row to search the item in Auctionator. Gear is left out. It keeps its own daily record of the scans, so the first comparison comes the day after your first scan. It never buys, bids, posts or cancels. `/kwm` | Auctionator |
-| **Boats And Zeppelins** | A pin on the world map at every boat dock and zeppelin tower. Hover it for where the boat or zeppelin goes. The routes come from Forever's own data, so the new ones (Stormwind to Darkshore) are there with the classic ones. Zone maps show their docks; continent maps and the world map can too. Two that leave from one place share a pin. High Order Skyborne also get a pin at Dalaran's portal to Stormwind, on zone maps. It shows every route in the game's data: it cannot tell when the next boat arrives, or whether a route is running yet. `/kwb` | Nothing |
+| **Boats And Zeppelins** | A pin on the world map at every boat dock and zeppelin tower. Hover it for the town the boat or zeppelin goes to, whose town that is, and how long it waits. The routes come from Forever's own data, so the new ones (Stormwind to Darkshore) are there with the classic ones. Zone maps show their docks; continent maps and the world map can too. Two that leave from one place share a pin. Zone maps also show the Deeprun Tram, the portal between Rut'theran Village and Darnassus, and for High Order Skyborne Dalaran's portal to Stormwind. `/kwb` names the nearest dock and `/kwb go` puts the game's map pin on it. It shows every route in the game's data: it cannot tell when the next boat arrives, or whether a route is running yet. `/kwb` | Nothing |
 
 All fourteen are on by default.
 
@@ -159,7 +159,7 @@ Optional companions:
 | `/kwl unignore <item>` / `ignored` | Mark it again (item, id or name); show the ignore list |
 | `/kwfish` | Your fishing key, and whether a pole is equipped for double right-click |
 | `/ru` | Reagent Uses' settings (`/ru chars` opens the character list) |
-| `/kwb` | The boats and zeppelins of the zone you are in (`/kwb all` lists every dock) |
+| `/kwb` | The boats and zeppelins of the zone you are in, or the nearest dock (`/kwb <place>` lists what goes there, `/kwb go [place]` marks the nearest on your map, `/kwb all` lists every dock) |
 | `/kwm` | Open the Market Movers window (`/kwm bargains` and `/kwm bags` open those tabs, `/kwm print` puts the top moves in chat, `/kwm reset` puts the window back beside the auction house) |
 
 The mark key and the fishing key are under **Key Bindings > AddOns > Krool World** (in a KW addon, under its own name). `/kwf` and `/kroolworld` work like
@@ -186,7 +186,8 @@ On by default: yes. Toggle: `/kwf questtrash on|off`. Commands: `/fqt, /questtra
 | Setting | Default | What it does |
 |---|---|---|
 | Show Verdict On Tooltips | On | Adds a keep or delete line to quest item tooltips. |
-| List The Quests Involved | On | Shows up to four quests and their status under the verdict. |
+| List The Quests Involved | On | Shows up to four quests and their status under the verdict. A quest not done yet also says its level, and a profession or reputation it needs that you do not have. |
+| Tell Me After A Turn-In | On | After you hand in a quest, says in chat which items in your bags no quest needs anymore. |
 
 ### Kill Value
 
@@ -353,7 +354,7 @@ On by default: yes. Toggle: `/kwf movers on|off`. Commands: `/kwm, /marketmovers
 
 ### Boats And Zeppelins
 
-Puts a pin on the world map at every boat dock and zeppelin tower. Hover a pin for where it goes. The routes come from the game's own data, so the new ones are there too. It cannot tell when the next one arrives. High Order Skyborne also get a pin at Dalaran's portal to Stormwind, on zone maps.
+Puts a pin on the world map at every boat dock and zeppelin tower. Hover a pin for the town it goes to, whose town that is, and how long the boat waits. The routes come from the game's own data, so the new ones are there too. It cannot tell when the next one arrives. Zone maps also show the Deeprun Tram, the portal between Rut'theran Village and Darnassus, and for High Order Skyborne Dalaran's portal to Stormwind.
 
 On by default: yes. Toggle: `/kwf transports on|off`. Commands: `/kwb, /kwboats`.
 
