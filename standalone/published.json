@@ -28,8 +28,8 @@
                    "version":  "0.22.1"
                },
     "questtrash":  {
-                       "hash":  "a8f7728aa811e58a8c58ae58cc675532f13a5345c662c2b222b0b8a747430add",
-                       "version":  "0.21.0"
+                       "hash":  "2f42936fe6b9e192e53e174a856c0e8dd3cf61ff1c3a66500dbf4397e8f03818",
+                       "version":  "0.27.0"
                    },
     "rares":  {
                   "hash":  "9ef026915a01350baf1542b7646f238606944fd06fc1677a7e44a60caadd20c1",
@@ -52,7 +52,7 @@
                     "version":  "0.24.1"
                 },
     "transports":  {
-                       "hash":  "d88b6fa53f41145cafa07a767aed7771709278fb74ba62da18759754a997feb1",
-                       "version":  "0.25.0"
+                       "hash":  "273cb29f0657ac601a7a8d9f900e3adf3d99680b552ced03ecea7d3398c7bd88",
+                       "version":  "0.27.0"
                    }
 }
